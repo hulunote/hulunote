@@ -1,0 +1,19 @@
+{:deps   {:aliases [:cljs]}
+
+ :http {:port 3333
+        :ssl-port 23456
+        :host "0.0.0.0"}
+
+ :builds {:hulunote {:target :browser
+                     :output-dir "resources/public/hulunote"
+                     :compiler-options {:infer-externs :auto
+                                        :optimizations :advanced
+                                        :externs ["datascript/externs.js"]}
+                     :modules
+                     {:hulunote {:init-fn hulunote.core/init!}}
+                     :devtools
+                     {:http-port  8803
+                      :http-root  "resources/public"
+                      :watch-dir  "resources/public"
+                      :after-load hulunote.core/after-load
+                      :preloads [shadow.remote.runtime.cljs.browser]}}}}

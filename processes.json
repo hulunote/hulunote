@@ -1,0 +1,27 @@
+{
+    "apps": [
+      {
+        "name"        : "hulunote-dev",
+        "interpreter" : "none",
+        "script"      : "./scripts/cljrunjar",
+        "args"        : "run"
+      },
+      {
+        "name": "op",
+        "cwd": "/home/ubuntu/production",
+        "exec_mode": "fork",
+        "node_args": [
+          "--harmony"
+        ],
+        "env": {
+          "DISPLAY": ":99"
+        },
+        "cron_restart": "00 45 * * * *",
+        "log_date_format": "YYYY-MM-DD HH:mm:ss",
+        "error_file": "~/logs/op-error.log",
+        "out_file": "~/logs/op-log.log",
+        "merge_logs": true
+      }
+    ]
+  }
+  

@@ -1,0 +1,2 @@
+#!/bin/bash
+cd /home/ubuntu/hulunote-backend-en && java -cp functor-api.jar clojure.main -m functor-api.core

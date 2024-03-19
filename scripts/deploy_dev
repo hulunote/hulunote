@@ -1,0 +1,11 @@
+#!/bin/bash
+# 0. 编译前端
+for fpath in `find . -name "cljs-runtime"`; do rm -fr $fpath; done
+rm -fr .shadow-cljs
+npx shadow-cljs release hulunote
+# 1. 编译新jar包
+clojure -m uberdeps.uberjar --deps-file deps.edn --target functor-api.jar
+# 2. 上传jar包
+scp ./functor-api.jar ubuntu@3.143.215.166:/home/ubuntu/hulunote-backend-en/.
+# 3. 重启pm2
+ssh ubuntu@3.143.215.166 'pm2 restart hulunote-dev'

@@ -1,0 +1,101 @@
+{:paths ["src/clj" "resources" "src/cljc"]
+
+ ;; discussing use datomic or not
+ ;; :mvn/repos {"my.datomic.com" {:url "https://my.datomic.com/repo"}}
+
+ :deps
+ {cheshire                                        {:mvn/version "5.8.1"}
+  clojure.java-time                               {:mvn/version "0.3.2"}
+  com.cognitect/transit-clj                       {:mvn/version "0.8.313"}
+  conman                                          {:mvn/version "0.8.3"}
+  cprop                                           {:mvn/version "0.1.14"}
+  expound                                         {:mvn/version "0.7.2"}
+  funcool/struct                                  {:mvn/version "1.4.0"}
+  metosin/reitit                                  {:mvn/version "0.5.5"}
+  mount                                           {:mvn/version "0.1.16"}
+  nrepl                                           {:mvn/version "0.6.0"}
+  org.clojure/clojure                             {:mvn/version "1.10.3"}
+  org.clojure/clojurescript                       {:mvn/version "1.10.879"}
+  org.clojure/core.async                          {:mvn/version "0.4.500"}
+  org.postgresql/postgresql                       {:mvn/version "42.2.6"}
+  org.webjars.npm/bulma                           {:mvn/version "0.7.5"}
+  org.webjars.npm/material-icons                  {:mvn/version "0.3.0"}
+  org.webjars/webjars-locator                     {:mvn/version "0.36"}
+  ring-webjars                                    {:mvn/version "0.2.0"}
+  ring/ring                                       {:mvn/version "1.8.0"}
+  ring/ring-defaults                              {:mvn/version "0.3.2"}
+  selmer                                          {:mvn/version "1.12.18"}
+  cider/cider-nrepl                               {:mvn/version "0.21.1"}
+  hikari-cp                                       {:mvn/version "2.9.0"}
+  honeysql                                        {:mvn/version "0.9.5"}
+  nilenso/honeysql-postgres                       {:mvn/version "0.2.6"}
+  com.huaban/jieba-analysis                       {:mvn/version "1.0.2"}
+  buddy                                           {:mvn/version "2.0.0"}
+  clj-time                                        {:mvn/version "0.15.2"}
+  amalloy/ring-gzip-middleware                    {:mvn/version "0.1.4"}
+  com.taoensso/timbre                             {:mvn/version "4.10.0"}
+  camel-snake-kebab                               {:mvn/version "0.4.0"}
+  info.sunng/ring-jetty9-adapter                  {:mvn/version "0.14.3"} ;; old: 0.12.5, jdk8最新支持到0.14.3
+  clj-http                                        {:mvn/version "3.10.0"}
+  org.clojure/algo.monads                         {:mvn/version "0.1.6"}
+  ragtime                                         {:mvn/version "0.8.0"}
+  org.clojure/java.classpath                      {:mvn/version "0.3.0"}
+  org.eclipse.paho/org.eclipse.paho.client.mqttv3 {:mvn/version "1.2.2"}
+  com.alibaba/fastjson                            {:mvn/version "1.2.48"}
+  com.aliyun.openservices/ons-client              {:mvn/version "1.7.9.Final"}
+  commons-io                                      {:mvn/version "2.4"}
+  io.netty/netty-all                              {:mvn/version "4.1.15.Final"}
+  com.squareup.okhttp3/okhttp                     {:mvn/version "3.13.1"}
+  com.squareup.okio/okio                          {:mvn/version "1.15.0"}
+  ring-middleware-format                          {:mvn/version "0.7.4"}
+  seancorfield/next.jdbc                          {:mvn/version "1.0.13"}
+  prone                                           {:mvn/version "2019-07-08"}
+  instaparse                                      {:mvn/version "1.4.10"}
+  me.raynes/conch                                 {:mvn/version "0.8.0"}
+  io.aviso/pretty                                 {:mvn/version "0.1.37"}
+  aysylu/loom                                     {:mvn/version "1.0.2"}
+  net.mikera/core.matrix                          {:mvn/version "0.62.0"}
+  net.mikera/vectorz-clj                          {:mvn/version "0.48.0"}
+  hickory                                         {:mvn/version "0.7.1"}
+  metosin/ring-http-response                      {:mvn/version "0.9.1"}
+  com.bhauman/rebel-readline                      {:mvn/version "0.1.4"}
+  uberdeps/uberdeps                               {:mvn/version "1.0.4"}
+  org.clojure/data.xml                            {:mvn/version "0.0.8"}
+  steve-clj-tagsoup                               {:mvn/version "0.4.3"}
+  org.clojure/core.logic                          {:mvn/version "1.0.0"}
+  org.clojure/core.unify                          {:mvn/version "0.5.7"}
+  medley                                          {:mvn/version "1.3.0"}
+  com.taoensso/carmine                            {:mvn/version "3.1.0"}
+  ;; 改造过的otplike
+  org.clojars.hzqi_110/otplike                    {:mvn/version "0.6.1-alpha"}
+  org.commonmark/commonmark                       {:mvn/version "0.18.1"}
+  clj-python/libpython-clj                        {:mvn/version "2.000"}
+  ;; aws-s3 依赖，图床使用
+  amazonica                                       {:mvn/version "0.3.156"}
+  ;; 字符串diff的依赖
+  tech.droit/clj-diff                             {:mvn/version "1.0.1"}
+  ;; 定时调度
+  clojurewerkz/quartzite                          {:mvn/version "2.1.0"}
+  ;; 带有jws可以直接校验的jwt库，为ios登陆使用的
+  io.jsonwebtoken/jjwt                            {:mvn/version "0.9.1"}
+
+  }
+
+ :aliases
+ {:uberjar {:extra-deps {seancorfield/depstar {:mvn/version "RELEASE"}}
+            :main-opts ["-m" "hf.depstar.uberjar"]}
+  :run {:main-opts ["-m" "functor-api.core"]}
+  :cljs {:extra-paths ["src/cljs" "src/cljc"]
+         :extra-deps {thheller/shadow-cljs    {:mvn/version "2.15.10"}
+                      cljs-bean               {:mvn/version "1.5.0"}
+                      reagent                 {:mvn/version "1.1.0"}
+                      cljs-http               {:mvn/version "0.1.46"}
+                      alandipert/storage-atom {:mvn/version "2.0.1"}
+                      re-frame                {:mvn/version "1.2.0"}
+                      rum                     {:mvn/version "0.12.10"}
+                      datascript              {:mvn/version "1.4.1"}
+                      datascript-transit      {:mvn/version "0.3.0"}
+                      arttuka/reagent-material-ui {:mvn/version "4.11.3-2"}}}
+  :shadow {:main-opts ["-m" "shadow.cljs.devtools.cli"]}
+
+  :repl {:main-opts ["-m" "functor-api.main-repl"]}}}

@@ -1,0 +1,33 @@
+{:functor-api-jwt-key "test-steve-token"
+ :is-load-py false
+
+ :redis     {:host "127.0.0.1"
+             :port 6379}
+
+ :database {:main {:dbtype            "postgresql"
+                   :dbname            "functor_api"
+                   :user              "postgrest"
+                   :password          "123456"
+                   :host              "localhost"
+                   :port              5432
+                   :useUnicode        true
+                   :characterEncoding "UTF-8"
+                   :recvlogical-exec  ""
+                   :replication-slot  ""}}
+
+ ;; ot-history ot历史长度为多少时进行持久化，清理内存
+ :max-ot-history 50
+
+ ;; discourse sso secret 必须与discourse里配置的一致
+ :discourse-sso-secret "qazwsxxas321321x"
+
+ ;; aws s3 的静态存储key信息
+ :aws-s3 {:access-key "---xew321321"
+          :access-secret "73Gxnpgo5jxsadsadas---dsa"
+          :endpoint "us-east-2"
+          :path-prefix "https://hulunote.s3.us-east-2.amazonaws.com/"}
+
+;; 机器人的key，使用r2d2的token
+:bot-key "qazwsxas321"
+
+}

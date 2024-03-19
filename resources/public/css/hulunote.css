@@ -1,0 +1,254 @@
+:root {
+    --font-color: #fdfeffc4;
+    --background-theme: #313541;
+}
+
+body {
+    /* font-family: "PingFang SC",sans-serif,monospace;
+       overflow-y: hidden; */
+
+    margin: 0;
+    font-family: open sans,-apple-system,BlinkMacSystemFont,segoe ui,Roboto,helvetica neue,Arial,sans-serif,apple color emoji,segoe ui emoji,segoe ui symbol;
+    font-size: 1rem;
+    font-weight: 400;
+    line-height: 1.5;
+    color: #fff;
+    text-align: left;
+    background-color: #2a354b;
+
+}
+
+
+.night-center-boxBg {
+    background: #404655 !important;
+    border-bottom: 1px solid rgba(35,35,40,.6);
+}
+
+.night-textColor-2 {
+    color: var(--font-color) !important;
+}
+
+.night-outline-line {
+    box-sizing: border-box;
+    border-right: 1px solid rgb(191, 204, 214);
+    bottom: 0px;
+    transition: all 100ms ease-in 0s;
+    top: 0px;
+    width: calc(7px);
+    cursor: pointer;
+    z-index: 10;
+    border-top-color: rgb(191, 204, 214);
+    border-bottom-color: rgb(191, 204, 214);
+    border-left-color: rgb(191, 204, 214);
+    position: absolute;
+    left: -5.5px;
+}
+
+div.content-box.outline-line:hover {
+    border-right: 2px solid #9FA9BA !important;
+    cursor: pointer !important;
+}
+
+hulu-text-font {
+    font-size: 0.95rem;
+    line-height: 1.3rem;
+}
+
+.show-page-right-siderbar-is-close{
+    padding-right: calc((100% - 800px) / 2);
+    padding-left: calc((100% - 800px) / 2);
+    height: 100vh;
+}
+
+.overflow-scroll-new {
+    -webkit-overflow-scrolling: touch;
+    overflow: scroll;
+}
+
+/* remove all scrollbar */
+::-webkit-scrollbar { display:none }
+
+.text-center {
+    text-align: center!important;
+}
+
+.main-container {
+    max-width: 1140px;
+}
+
+/* PC */
+@media only screen and (min-width: 700px) {
+    .main-title {
+        font-size: 3rem;
+        font-weight: 700;
+        line-height: 1.2;
+        word-wrap: break-word;
+    }
+    .head-bar-pl {
+        padding-left: 2rem;
+    }
+}
+/* mobile */
+@media only screen and (max-width: 600px) {
+    .main-title {
+        font-size: 11.4vw;
+        padding: 30px;
+    }
+    .main-hulu-name {
+        display: none;
+    }
+    .head-bar-pl {
+        padding-left: 2rem;
+    }
+    .mb-no-show {
+        display: none;
+    }
+
+}
+
+.link-style {
+    color: #9644fc
+}
+
+.link-titlt-style {
+    color: #9644fc
+}
+
+.inner-wrapper {
+    margin: 0 auto;
+    width: 100%;
+    max-width: 1270px;
+    display: flex;
+    align-items: center;
+}
+
+.td-navbar {
+    background: rgb(46 49 54);
+    min-height: 4rem;
+    margin: 0;
+    z-index: 32;
+    position: fixed;
+    top: 0;
+    width: 100%;
+    background: rgb(46 49 54);
+}
+
+.btn-login {
+    border: 1px solid rgba(255,255,255,.5);
+    background: 0 0;
+}
+
+.btn-new  {
+    width: 86px;
+    height: 40px;
+    border-radius: 3px;
+    margin: 0 0 0 24px;
+    color: #fff;
+    font-weight: 600;
+    font-size: 16px;
+    line-height: 20px;
+}
+
+.nav-link {
+    text-transform: none;
+    font-weight: 700;
+    font-size: 16px;
+    line-height: 20px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+}
+
+.advantages {
+    max-width: 1370px;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-evenly;
+    margin: -230px auto 0;
+}
+
+.advantage-card {
+    width: 282px;
+    height: 348px;
+    margin: 0 0 40px;
+    background: #fff;
+    box-shadow: 0 2px 36px rgba(16,16,16,.1);
+    border-radius: 8px;
+    z-index: 1;
+}
+
+
+.db-card {
+    width: 282px;
+    height: 150px;
+    color: black;
+    margin: 0 0 40px;
+    background: #fff;
+    box-shadow: 0 2px 36px rgba(16,16,16,.1);
+    border-radius: 8px;
+    z-index: 1;
+}
+
+.db-card-big {
+    width: 600px;
+    height: 300px;
+    color: black;
+    margin: 0 0 40px;
+    background: #fff;
+    box-shadow: 0 2px 36px rgba(16,16,16,.1);
+    border-radius: 8px;
+    z-index: 1;
+}
+
+.card-title {
+    margin: 15px 0;
+    font-size: 24px;
+    font-weight: 600;
+    height: 80px;
+    line-height: 30px;
+    color: black;
+    display: flex;
+    justify-content: center;
+    text-align: center;
+    align-items: center;
+}
+
+.card-desc {
+    font-size: 14px;
+    font-weight: 400;
+    width: 234px;
+    line-height: 18px;
+    text-align: center;
+    color: #8a8ea0;
+}
+
+
+.submain-title {
+    font-size: 28px;
+    font-family: Outfit,rubik medium,OpenSans,sans-serif,helvetica neue;
+    font-weight: 700;
+    line-height: 40px;
+    color: #fff;
+    opacity: .5;
+}
+
+.td-overlay{
+    position: absolute;
+    top: 600px;
+    right: 0;
+    bottom: 0;
+    left: 0;
+}
+
+.sub-title2 {
+    color: black;
+    font-size: 46px;
+    font-weight: 700;
+    text-align: center;
+    margin: 0 0 32px;
+    line-height: 58px;
+}
+
+.img-class {
+    width: 100%;
+}
