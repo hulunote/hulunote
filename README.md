@@ -13,21 +13,24 @@
 
 * db environment
 ```bash
+
 > psql
 CREATE DATABASE functor_api;
 
-$ psql -d functor_api -Upostgres < ./sql/init.sql
+$  psql -d functor_api -Upostgres < ./sql/init.sql
 $  for sql in `find . -name "*.sql" | grep -v init.sql | sort `; do psql -d functor_api -Upostgres < $sql ; done
 
 ```
 * backend
 ```bash
-cp config/config.clj.default config/config.clj
+$ cp config/config.clj.default config/config.clj
 
-clojure -A:cider:run
+$ clojure -A:cider:run
 ```
 * frontend
 ```bash
-clojure -A:cider:cljs:shadow watch hulunote
+$ yarn 
+
+$ clojure -A:cider:cljs:shadow watch hulunote
 ```
 
