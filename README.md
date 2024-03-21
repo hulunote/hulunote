@@ -1,4 +1,4 @@
-# hulunote open source
+# hulunote, a tool for networked thought, think different
 
 ## technical framework
 
