@@ -15,13 +15,19 @@
             [functor-api.db.database :as db]
             [functor-api.db.note :as note]))
 
+(comment
+  (create-database-api
+    {:hulunote  {:hulunote/id 1}}
+    {:database-name "hulunotedb"})
+  ;; so , you can request: http://127.0.0.1:6689/#/app/hulunotedb/diaries
+  )
 (defn create-database-api
   [{:keys [hulunote region]}
    {:keys [database-name description]}]
   (let [account-id (:hulunote/id hulunote)
         db-count (db/get-database-count account-id)]
     (if (and (payment/is-vip? account-id)
-             (>= db-count 5))
+          (>= db-count 5))
       (dict/get-dict-error :error-too-database region)
       (db/create-database account-id database-name description region))))
 

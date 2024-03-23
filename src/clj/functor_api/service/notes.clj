@@ -12,6 +12,44 @@
             [functor-api.db.database :as database]
             [functor-api.db.note :as note]))
 
+(comment
+  (create-new-note-api {:hulunote  {:hulunote/id 1}}
+    {:database-name "hulunotedb" :title "outline example"})
+  ;; => #:hulunote-notes{:created-at
+  ;;                     #inst "2024-03-23T02:19:36.489370000-00:00",
+  ;;                     :root-nav-id "518ec94a-c02e-40de-9a7f-2e05ec5484ee",
+  ;;                     :pv 0,
+  ;;                     :title "outline example",
+  ;;                     :is-delete false,
+  ;;                     :account-id 1,
+  ;;                     :id #uuid "a462665a-17cd-4243-b7cd-e744c452bd37",
+  ;;                     :nav ;; ===>>> create first nav , root nav, but no show
+  ;;                     #:hulunote-navs{:note-id
+  ;;                                     "a462665a-17cd-4243-b7cd-e744c452bd37",
+  ;;                                     :database-id
+  ;;                                     "2de0dae6-c710-4383-8339-e0a68d9a3b93",
+  ;;                                     :created-at
+  ;;                                     #inst "2024-03-23T02:19:36.489370000-00:00",
+  ;;                                     :is-delete false,
+  ;;                                     :content "ROOT",
+  ;;                                     :account-id 1,
+  ;;                                     :properties "",
+  ;;                                     :same-deep-order 0.0,
+  ;;                                     :updated-at
+  ;;                                     #inst "2024-03-23T02:19:36.489370000-00:00",
+  ;;                                     :parid
+  ;;                                     "00000000-0000-0000-0000-000000000000",
+  ;;                                     :is-public false,
+  ;;                                     :extra-id "",
+  ;;                                     :is-display true,
+  ;;                                     :id
+  ;;                                     #uuid "518ec94a-c02e-40de-9a7f-2e05ec5484ee"},
+  ;;                     :database-id "2de0dae6-c710-4383-8339-e0a68d9a3b93",
+  ;;                     :is-public false,
+  ;;                     :updated-at
+  ;;                     #inst "2024-03-23T02:19:36.489370000-00:00",
+  ;;                     :is-shortcut false}  
+  )
 (defn create-new-note-api
   "创建笔记"
   [{:keys [hulunote region]}

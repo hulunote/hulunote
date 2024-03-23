@@ -81,14 +81,31 @@
         (u/log-error ex)
         (dict/get-dict-error :error-server region)))))
 
+(comment
+
+  (-> (sql/insert-into :accounts)
+    (sql/values [{:username "stevechan"
+                  :nickname "stevechan"
+                  :password (hashers/derive "123456")
+                  :mail "chanshunli@gmail.com"
+                  :info ""
+                  :invitation-code (u/gen-reg-code)
+                  :cell-number (u/uuid)
+                  :oauth-key "aaaa"           ;; oauth-key
+                  :need-update-password false ;; (boolean need-update-password)
+                  }])
+    (u/returning :*)
+    (u/execute-one!))
+  
+  )
 (defn web-sign-up-and-create-database
   "web端注册"
   [{:keys [region] :as ctx}
    {:keys [username password email ack-number
            ;; 邀请码相关
-           invitation-code ;; 普通邀请码
-           ot-invitation-code ;; 笔记OT邀请码
-           db-invitation-code ;; 笔记库邀请码
+           invitation-code        ;; 普通邀请码
+           ot-invitation-code     ;; 笔记OT邀请码
+           db-invitation-code     ;; 笔记库邀请码
            db-invitation-password ;; 笔记库邀请密码
            ;; oauth相关 ;; 记录注册时的平台
            oauth-key platform
@@ -110,49 +127,49 @@
       :else
       (let [username (if username username email)
             {:accounts/keys [id] :as account} (-> (sql/insert-into :accounts)
-                                                  (sql/values [{:username username
-                                                                :nickname username
-                                                                :password (hashers/derive password)
-                                                                :mail email
-                                                                :info platform
-                                                                :invitation-code (u/gen-reg-code)
-                                                                :cell-number (u/uuid)
-                                                                :oauth-key oauth-key
-                                                                :need-update-password (boolean need-update-password)}])
-                                                  (u/returning :*)
-                                                  (u/execute-one!))
+                                                (sql/values [{:username username
+                                                              :nickname username
+                                                              :password (hashers/derive password)
+                                                              :mail email
+                                                              :info platform
+                                                              :invitation-code (u/gen-reg-code)
+                                                              :cell-number (u/uuid)
+                                                              :oauth-key oauth-key
+                                                              :need-update-password (boolean need-update-password)}])
+                                                (u/returning :*)
+                                                (u/execute-one!))
             account-id id
             invite-account (when invitation-code
                              (-> (sql/select :*)
-                                 (sql/from :accounts)
-                                 (sql/where [:= :invitation-code invitation-code])
-                                 (u/execute-one!)))
+                               (sql/from :accounts)
+                               (sql/where [:= :invitation-code invitation-code])
+                               (u/execute-one!)))
             database-name (str username "-" (rand-int 9999))]
         ;; 邀请注册的流水记录
         (when invite-account
           (add-invitation-record account-id (:accounts/id invite-account))
           (huluseed/add-hulunote-seed (:accounts/id invite-account)
-                                     10 (dict/get-dict-string :reward-huluseed-by-invition region)
-                                     :extra-text (str "code:" invitation-code)))
+            10 (dict/get-dict-string :reward-huluseed-by-invition region)
+            :extra-text (str "code:" invitation-code)))
         ;; 处理OT邀请来的注册
         (when ot-invitation-code
           (when-let [inviter-id (-> (sql/select :inviter-id)
-                                    (sql/from :ot-note-invites)
-                                    (sql/where [:and
-                                                [:= :invite-code ot-invitation-code]
-                                                [:= :is-active false]
-                                                [:= :is-delete false]])
-                                    (u/execute-one!)
-                                    (:ot-note-invites/inviter-id))]
+                                  (sql/from :ot-note-invites)
+                                  (sql/where [:and
+                                              [:= :invite-code ot-invitation-code]
+                                              [:= :is-active false]
+                                              [:= :is-delete false]])
+                                  (u/execute-one!)
+                                  (:ot-note-invites/inviter-id))]
             ;; 激活这个ot邀请码
             (-> (sql/update :ot-note-invites)
-                (sql/sset {:invitee-id account-id
-                           :is-active true
-                           :updated-at (sqlh/call :now)})
-                (sql/where [:= :invite-code ot-invitation-code])
-                (u/execute-one!))
+              (sql/sset {:invitee-id account-id
+                         :is-active true
+                         :updated-at (sqlh/call :now)})
+              (sql/where [:= :invite-code ot-invitation-code])
+              (u/execute-one!))
             (huluseed/add-hulunote-seed inviter-id 10 (dict/get-dict-string :reward-huluseed-by-ot-invition region)
-                                        :extra-text (str "code: " ot-invitation-code))))
+              :extra-text (str "code: " ot-invitation-code))))
         ;; 处理笔记库邀请来的注册
         (when db-invitation-code
           (database/add-user-permission-by-invitaion account-id db-invitation-code db-invitation-password region))
@@ -170,9 +187,9 @@
 
         ;; 返回token等信息
         (assoc ctx
-               :database database-name
-               :hulunote (dissoc account :accounts/password)
-               :token (u/make-user-jwt-token account-id))))
+          :database database-name
+          :hulunote (dissoc account :accounts/password)
+          :token (u/make-user-jwt-token account-id))))
 
     (catch Exception ex
       (u/log-error ex)

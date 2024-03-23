@@ -13,6 +13,16 @@
             [functor-api.db.note :as note]
             [functor-api.db.nav :as nav]))
 
+(comment
+  (create-or-update-nav-api
+    {:hulunote  {:hulunote/id 1}}
+    {:database-name "hulunotedb"
+     :note-id "a462665a-17cd-4243-b7cd-e744c452bd37"
+     :content "ROOT"
+     
+     }
+    )
+  )
 (defn create-or-update-nav-api
   "原版的/new-hulunote-navs-uuid-v2类似的接口"
   [{:keys [hulunote region]}
