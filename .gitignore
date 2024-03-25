@@ -6,6 +6,7 @@
 #dev-config.edn
 test-config.edn
 *.jar
+!jsr173-ri-1.0.jar
 *.class
 /.lein-*
 profiles.clj

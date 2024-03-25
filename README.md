@@ -11,6 +11,11 @@
 
 ## develop
 
+* Missing dependency
+```
+$ lein localrepo install jsr173-ri-1.0.jar com.bea.xml/jsr173-ri 1.0
+
+```
 * db environment
 ```bash
 
