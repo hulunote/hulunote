@@ -1,4 +1,4 @@
-# hulunote, a tool for networked thought, think different
+# Powerful prompt engineering developed by Hulunote
 
 ## technical framework
 
