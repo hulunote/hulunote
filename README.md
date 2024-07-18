@@ -1,4 +1,10 @@
-# Powerful prompt engineering developed by Hulunote
+# Powerful prompt engineering development platform by Hulunote
+
+## Feature
+* Datalog help LLM Prompt Engineering, to achieve explainability of AI
+* Use datomic/datascript or cozodb
+* Hippocampus for AI, with Embedded Datalog
+* Embedding datalog knowledge into LLM enhances LLM's logical reasoning capabilities
 
 ## technical framework
 
