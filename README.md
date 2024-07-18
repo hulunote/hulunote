@@ -1,5 +1,7 @@
 # Powerful prompt engineering development platform by Hulunote
 
+![](./hulunote_prompt_engineering.png)
+ 
 ## Feature
 * Datalog help LLM Prompt Engineering, to achieve explainability of AI
 * Use datomic/datascript or cozodb
