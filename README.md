@@ -1,4 +1,4 @@
-# Powerful prompt engineering development platform by Hulunote
+# Hulunote: Powerful prompt engineering development platform
 
 ![](./hulunote_prompt_engineering.png)
  
