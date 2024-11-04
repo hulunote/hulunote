@@ -7,7 +7,7 @@
 * Use datomic/datascript or cozodb
 * Hippocampus for AI, with Embedded Datalog
 * Embedding datalog knowledge into LLM enhances LLM's logical reasoning capabilities
-* Build powerful prompt database(datomic db) from https://github.com/chanshunli/prompt-engineering-design
+* Build powerful prompt database(datomic db) from https://github.com/xlisp/prompt-engineering-design
 
 ## technical framework
 
