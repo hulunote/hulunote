@@ -94,7 +94,8 @@
                       re-frame                {:mvn/version "1.2.0"}
                       rum                     {:mvn/version "0.12.10"}
                       datascript              {:mvn/version "1.4.1"}
-                      datascript-transit      {:mvn/version "0.3.0"}
+                      datascript-transit/datascript-transit {:mvn/version "0.3.0"
+                                                   :exclusions  [datascript/datascript]}
                       arttuka/reagent-material-ui {:mvn/version "4.11.3-2"}}}
   :shadow {:main-opts ["-m" "shadow.cljs.devtools.cli"]}
 
