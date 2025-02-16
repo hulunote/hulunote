@@ -1,5 +1,6 @@
 (ns hulunote.storage
   (:require [reagent.core :as reagent]
+            ["localforage" :as lcf]
             [alandipert.storage-atom :refer [local-storage]]
             [datascript.transit :as dt]
             [cognitect.transit :as t]))
@@ -22,6 +23,11 @@
 (defn item-keys [cb]
   (-> (.keys @local-db)
       (.then cb)))
+
+(defn create-db
+  [dbname]
+  (let [db (lcf/createInstance (clj->js {:name dbname}))]
+    (reset! local-db db)))
 
 ;; Save: (async-save-db @db/dsdb)  => Load: (get-item "dsdb" (fn [v] (reset-db! (dt/read-transit-str v)) ))
 (defn async-save-db [dsdb]
