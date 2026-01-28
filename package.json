@@ -6,13 +6,14 @@
         "animate.css": "^3.7.2",
         "clipboard": "^2.0.6",
         "create-react-class": "15.6.3",
+        "file-saver": "^2.0.5",
+        "localforage": "^1.10.0",
         "moment": "^2.24.0",
         "react": "^16.12.0",
         "react-datetime": "^2.16.3",
         "react-dom": "^16.12.0",
         "react-markdown": "^8.0.3",
         "remark-gfm": "^3.0.1",
-        "file-saver": "^2.0.5",
         "tachyons": "^4.11.1"
     },
     "devDependencies": {

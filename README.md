@@ -46,5 +46,12 @@ $ clojure -A:cider:run
 $ yarn 
 
 $ clojure -A:cider:cljs:shadow watch hulunote
+
+* java8 compile
+$ npx shadow-cljs release hulunote
+
+❯ du -sh resources/public/hulunote/hulunote.js
+1.6M	resources/public/hulunote/hulunote.js
+
 ```
 
