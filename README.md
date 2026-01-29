@@ -1,57 +1,51 @@
-# Hulunote: Powerful prompt engineering development platform
+# Hulunote
 
-![](./hulunote_prompt_engineering.png)
- 
-## Feature
-* Datalog help LLM Prompt Engineering, to achieve explainability of AI
-* Use datomic/datascript or cozodb
-* Hippocampus for AI, with Embedded Datalog
-* Embedding datalog knowledge into LLM enhances LLM's logical reasoning capabilities
-* Build powerful prompt database(datomic db) from https://github.com/xlisp/prompt-engineering-design
+An open-source outliner note-taking application with bidirectional linking.
 
-## technical framework
+Inspired by Roam Research, designed for networked thought.
 
-* clojure and clojurescript
-* datascript + rum
-* instaparse
-* ring
-* clj-http
-* re-frame
+## Features
 
-## develop
+- **Outliner Structure** - Organize thoughts in hierarchical bullet points with infinite nesting
+- **Bidirectional Links** - Connect ideas with `[[wiki-style links]]` and backlinks
+- **Daily Notes** - Journaling with automatic date-based pages
+- **Multiple Databases** - Separate workspaces for different projects
 
-* Missing dependency
-```
-$ lein localrepo install jsr173-ri-1.0.jar com.bea.xml/jsr173-ri 1.0
+## Tech Stack
 
-```
-* db environment
+| Component | Technology |
+|-----------|------------|
+| Backend | Rust (Axum, SQLx) |
+| Frontend | ClojureScript (Rum, DataScript, Shadow-cljs) |
+| Database | PostgreSQL |
+
+## Quick Start
+
 ```bash
+# 1. Initialize database
+createdb hulunote_open
+psql -d hulunote_open -f hulunote-rust/init.sql
 
-> psql
-CREATE DATABASE functor_api;
+# 2. Start backend
+cd hulunote-rust
+cargo run
 
-$  psql -d functor_api -Upostgres < ./sql/init.sql
-$  for sql in `find . -name "*.sql" | grep -v init.sql | sort `; do psql -d functor_api -Upostgres < $sql ; done
+# 3. Start frontend
+cd hulunote
+yarn
+shadow-cljs watch hulunote
 
-```
-* backend
-```bash
-$ cp config/config.clj.default config/config.clj
-
-$ clojure -A:cider:run
-```
-* frontend
-```bash
-$ yarn 
-
-$ clojure -A:cider:cljs:shadow watch hulunote
-
-* java8 compile
-$ npx shadow-cljs release hulunote
-
-❯ du -sh resources/public/hulunote/hulunote.js
-1.6M	resources/public/hulunote/hulunote.js
-
+# 4. Open browser
+open http://localhost:6689
 ```
 
+**Test Account:** `chanshunli@gmail.com` / `123456`
+
+## Links
+
+- Frontend: https://github.com/xlisp/hulunote
+- Backend: https://github.com/xlisp/hulunote-rust
+
+## License
+
+MIT
