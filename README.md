@@ -43,8 +43,8 @@ open http://localhost:6689
 
 ## Links
 
-- Frontend: https://github.com/xlisp/hulunote
-- Backend: https://github.com/xlisp/hulunote-rust
+- Frontend: https://github.com/hulunote/hulunote
+- Backend: https://github.com/hulunote/hulunote-rust
 
 ## License
 
