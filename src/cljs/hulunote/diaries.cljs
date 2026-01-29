@@ -5,6 +5,7 @@
             [hulunote.render :as render]
             [hulunote.db :as db]
             [hulunote.components :as comps]
+            [hulunote.sidebar :as sidebar]
             [hulunote.router :as router]))
 
 (comment
@@ -29,23 +30,45 @@
   (let [{:keys [params]} (db/get-route db)]
     (:database params)))
 
-(rum/defc diaries-page
+(rum/defc diaries-page < rum/reactive
   [db]
   (let [daily-list (db/sort-daily-list (db/get-daily-list db))
-        database-name (get-current-database-name db)]
+        database-name (get-current-database-name db)
+        sidebar-collapsed? (rum/react sidebar/sidebar-collapsed?)]
     [:div.night-center-boxBg.night-textColor-2
-     ;; "diaries page"
      (comps/header-editor)
-     [:div.flex.overflow-scroll-new.hulunote-note-wrapper.show-page-right-siderbar-is-close
+     
+     ;; Left sidebar
+     (sidebar/left-sidebar db database-name)
+     
+     ;; Main content area with sidebar margin
+     [:div.flex.overflow-scroll-new.hulunote-note-wrapper
+      {:class (str "main-content-with-sidebar "
+                   (when sidebar-collapsed? "sidebar-collapsed"))
+       :style {:padding-right "calc((100% - 800px) / 2)"
+               :height "100vh"}}
       [:div.flex.flex-column.mt0.overflow-scroll-new.main-editer-class.w-100.w-100-m.w-100-ns
        [:div.mt4]
-       (for [item daily-list]
-         (let [[note-title note-id root-nav-id] item]
-           [:div {:key note-id}
-            [:div.f3.b.ma4 (u/daily-title->en note-title)]
-            [:div {:style {:padding-left "12px"}}
-             (render/render-navs db root-nav-id note-id database-name)]
-            [:div {:style {:padding "35px"}}
-             [:div {:style {:background "rgba(151, 151, 151, 0.25)"
-                            :height "1px" :width "100%"}}]]]))
+       (if (empty? daily-list)
+         ;; Empty state - show message and create first note button
+         [:div.flex.flex-column.items-center.justify-center
+          {:style {:height "50vh"}}
+          [:div {:style {:font-size "24px" :margin-bottom "20px"}} 
+           "No notes yet"]
+          [:div {:style {:color "rgba(255,255,255,0.6)" :margin-bottom "30px"}}
+           "Create your first note to get started"]
+          [:button.new-note-btn
+           {:on-click #(sidebar/create-new-note! database-name)}
+           [:span.new-note-btn-icon "+"]
+           "Create First Note"]]
+         ;; Show existing notes
+         (for [item daily-list]
+           (let [[note-title note-id root-nav-id] item]
+             [:div {:key note-id}
+              [:div.f3.b.ma4 (u/daily-title->en note-title)]
+              [:div {:style {:padding-left "12px"}}
+               (render/render-navs db root-nav-id note-id database-name)]
+              [:div {:style {:padding "35px"}}
+               [:div {:style {:background "rgba(151, 151, 151, 0.25)"
+                              :height "1px" :width "100%"}}]]])))
        [:div.mb5]]]]))

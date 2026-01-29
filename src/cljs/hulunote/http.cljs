@@ -149,11 +149,6 @@
     (info "完成导入" (js/Date.))
     (when op-fn
       (op-fn))
-    ;; (if @is-part-note-load?
-    ;;   nil
-    ;;   (re-frame/dispatch [:show-process-status false]))
-    ;; (prn1 "加载完成....")
-    ;;
     (do
       (cond
         (= last-ts 0)
@@ -161,21 +156,10 @@
         (> (:backend-ts data) last-ts)
         , (prn1 "1111")
         :else (prn1 "2222")))
-    ;;
     (if (empty? (:nav-list data))
-      nil             ;; 从缓存中加载的: :nav-list 为空的情况
-      (prn "OK load") ;; (a/put! atom-chan/load-chan "load-finished")
-      )
-    ;;
-    (info "获取all nav list,存入dsdb:")
-    #_(if-not (u/is-share?)
-        (timeout-do
-          1
-          (do
-            ;; 每次加载完所有的nav之后，就dump一次，保存到indexed-db
-            ;; 每次修改nav和note都会导致:backend-ts变化
-            (async-save-db)
-            (async-save-backend-ts (:backend-ts data)))))))
+      nil
+      (prn "OK load"))
+    (info "获取all nav list,存入dsdb:")))
 
 (defn transact-all-note
   "导入note数据到dsdb"
@@ -220,7 +204,7 @@
                         http/get
                         http/post)
                       (http-uri uri)
-                      req)) ;; 下面的data会等上面的resp完成
+                      req))
             data (if (empty? (:data (:body resp)))
                    (:body resp)
                    (:data (:body resp)))
@@ -242,35 +226,18 @@
                       (doseq [e event]
                         (re-frame/dispatch (conj e data)))
                       (re-frame/dispatch (conj event data))))
-                  ;; 成功后dispatch某内容
                   (when-let [succ (:succ callback)]
                     (execute-cb succ data))
                   (when-let [ok-dispatch (:ok-dispatch callback)]
                     (do
                       (info "执行成功回调 dispatch: " ok-dispatch)
                       (re-frame/dispatch ok-dispatch))))
-
               :else (error-dispatch-network "操作失败"))))))
 
 (re-frame/reg-fx :http
   (fn http [{:keys [uri params multipart-params event callback get-post] :as fx-data}]
     (go-http-queue fx-data)))
 
-(comment
-
-  (prn @db/dsdb)
-
-  ;; OK 存入navs数据成功！
-  (re-frame/dispatch-sync
-    [:get-all-nav-payload ["" nil] nil "/test-all-navs.json"])
-
-  ;; OK 存入note数据
-  (re-frame/dispatch-sync
-    [:get-all-note-list-payload
-     {:database ""
-      :user-share-path "/test-all-notes.json"}])
-
-  )
 (re-frame/reg-event-fx
   :get-all-nav-payload
   (fn get-all-nav-payload
@@ -305,14 +272,6 @@
                        (fn [{:keys [all-note-list]}]
                          (transact-all-note all-note-list))}}}))
 
-
-(comment
-  (re-frame/dispatch-sync
-    [:get-all-nav-payload ["" nil] nil "/test-all-navs.json"])
-  (re-frame/dispatch-sync
-    [:get-all-note-list-payload
-     {:database ""
-      :user-share-path "/test-all-notes.json"}]))
 (defn database-data-load
   [database-name]
   (do
@@ -327,16 +286,8 @@
                               :page 1
                               :size 1000
                               :op-fn (fn [{:keys [nav-list] :as data}]
-                                       ;; (prn nav-list)
                                        (transact-all-nav data 0 #(prn "OK load") ))}])))
 
-(comment
-  (re-frame/dispatch-sync
-    [:web-login {:email "hzqi_110@hotmail.com"
-                 :password "12345678"
-                 :op-fn #(prn %)}])
-  ;; ("Response:" {:region nil, :hulunote {:accounts/updated-at "2023-03-22T11:38:50Z", :accounts/show-link false, :accounts/mail "hzqi_110@hotmail.com", :accounts/nickname "JackyWong", :accounts/username "JackyWong", :accounts/need-update-password false, :accounts/id 3, :accounts/is-new-user true, :accounts/created-at "2023-03-22T11:38:50Z", :accounts/cell-number "416b69bc-1a2f-417b-9328-03f557b344be", :accounts/invitation-code "caf5f5a2"}, :token "eyJhbGciOiJIUzI1NiJ9.eyJyb2xlIjoiaHVsdW5vdGUiLCJpZCI6MywiZXhwIjoxNjgyOTE2NDA1fQ.5ubQQsOzIW6EFCblLSUSyBVbh0JaCQ-1MQ5vAV-EQFM"})
-  )
 (re-frame/reg-event-fx
   :web-login
   (fn web-login
@@ -345,12 +296,8 @@
     {:db db
      :http
      {:uri "/login/web-login"
-      :params { ;; :username username
-               :email email
-               :password password
-               ;; :binding-code binding-code
-               ;; :binding-platform binding-platform
-               }
+      :params {:email email
+               :password password}
       :callback
       {:succ
        (fn [data]
@@ -360,13 +307,11 @@
   :web-signup
   (fn web-signup
     [{:keys [db]  :as cofx}
-     [_ {:keys [;; username
-                email password ack-number binding-code
-                op-fn]}]]
+     [_ {:keys [email password ack-number binding-code op-fn]}]]
     {:db db
      :http
      {:uri "/login/web-signup"
-      :params {:username email;; username
+      :params {:username email
                :email email
                :password password
                :ack-number ack-number
@@ -391,9 +336,6 @@
        (fn [data]
          (op-fn data))}}}))
 
-(comment
-  (re-frame/dispatch-sync [:get-database-list {:op-fn #(cljs.pprint/pprint %)}])
-  )
 (re-frame/reg-event-fx
   :get-database-list
   (fn get-database-list
@@ -408,38 +350,6 @@
        (fn [data]
          (op-fn data))}}}))
 
-;; 分页获取笔记列表 => 性能更好，不会卡死。=>TODO: 先写一个很大的。ds保存一下分页的信息
-(comment
-  (re-frame/dispatch-sync [:get-note-list {:database-name "JackyWong-5721"
-                                           :page 1
-                                           :size 100
-                                           :op-fn #(cljs.pprint/pprint %)}])
-  ;; =>
-  {:all-pages 1,
-   :note-list
-   [{:hulunote-notes/created-at "2023-03-22T11:39:16Z",
-     :hulunote-notes/root-nav-id "a526aad4-18a5-493e-8752-121e8abaaaa7",
-     :hulunote-notes/pv 0,
-     :hulunote-notes/title "2023-03-22",
-     :hulunote-notes/is-delete false,
-     :hulunote-notes/account-id 3,
-     :hulunote-notes/id "89b1d754-959e-4fcd-8c62-eb1978fe238b",
-     :hulunote-notes/database-id "dd76de34-28ad-4107-8a54-4789ae06fbdd",
-     :hulunote-notes/is-public false,
-     :hulunote-notes/updated-at "2023-03-22T11:39:16Z",
-     :hulunote-notes/is-shortcut false}
-    {:hulunote-notes/created-at "2023-03-23T00:43:55Z",
-     :hulunote-notes/root-nav-id "4b1d7a3c-69e3-4153-bf4b-00009935de85",
-     :hulunote-notes/pv 0,
-     :hulunote-notes/title "2023-03-23",
-     :hulunote-notes/is-delete false,
-     :hulunote-notes/account-id 3,
-     :hulunote-notes/id "a397df63-0417-4c48-9896-56983050b255",
-     :hulunote-notes/database-id "dd76de34-28ad-4107-8a54-4789ae06fbdd",
-     :hulunote-notes/is-public false,
-     :hulunote-notes/updated-at "2023-03-23T00:43:55Z",
-     :hulunote-notes/is-shortcut false}]}
-  )
 (re-frame/reg-event-fx
   :get-note-list
   (fn get-note-list
@@ -456,84 +366,6 @@
        (fn [data]
          (op-fn data))}}}))
 
-(comment
-  (re-frame/dispatch-sync [:get-all-nav-by-page
-                           {:database-name "JackyWong-5721"
-                            :backend-ts 0
-                            :page 1
-                            :size 5
-                            :op-fn #(cljs.pprint/pprint %)}])
-  ;; =>
-  {:nav-list
-   [{:properties "",
-     :updated-at "2023-03-22T11:39:16Z",
-     :hulunote-note "89b1d754-959e-4fcd-8c62-eb1978fe238b",
-     :last-account-id 3,
-     :is-display true,
-     :parid "00000000-0000-0000-0000-000000000000",
-     :same-deep-order 0,
-     :content "ROOT",
-     :account-id 3,
-     :id "a526aad4-18a5-493e-8752-121e8abaaaa7",
-     :note-id "89b1d754-959e-4fcd-8c62-eb1978fe238b",
-     :created-at "2023-03-22T11:39:16Z",
-     :is-delete false}
-    {:properties "",
-     :updated-at "2023-03-22T12:44:12Z",
-     :hulunote-note "89b1d754-959e-4fcd-8c62-eb1978fe238b",
-     :last-account-id 3,
-     :is-display true,
-     :parid "a526aad4-18a5-493e-8752-121e8abaaaa7",
-     :same-deep-order 0,
-     :content "testing",
-     :account-id 3,
-     :id "85d7d44d-09f8-4b19-9946-46b14fbc29ea",
-     :note-id "89b1d754-959e-4fcd-8c62-eb1978fe238b",
-     :created-at "2023-03-22T12:44:12Z",
-     :is-delete false}
-    {:properties "",
-     :updated-at "2023-03-22T12:55:13Z",
-     :hulunote-note "89b1d754-959e-4fcd-8c62-eb1978fe238b",
-     :last-account-id 3,
-     :is-display true,
-     :parid "a526aad4-18a5-493e-8752-121e8abaaaa7",
-     :same-deep-order 100,
-     :content "test",
-     :account-id 3,
-     :id "0e8cae19-7d19-4f32-8354-e8b12266b75c",
-     :note-id "89b1d754-959e-4fcd-8c62-eb1978fe238b",
-     :created-at "2023-03-22T12:55:13Z",
-     :is-delete false}
-    {:properties "",
-     :updated-at "2023-03-22T14:01:48Z",
-     :hulunote-note "89b1d754-959e-4fcd-8c62-eb1978fe238b",
-     :last-account-id 3,
-     :is-display true,
-     :parid "a526aad4-18a5-493e-8752-121e8abaaaa7",
-     :same-deep-order 200,
-     :content "hahahahah",
-     :account-id 3,
-     :id "7d51e13b-f776-4fd1-8b86-aa2f038f6388",
-     :note-id "89b1d754-959e-4fcd-8c62-eb1978fe238b",
-     :created-at "2023-03-22T14:01:48Z",
-     :is-delete false}
-    {:properties "",
-     :updated-at "2023-03-22T15:51:17Z",
-     :hulunote-note "89b1d754-959e-4fcd-8c62-eb1978fe238b",
-     :last-account-id 3,
-     :is-display true,
-     :parid "7d51e13b-f776-4fd1-8b86-aa2f038f6388",
-     :same-deep-order 0,
-     :content "快到12点了咯",
-     :account-id 3,
-     :id "dd6e6ff0-cdaa-4725-913e-ccaf09daef0b",
-     :note-id "89b1d754-959e-4fcd-8c62-eb1978fe238b",
-     :created-at "2023-03-22T15:51:17Z",
-     :is-delete false}],
-   :all-pages 2,                        ;;=> 继续递归下去，取完所有的页面为止
-   :backend-ts 1682410341223}           ;;
-  )
-;; 分页获取笔记库所有笔记节点 => 即使是backend-ts不为零也可获取分页更新
 (re-frame/reg-event-fx
   :get-all-nav-by-page
   (fn get-all-nav-by-page
@@ -554,22 +386,6 @@
 
 ;; ==================== Nav Update Operations ====================
 
-(comment
-  ;; Example: Update nav content
-  (re-frame/dispatch-sync
-    [:update-nav {:database-name "JackyWong-5721"
-                  :note-id "89b1d754-959e-4fcd-8c62-eb1978fe238b"
-                  :id "85d7d44d-09f8-4b19-9946-46b14fbc29ea"
-                  :content "new content here"}])
-  
-  ;; Example: Toggle is-display
-  (re-frame/dispatch-sync
-    [:update-nav {:database-name "JackyWong-5721"
-                  :note-id "89b1d754-959e-4fcd-8c62-eb1978fe238b"
-                  :id "85d7d44d-09f8-4b19-9946-46b14fbc29ea"
-                  :is-display false}]))
-
-;; Update nav (content, is-display, parid, order, etc.)
 (re-frame/reg-event-fx
   :update-nav
   (fn update-nav
@@ -596,25 +412,24 @@
        (fn [err]
          (prn "Failed to update nav:" err))}}}))
 
-;; Create a new nav
 (re-frame/reg-event-fx
   :create-nav
   (fn create-nav
     [{:keys [db] :as cofx}
-     [_ {:keys [database-name note-id parid content order op-fn]}]]
+     [_ {:keys [database-name note-id id parid content order op-fn]}]]
     {:db db
      :http
      {:uri "/hulunote/create-or-update-nav"
-      :params {:database-name database-name
-               :note-id note-id
-               :parid parid
-               :content (or content "")
-               :order (or order 0)}
+      :params (cond-> {:database-name database-name
+                       :note-id note-id
+                       :parid parid
+                       :content (or content "")
+                       :order (or order 0)}
+                id (assoc :id id))
       :callback
       {:succ
        (fn [data]
          (prn "Nav created successfully:" data)
-         ;; Add to local datascript
          (when-let [nav-info (:nav data)]
            (d/transact! db/dsdb
              [(-> nav-info
@@ -625,7 +440,6 @@
        (fn [err]
          (prn "Failed to create nav:" err))}}}))
 
-;; Delete a nav (soft delete)
 (re-frame/reg-event-fx
   :delete-nav
   (fn delete-nav
@@ -642,10 +456,53 @@
       {:succ
        (fn [data]
          (prn "Nav deleted successfully:" data)
-         ;; Remove from local datascript
          (d/transact! db/dsdb
            [[:db/retractEntity [:id id]]])
          (when op-fn (op-fn data)))
        :err
        (fn [err]
          (prn "Failed to delete nav:" err))}}}))
+
+
+;; ==================== Note Operations ====================
+
+(re-frame/reg-event-fx
+  :create-note
+  (fn create-note
+    [{:keys [db] :as cofx}
+     [_ {:keys [database-name title op-fn]}]]
+    {:db db
+     :http
+     {:uri "/hulunote/new-note"
+      :params {:database-name database-name
+               :title title}
+      :callback
+      {:succ
+       (fn [data]
+         (prn "Note created successfully:" data)
+         (when op-fn (op-fn data)))
+       :err
+       (fn [err]
+         (prn "Failed to create note:" err))}}}))
+
+(re-frame/reg-event-fx
+  :update-note
+  (fn update-note
+    [{:keys [db] :as cofx}
+     [_ {:keys [note-id title is-delete is-public is-shortcut op-fn]}]]
+    {:db db
+     :http
+     {:uri "/hulunote/update-hulunote-note"
+      :params (cond-> {:note-id note-id}
+                title (assoc :title title)
+                (some? is-delete) (assoc :is-delete is-delete)
+                (some? is-public) (assoc :is-public is-public)
+                (some? is-shortcut) (assoc :is-shortcut is-shortcut))
+      :callback
+      {:succ
+       (fn [data]
+         (prn "Note updated successfully:" data)
+         (when op-fn (op-fn data)))
+       :err
+       (fn [err]
+         (prn "Failed to update note:" err))}}}))
