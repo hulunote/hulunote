@@ -1,12 +1,11 @@
 :root {
     --font-color: #fdfeffc4;
     --background-theme: #313541;
+    --sidebar-width: 250px;
+    --sidebar-collapsed-width: 0px;
 }
 
 body {
-    /* font-family: "PingFang SC",sans-serif,monospace;
-       overflow-y: hidden; */
-
     margin: 0;
     font-family: open sans,-apple-system,BlinkMacSystemFont,segoe ui,Roboto,helvetica neue,Arial,sans-serif,apple color emoji,segoe ui emoji,segoe ui symbol;
     font-size: 1rem;
@@ -15,13 +14,10 @@ body {
     color: #fff;
     text-align: left;
     background-color: #2a354b;
-
 }
-
 
 .night-center-boxBg {
     background: #404655 !important;
-    border-bottom: 1px solid rgba(35,35,40,.6);
 }
 
 .night-textColor-2 {
@@ -52,12 +48,6 @@ div.content-box.outline-line:hover {
 hulu-text-font {
     font-size: 0.95rem;
     line-height: 1.3rem;
-}
-
-.show-page-right-siderbar-is-close{
-    padding-right: calc((100% - 800px) / 2);
-    padding-left: calc((100% - 800px) / 2);
-    height: 100vh;
 }
 
 .overflow-scroll-new {
@@ -103,7 +93,6 @@ hulu-text-font {
     .mb-no-show {
         display: none;
     }
-
 }
 
 .link-style {
@@ -124,13 +113,12 @@ hulu-text-font {
 
 .td-navbar {
     background: rgb(46 49 54);
-    min-height: 4rem;
+    min-height: 50px;
     margin: 0;
     z-index: 32;
     position: fixed;
     top: 0;
     width: 100%;
-    background: rgb(46 49 54);
 }
 
 .btn-login {
@@ -177,7 +165,6 @@ hulu-text-font {
     z-index: 1;
 }
 
-
 .db-card {
     width: 282px;
     height: 150px;
@@ -222,7 +209,6 @@ hulu-text-font {
     color: #8a8ea0;
 }
 
-
 .submain-title {
     font-size: 28px;
     font-family: Outfit,rubik medium,OpenSans,sans-serif,helvetica neue;
@@ -256,12 +242,10 @@ hulu-text-font {
 
 /* ==================== Outline Editor Styles ==================== */
 
-/* Nav item container */
 .nav-item {
     position: relative;
 }
 
-/* Expand/collapse icon for nodes with children */
 .expand-icon {
     user-select: none;
     font-size: 8px;
@@ -277,13 +261,11 @@ hulu-text-font {
     transform: rotate(0deg);
 }
 
-/* Bullet point for nodes with children */
 .has-children:hover {
     background: rgba(100, 100, 100, 0.2);
     border-radius: 50%;
 }
 
-/* Nav content styling */
 .nav-content {
     cursor: text;
     min-width: 100px;
@@ -295,7 +277,7 @@ hulu-text-font {
     border-radius: 3px;
 }
 
-/* Editor input styling - FIXED for dark theme */
+/* Editor input styling - dark theme */
 .nav-editor-input {
     border: 1px solid #4a90d9 !important;
     border-radius: 3px !important;
@@ -316,7 +298,6 @@ hulu-text-font {
     color: #fdfeffc4 !important;
 }
 
-/* Dark mode input styling - ensure it's applied */
 .night-textColor-2 .nav-editor-input,
 .night-center-boxBg .nav-editor-input {
     background: #2a2f3a !important;
@@ -324,18 +305,15 @@ hulu-text-font {
     border-color: #4a90d9 !important;
 }
 
-/* Outline vertical line hover effect */
 .outline-line:hover {
     border-right: 2px solid #4a90d9 !important;
 }
 
-/* Animation for expand/collapse */
 .content-box {
     transition: max-height 0.2s ease-out;
     overflow: hidden;
 }
 
-/* Tooltip for keyboard shortcuts */
 .nav-item .tooltip {
     visibility: hidden;
     background-color: #333;
@@ -356,7 +334,6 @@ hulu-text-font {
     visibility: visible;
 }
 
-/* Action buttons for nav items */
 .nav-actions {
     display: none;
     position: absolute;
@@ -384,50 +361,62 @@ hulu-text-font {
     background: rgba(100, 100, 100, 0.5);
 }
 
+/* ==================== Page Layout ==================== */
+
+.page-wrapper {
+    display: flex;
+    min-height: 100vh;
+    position: relative;
+}
+
 /* ==================== Sidebar Styles ==================== */
 
-/* Left sidebar container */
 .left-sidebar {
     position: fixed;
     left: 0;
-    top: 4rem; /* Below the header */
-    height: calc(100vh - 4rem);
-    width: 250px;
+    top: 0;
+    height: 100vh;
+    width: var(--sidebar-width);
     background: #2e3340;
     border-right: 1px solid rgba(255, 255, 255, 0.1);
-    transition: transform 0.3s ease, width 0.3s ease;
-    z-index: 30;
+    transition: transform 0.3s ease;
+    z-index: 100;
     display: flex;
     flex-direction: column;
+    overflow: hidden;
 }
 
 .left-sidebar.collapsed {
-    transform: translateX(-200px);
-    width: 50px;
+    transform: translateX(-100%);
 }
 
-/* Sidebar toggle button */
-.sidebar-toggle {
-    position: absolute;
-    right: -12px;
-    top: 50%;
-    transform: translateY(-50%);
-    width: 24px;
-    height: 48px;
+/* Sidebar toggle button - fixed position */
+.sidebar-toggle-btn {
+    position: fixed;
+    left: var(--sidebar-width);
+    top: 16px;
+    width: 32px;
+    height: 32px;
     background: #3d4455;
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.15);
     border-radius: 0 6px 6px 0;
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
     color: #fff;
-    font-size: 12px;
-    z-index: 31;
+    font-size: 16px;
+    z-index: 101;
+    transition: left 0.3s ease, background 0.2s ease;
 }
 
-.sidebar-toggle:hover {
+.sidebar-toggle-btn:hover {
     background: #4a5568;
+}
+
+.sidebar-toggle-btn.collapsed {
+    left: 0;
+    border-radius: 0 6px 6px 0;
 }
 
 /* Sidebar header */
@@ -436,14 +425,13 @@ hulu-text-font {
     border-bottom: 1px solid rgba(255, 255, 255, 0.1);
     display: flex;
     align-items: center;
-    justify-content: space-between;
+    flex-shrink: 0;
 }
 
 .sidebar-title {
-    font-size: 14px;
+    font-size: 16px;
     font-weight: 600;
     color: #fff;
-    opacity: 0.9;
 }
 
 /* Sidebar content */
@@ -492,7 +480,7 @@ hulu-text-font {
 
 /* New note button */
 .new-note-btn {
-    margin: 8px 16px;
+    margin: 12px 16px;
     padding: 10px 16px;
     background: #4a90d9;
     color: #fff;
@@ -505,6 +493,7 @@ hulu-text-font {
     font-size: 14px;
     font-weight: 500;
     transition: background 0.2s ease;
+    flex-shrink: 0;
 }
 
 .new-note-btn:hover {
@@ -545,39 +534,91 @@ hulu-text-font {
     opacity: 1;
 }
 
-/* Main content adjustment when sidebar is visible */
-.main-content-with-sidebar {
-    margin-left: 250px;
-    transition: margin-left 0.3s ease;
+/* Section title in sidebar */
+.sidebar-section-title {
+    margin-top: 16px;
+    padding: 8px 16px;
+    font-size: 11px;
+    color: rgba(255,255,255,0.4);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
 }
 
-.main-content-with-sidebar.sidebar-collapsed {
-    margin-left: 50px;
+/* ==================== Main Content ==================== */
+
+.main-content-area {
+    flex: 1;
+    margin-left: var(--sidebar-width);
+    transition: margin-left 0.3s ease;
+    min-height: 100vh;
+    overflow-y: auto;
+}
+
+.main-content-area.sidebar-collapsed {
+    margin-left: 0;
+}
+
+/* ==================== Note Title Editor ==================== */
+
+.note-title-wrapper {
+    display: flex;
+    align-items: center;
+    padding: 8px 0;
+    margin-bottom: 8px;
+}
+
+.note-title {
+    font-size: 1.5rem;
+    font-weight: bold;
+    cursor: pointer;
+    padding: 4px 8px;
+    border-radius: 4px;
+    transition: background 0.2s ease;
+}
+
+.note-title:hover {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.note-title-input {
+    font-size: 1.5rem;
+    font-weight: bold;
+    background: #2a2f3a !important;
+    color: #fdfeffc4 !important;
+    border: 1px solid #4a90d9 !important;
+    border-radius: 4px;
+    padding: 4px 8px;
+    outline: none;
+    width: 100%;
+    max-width: 600px;
+}
+
+.note-title-input:focus {
+    border-color: #2e7ad1 !important;
+    box-shadow: 0 0 0 2px rgba(74, 144, 217, 0.2);
 }
 
 /* Mobile responsive */
 @media only screen and (max-width: 768px) {
     .left-sidebar {
         width: 100%;
-        transform: translateX(-100%);
     }
     
-    .left-sidebar.open {
-        transform: translateX(0);
+    .sidebar-toggle-btn {
+        left: 0;
+        top: 16px;
+        border-radius: 0 6px 6px 0;
     }
     
-    .left-sidebar.collapsed {
-        transform: translateX(-100%);
-        width: 100%;
+    .sidebar-toggle-btn:not(.collapsed) {
+        left: calc(100% - 48px);
     }
     
-    .main-content-with-sidebar,
-    .main-content-with-sidebar.sidebar-collapsed {
+    .main-content-area {
         margin-left: 0;
     }
     
-    .sidebar-toggle {
-        right: -36px;
-        width: 36px;
+    .left-sidebar:not(.collapsed) ~ .main-content-area {
+        display: none;
     }
 }

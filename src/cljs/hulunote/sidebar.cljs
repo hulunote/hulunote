@@ -5,13 +5,19 @@
             [hulunote.util :as u]
             [hulunote.router :as router]
             [hulunote.render :as render]
-            [re-frame.core :as re-frame]))
+            [re-frame.core :as re-frame]
+            ["moment" :as moment]))
 
 ;; State for sidebar collapse
 (defonce sidebar-collapsed? (atom false))
 
 (defn toggle-sidebar! []
   (swap! sidebar-collapsed? not))
+
+(defn generate-note-title
+  "Generate a unique note title with date and time"
+  []
+  (.format (moment.) "YYYY-MM-DD HH:mm:ss"))
 
 (defn get-all-notes
   "Get all notes from the database"
@@ -25,17 +31,16 @@
     conn))
 
 (defn create-new-note!
-  "Create a new note with a default first nav node"
+  "Create a new note with a default first nav node.
+   Title format: YYYY-MM-DD HH:mm:ss to ensure uniqueness."
   [database-name]
-  (let [today (.toISOString (js/Date.))
-        title (subs today 0 10)] ;; Use today's date as default title
+  (let [title (generate-note-title)]
     (re-frame/dispatch-sync
       [:create-note
        {:database-name database-name
         :title title
         :op-fn (fn [note-info]
                  (prn "Note created response:" note-info)
-                 ;; The response format is: {:hulunote-notes/id "...", :hulunote-notes/title "...", ...}
                  (let [id (or (:hulunote-notes/id note-info) 
                               (get note-info "hulunote-notes/id"))
                        root-nav-id (or (:hulunote-notes/root-nav-id note-info)
@@ -49,7 +54,8 @@
                          :hulunote-notes/database-id database-name
                          :hulunote-notes/is-delete false
                          :hulunote-notes/is-public false
-                         :hulunote-notes/is-shortcut false}])
+                         :hulunote-notes/is-shortcut false
+                         :hulunote-notes/updated-at (.toISOString (js/Date.))}])
                      ;; Add root nav to datascript
                      (d/transact! db/dsdb
                        [{:id root-nav-id
@@ -90,61 +96,56 @@
    [:div.sidebar-item-icon icon]
    [:div.sidebar-item-text text]])
 
-(rum/defc note-list-item
-  [note-id title on-click & [active?]]
-  [:div.note-list-item
-   {:class (when active? "active")
-    :on-click on-click
-    :title title}
-   title])
-
 (rum/defc left-sidebar < rum/reactive
   [db database-name]
   (let [collapsed? (rum/react sidebar-collapsed?)
         daily-list (db/sort-daily-list (db/get-daily-list db))]
-    [:div.left-sidebar
-     {:class (when collapsed? "collapsed")}
+    [:<>
+     ;; Sidebar container
+     [:div.left-sidebar
+      {:class (when collapsed? "collapsed")}
+      
+      (when-not collapsed?
+        [:<>
+         ;; Sidebar header with logo
+         [:div.sidebar-header
+          [:div.flex.items-center
+           [:img {:src "/img/hulunote.webp"
+                  :width "24px"
+                  :style {:border-radius "50%"}}]
+           [:span.sidebar-title.ml2 "HULUNOTE"]]]
+         
+         ;; New note button
+         [:button.new-note-btn
+          {:on-click #(create-new-note! database-name)}
+          [:span.new-note-btn-icon "+"]
+          "New Note"]
+         
+         ;; Sidebar content
+         [:div.sidebar-content
+          ;; Menu items
+          (sidebar-item "📅" "Diaries" 
+                        #(router/switch-router! 
+                           (str "/app/" database-name "/diaries")))
+          
+          (sidebar-item "📝" "All Notes" 
+                        #(router/switch-router! 
+                           (str "/app/" database-name "/diaries")))
+          
+          ;; Note list section
+          [:div.sidebar-section-title "Recent Notes"]
+          
+          [:div.note-list
+           (for [[note-title note-id root-nav-id] (take 20 daily-list)]
+             [:div.note-list-item
+              {:key note-id
+               :on-click #(prn "Navigate to note:" note-id)
+               :title note-title}
+              note-title])]]])]
      
-     ;; Toggle button
-     [:div.sidebar-toggle
-      {:on-click toggle-sidebar!}
-      (if collapsed? "▶" "◀")]
-     
-     (when-not collapsed?
-       [:<>
-        ;; Sidebar header
-        [:div.sidebar-header
-         [:span.sidebar-title "Notes"]]
-        
-        ;; New note button
-        [:button.new-note-btn
-         {:on-click #(create-new-note! database-name)}
-         [:span.new-note-btn-icon "+"]
-         "New Note"]
-        
-        ;; Sidebar content
-        [:div.sidebar-content
-         ;; Menu items
-         (sidebar-item "📅" "Diaries" 
-                       #(router/switch-router! 
-                          (str "/app/" database-name "/diaries")))
-         
-         (sidebar-item "📝" "All Notes" 
-                       #(router/switch-router! 
-                          (str "/app/" database-name "/diaries")))
-         
-         ;; Note list section
-         [:div {:style {:margin-top "16px"
-                        :padding "0 16px"
-                        :font-size "12px"
-                        :color "rgba(255,255,255,0.5)"
-                        :text-transform "uppercase"}}
-          "Recent Notes"]
-         
-         [:div.note-list
-          (for [[note-title note-id root-nav-id] (take 20 daily-list)]
-            [:div.note-list-item
-             {:key note-id
-              :on-click #(prn "Navigate to note:" note-id)
-              :title note-title}
-             (u/daily-title->en note-title)])]]])]))
+     ;; Toggle button - always visible, positioned at edge of sidebar
+     [:div.sidebar-toggle-btn
+      {:class (when collapsed? "collapsed")
+       :on-click toggle-sidebar!
+       :title (if collapsed? "展开侧边栏" "收起侧边栏")}
+      (if collapsed? "☰" "✕")]]))
