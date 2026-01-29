@@ -550,3 +550,102 @@
       {:succ
        (fn [data]
          (op-fn data))}}}))
+
+
+;; ==================== Nav Update Operations ====================
+
+(comment
+  ;; Example: Update nav content
+  (re-frame/dispatch-sync
+    [:update-nav {:database-name "JackyWong-5721"
+                  :note-id "89b1d754-959e-4fcd-8c62-eb1978fe238b"
+                  :id "85d7d44d-09f8-4b19-9946-46b14fbc29ea"
+                  :content "new content here"}])
+  
+  ;; Example: Toggle is-display
+  (re-frame/dispatch-sync
+    [:update-nav {:database-name "JackyWong-5721"
+                  :note-id "89b1d754-959e-4fcd-8c62-eb1978fe238b"
+                  :id "85d7d44d-09f8-4b19-9946-46b14fbc29ea"
+                  :is-display false}]))
+
+;; Update nav (content, is-display, parid, order, etc.)
+(re-frame/reg-event-fx
+  :update-nav
+  (fn update-nav
+    [{:keys [db] :as cofx}
+     [_ {:keys [database-name note-id id content is-display parid order is-delete properties op-fn]}]]
+    {:db db
+     :http
+     {:uri "/hulunote/create-or-update-nav"
+      :params (cond-> {:database-name database-name
+                       :note-id note-id
+                       :id id}
+                content (assoc :content content)
+                (some? is-display) (assoc :is-display is-display)
+                parid (assoc :parid parid)
+                order (assoc :order order)
+                (some? is-delete) (assoc :is-delete is-delete)
+                properties (assoc :properties properties))
+      :callback
+      {:succ
+       (fn [data]
+         (prn "Nav updated successfully:" data)
+         (when op-fn (op-fn data)))
+       :err
+       (fn [err]
+         (prn "Failed to update nav:" err))}}}))
+
+;; Create a new nav
+(re-frame/reg-event-fx
+  :create-nav
+  (fn create-nav
+    [{:keys [db] :as cofx}
+     [_ {:keys [database-name note-id parid content order op-fn]}]]
+    {:db db
+     :http
+     {:uri "/hulunote/create-or-update-nav"
+      :params {:database-name database-name
+               :note-id note-id
+               :parid parid
+               :content (or content "")
+               :order (or order 0)}
+      :callback
+      {:succ
+       (fn [data]
+         (prn "Nav created successfully:" data)
+         ;; Add to local datascript
+         (when-let [nav-info (:nav data)]
+           (d/transact! db/dsdb
+             [(-> nav-info
+                (assoc :origin-parid (:parid nav-info))
+                (dissoc :parid))]))
+         (when op-fn (op-fn data)))
+       :err
+       (fn [err]
+         (prn "Failed to create nav:" err))}}}))
+
+;; Delete a nav (soft delete)
+(re-frame/reg-event-fx
+  :delete-nav
+  (fn delete-nav
+    [{:keys [db] :as cofx}
+     [_ {:keys [database-name note-id id op-fn]}]]
+    {:db db
+     :http
+     {:uri "/hulunote/create-or-update-nav"
+      :params {:database-name database-name
+               :note-id note-id
+               :id id
+               :is-delete true}
+      :callback
+      {:succ
+       (fn [data]
+         (prn "Nav deleted successfully:" data)
+         ;; Remove from local datascript
+         (d/transact! db/dsdb
+           [[:db/retractEntity [:id id]]])
+         (when op-fn (op-fn data)))
+       :err
+       (fn [err]
+         (prn "Failed to delete nav:" err))}}}))

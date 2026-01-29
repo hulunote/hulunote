@@ -4,7 +4,8 @@
             [hulunote.util :as u]
             [hulunote.render :as render]
             [hulunote.db :as db]
-            [hulunote.components :as comps]))
+            [hulunote.components :as comps]
+            [hulunote.router :as router]))
 
 (comment
   ;; 打印出来树了，很多个，全的。
@@ -21,9 +22,17 @@
       :hulunote-notes/title (str "=====" (rand 100000) "=====")]])
 
   )
+
+(defn get-current-database-name
+  "Get current database name from route params"
+  [db]
+  (let [{:keys [params]} (db/get-route db)]
+    (:database params)))
+
 (rum/defc diaries-page
   [db]
-  (let [daily-list (db/sort-daily-list (db/get-daily-list db))]
+  (let [daily-list (db/sort-daily-list (db/get-daily-list db))
+        database-name (get-current-database-name db)]
     [:div.night-center-boxBg.night-textColor-2
      ;; "diaries page"
      (comps/header-editor)
@@ -31,11 +40,12 @@
       [:div.flex.flex-column.mt0.overflow-scroll-new.main-editer-class.w-100.w-100-m.w-100-ns
        [:div.mt4]
        (for [item daily-list]
-         [:div
-          [:div.f3.b.ma4 (u/daily-title->en (first item))]
-          [:div {:style {:padding-left "12px"}}
-           (render/render-navs db (last item))]
-          [:div {:style {:padding "35px"}}
-           [:div {:style {:background "rgba(151, 151, 151, 0.25)"
-                          :height "1px" :width "100%"}}]]])
+         (let [[note-title note-id root-nav-id] item]
+           [:div {:key note-id}
+            [:div.f3.b.ma4 (u/daily-title->en note-title)]
+            [:div {:style {:padding-left "12px"}}
+             (render/render-navs db root-nav-id note-id database-name)]
+            [:div {:style {:padding "35px"}}
+             [:div {:style {:background "rgba(151, 151, 151, 0.25)"
+                            :height "1px" :width "100%"}}]]]))
        [:div.mb5]]]]))
