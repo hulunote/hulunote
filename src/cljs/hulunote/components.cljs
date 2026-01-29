@@ -78,7 +78,7 @@
      [:div.b.pt3.pointer {:on-click #(js/open "https://youtube.com/@hulunote")} "YouTube"]
      [:div.b.pt3 "About us"]]
     ]
-   [:div.flex.justify-center.pa3 "© 2023 Hulunote"]])
+   [:div.flex.justify-center.pa3 "© 2023 Hulunote 111"]])
 
 
 (defn render-recursion-page-link
