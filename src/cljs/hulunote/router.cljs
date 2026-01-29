@@ -17,6 +17,8 @@
      ["/app/:database/show/:page-id/:nav-id" :show]
      ["/app/:database/graph" :graph]
      ["/app/:database/diaries" :diaries]
+     ["/app/:database/notes" :all-notes]
+     ["/app/:database/note/:note-id" :single-note]
      ;; 首页：登录，主页，价格，下载
      ["/login" :login]
      ["/main" :main]
@@ -25,21 +27,23 @@
     {:compile rc/compile-request-coercers
      :data {:coercion rsc/coercion}}))
 
-(comment
-  (switch-router! "/")
-
-  (switch-router! "/login")
-
-  (switch-router! "/app/help/diaries")
-  (switch-router! "/app/xxxx/diaries")
-  (switch-router! "/app/yyyy/diaries")
-  (switch-router! "/app/zzzz/diaries")
-  (switch-router! "/app/1111/diaries")
-  (switch-router! "/app/22222/diaries")
-
-  )
 (defn switch-router! [loc]
   (set! (.-hash js/window.location) (str "#" loc)))
+
+(defn go-to-note! 
+  "Navigate to a specific note page"
+  [database-name note-id]
+  (switch-router! (str "/app/" database-name "/note/" note-id)))
+
+(defn go-to-all-notes!
+  "Navigate to all notes page"
+  [database-name]
+  (switch-router! (str "/app/" database-name "/notes")))
+
+(defn go-to-diaries!
+  "Navigate to diaries page"
+  [database-name]
+  (switch-router! (str "/app/" database-name "/diaries")))
 
 (defn is-route-in-login []
   (= (.-hash js/window.location)
@@ -48,5 +52,5 @@
 (defonce router-uuid (d/squuid))
 
 (defn navigate [route route-params]
-  (d/transact! db/dsdb [{:route/id router-uuid ;;:db/id (d/tempid :db.part/user)
+  (d/transact! db/dsdb [{:route/id router-uuid
                          :route/name {:route-name route :params route-params}}]))

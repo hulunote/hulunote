@@ -19,31 +19,14 @@
    [hulunote.show :as show]
    [hulunote.graph :as graph]
    [hulunote.diaries :as diaries]
+   [hulunote.all-notes :as all-notes]
+   [hulunote.single-note :as single-note]
    [hulunote.login :as login]
-   [hulunote.components :as comps]
-   ;; [hulunote.main :as main]
-   ;; [hulunote.price :as price]
-   ;; [hulunote.download :as download]
-   )
+   [hulunote.components :as comps])
   (:require-macros
    [hulunote.share :refer [profile]])
   (:import goog.History))
 
-(comment
-  (all-notes @db/dsdb)
-  (d/pull-many
-    @db/dsdb
-    [:*]
-    (map
-      :e
-      (d/datoms @db/dsdb :aevt :hulunote-notes/title)))
-
-  (for [note (all-notes db)]
-    [:<>
-     [:div.flex.flex-row
-      [:div.mr2 (:hulunote-notes/id note)]
-      [:div (:hulunote-notes/title note)]]])
-  )
 (defn all-notes [db]
   (->> (d/datoms db :aevt :hulunote-notes/title)
     (map :e)
@@ -73,6 +56,8 @@
        :show (show/show-page db)
        :graph (graph/graph-page db)
        :diaries (diaries/diaries-page db)
+       :all-notes (all-notes/all-notes-page db)
+       :single-note (single-note/single-note-page db)
        ;; 首页：登录，主页，价格，下载
        :login (login/login-page db)
        :main (main-page db)
@@ -92,7 +77,6 @@
                 current-page (:name (:data match))
                 route-params (:path-params match)
                 {:keys [page-id database]} route-params]
-            ;;(prn "router: " match "," route-params)
             (when current-page
               (router/navigate current-page route-params))))))
     (.setEnabled true)))
