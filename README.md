@@ -4,6 +4,8 @@ An open-source outliner note-taking application with bidirectional linking.
 
 Inspired by Roam Research, designed for networked thought.
 
+![](./demo.png)
+
 ## Features
 
 - **Outliner Structure** - Organize thoughts in hierarchical bullet points with infinite nesting
