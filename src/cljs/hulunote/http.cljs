@@ -188,7 +188,7 @@
 (defn http-uri [uri]
   (if (u/is-dev?)
     (str "http://127.0.0.1:6689" uri)
-    (str "https://hulunote.io" uri)))
+    (str "http://104.244.95.160:6689" uri)))
 
 (defn go-http-queue
   "go队列里面包含进去！顺序一定对, 不用await！"
