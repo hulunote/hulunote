@@ -267,7 +267,7 @@
         {:on-click #(router/switch-router! "/main")
          :width "36px"
          :style {:border-radius "50%"}
-         :src "/img/hulunote.webp"}]
+         :src (u/asset-path "/img/hulunote.webp")}]
        [:div.pl3.pointer
         {:on-click #(router/switch-router! "/main")
          :style {:font-size "22px"
