@@ -50,17 +50,20 @@
         {:keys [route-name params]} (db/get-route db)]
     [:div
      (case route-name
-       :database (database/database-page db)
-       ;; 笔记库的列表，详情，图页面
+       ;; Root path: show home page if not logged in or expired, otherwise show database list
+       :database (if (u/is-expired?)
+                   (home/home-page db)
+                   (database/database-page db))
+       ;; App pages (notebook list, detail, graph)
        :home (home/home-page db)
        :show (show/show-page db)
        :graph (graph/graph-page db)
        :diaries (diaries/diaries-page db)
        :all-notes (all-notes/all-notes-page db)
        :single-note (single-note/single-note-page db)
-       ;; 首页：登录，主页，价格，下载
+       ;; Public pages: login, main, price, download
        :login (login/login-page db)
-       :main (main-page db)
+       :main (home/home-page db)
        :price (price-page db)
        :download (download-page db)
        (not-found-component))

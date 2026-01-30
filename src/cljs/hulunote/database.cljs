@@ -8,6 +8,58 @@
             [hulunote.components :as comps]
             [re-frame.core :as re-frame]))
 
+;; Database card component
+(rum/defc database-card [name on-click]
+  [:div.flex.pointer
+   {:on-click on-click
+    :style {:background "#fff"
+            :border-radius "12px"
+            :padding "32px 24px"
+            :box-shadow "0 2px 12px rgba(0,0,0,0.08)"
+            :transition "all 0.3s ease"
+            :border "2px solid transparent"
+            :min-width "200px"}}
+   [:div.flex.flex-column.items-center.w-100
+    [:div {:style {:font-size "40px"
+                   :margin-bottom "16px"}}
+     "📚"]
+    [:div {:style {:font-size "18px"
+                   :font-weight "600"
+                   :color "#1a1a2e"
+                   :text-align "center"
+                   :word-break "break-word"}}
+     name]]])
+
+;; Empty state component
+(rum/defc empty-state []
+  [:div.flex.flex-column.items-center
+   {:style {:padding "60px 20px"
+            :text-align "center"}}
+   [:div {:style {:font-size "64px"
+                  :margin-bottom "24px"}}
+    "📝"]
+   [:h3 {:style {:font-size "24px"
+                 :font-weight "600"
+                 :color "#1a1a2e"
+                 :margin "0 0 12px 0"}}
+    "No Databases Yet"]
+   [:p {:style {:font-size "16px"
+                :color "#666"
+                :margin "0 0 32px 0"}}
+    "Login to create your first note database"]
+   [:button.pointer
+    {:on-click #(router/switch-router! "/login")
+     :style {:background "linear-gradient(135deg, #667eea 0%, #764ba2 100%)"
+             :color "#fff"
+             :border "none"
+             :padding "12px 28px"
+             :border-radius "25px"
+             :font-size "16px"
+             :font-weight "600"
+             :cursor "pointer"}}
+    "Login Now"]])
+
+;; Main database list page
 (rum/defcs database-page
   < {:will-mount
      (fn [state]
@@ -15,78 +67,91 @@
          [:get-database-list
           {:op-fn
            (fn [{:keys [database-list settings]}]
-             ;; (d/transact! db/dsdb {:db/id (d/tempid :db.part/user)
-             ;;                       :settings settings})
              (doseq [item database-list]
-               (do
-                 (d/transact! db/dsdb [item])))
-             ;;
-             )}])
-       )
-     }
+               (d/transact! db/dsdb [item])))}])
+       state)}
   [state db]
   (let [database-list (db/get-database db)]
     [:div.flex.flex-column
-     (comps/header)
-     [:div.flex.items-center.justify-center.flex-column
-      {:style {:height "600px"}}
-      [:div.main-title.text-center.main-container
-       "WhatsApp & Telegram chat sorting and summary with AI"]
-      [:p.submain-title "Define your own AI Chat for community management"]]
-     ;; =====
-     [:div.mt4.td-overlay
-      [:div.advantages
-       [:div.advantage-card.flex
-        [:div.card-body.flex.justify-center.w-100.mt4
-         [:div.flex-column
-          [:div.flex.justify-center
-           [:img.img-class {:style {:width "146px"}
-                            :src "/img/mutil_chat.svg"}]]
-          [:div.card-title "Mutil Chat Support"]
-          [:div.card-desc "Support WhatsApp, Telegram and other chat tools"]]]]
-       [:div.advantage-card.flex
-        [:div.card-body.flex.justify-center.w-100.mt4
-         [:div.flex-column
-          [:div [:img.img-class {:src "/img/mutil_database.svg"}]]
-          [:div.card-title "Chat Database"]
-          [:div.card-desc "Support exporting chat history and chat editing and creation"]]]]
-       [:div.advantage-card.flex
-        [:div.card-body.flex.justify-center.w-100.mt4
-         [:div.flex-column
-          [:div.flex.justify-center
-           [:img.img-class {:style {:width "146px"}
-                            :src "/img/ai_ass.svg"}]]
-          [:div.card-title "AI Assisted Chat"]
-          [:div.card-desc "Chat sorting and summary with AI, help you read messages and communicate more efficiently"]]]]
-       [:div.advantage-card.flex
-        [:div.card-body.flex.justify-center.w-100.mt4
-         [:div.flex-column
-          [:div.flex.justify-center
-           [:img.img-class {:style {:width "146px"}
-                            :src "/img/ai_define.svg"}]]
-          [:div.card-title "Define your AI Chat"]
-          [:div.card-desc "Realize custom chatbot and instruction recognition based on OpenAI"]]]]
-       ]]
-     [:div
-      {:style {:min-height 600
-               :background "#f0f0f0"}}
-      [:div.sub-title2.pt7.mb3 "Chat Database List"]
-      [:div.advantages.pt7
-       (if (empty? database-list)
+     {:style {:min-height "100vh"
+              :background "#f8f9fa"}}
+     
+     ;; Header
+     [:div.td-navbar
+      {:style {:display "flex"
+               :align-items "center"
+               :justify-content "space-between"
+               :padding "0 32px"
+               :height "60px"
+               :background "linear-gradient(135deg, #667eea 0%, #764ba2 100%)"}}
+      [:div.flex.items-center
+       [:img.pointer
+        {:on-click #(router/switch-router! "/main")
+         :width "36px"
+         :style {:border-radius "50%"}
+         :src "/img/hulunote.webp"}]
+       [:div.pl3.pointer
+        {:on-click #(router/switch-router! "/main")
+         :style {:font-size "22px"
+                 :font-weight "700"
+                 :color "#fff"}}
+        "HULUNOTE"]]
+      [:div.flex.items-center
+       (if (u/is-expired?)
+         [:button.pointer
+          {:on-click #(router/switch-router! "/login")
+           :style {:background "#fff"
+                   :color "#667eea"
+                   :border "none"
+                   :padding "8px 20px"
+                   :border-radius "20px"
+                   :font-weight "600"
+                   :cursor "pointer"}}
+          "Login"]
          [:div
-          [:div.flex.pointer.db-card-big
-           [:div.flex.flex-column.items-center.justify-center.w-100
-            [:div "Scan the QR code to add a WhatsApp or Telegram robot, bind your mail"]
-            [:div.flex.flex-row
-             [:img.mt3 {:width "180" :src "/img/WhatsApp.png"}]
-             [:img.mt3.ml4 {:width "180" :src "/img/telegram-hulunote.jpg"}]]]]]
+          {:style {:color "#fff"}}
+          (first (clojure.string/split (:accounts/mail (:hulunote @storage/jwt-auth)) "@"))])]]
+     
+     ;; Main content
+     [:div.flex.flex-column
+      {:style {:flex "1"
+               :padding "40px 20px"
+               :max-width "1200px"
+               :margin "0 auto"
+               :width "100%"}}
+      
+      ;; Title
+      [:div.flex.flex-row.items-center.justify-between
+       {:style {:margin-bottom "32px"}}
+       [:h1 {:style {:font-size "32px"
+                     :font-weight "700"
+                     :color "#1a1a2e"
+                     :margin "0"}}
+        "My Databases"]
+       [:div {:style {:color "#666"
+                      :font-size "14px"}}
+        (str (count database-list) " database(s)")]]
+      
+      ;; Database list or empty state
+      (if (empty? database-list)
+        (empty-state)
+        [:div
+         {:style {:display "grid"
+                  :grid-template-columns "repeat(auto-fill, minmax(220px, 1fr))"
+                  :gap "20px"}}
          (for [item database-list]
-           [:div.flex.pointer.db-card
-            {:on-click #(js/open ;; router/switch-router!
-                          (str "#/app/"
-                            (:hulunote-databases/name (first item))
-                            "/diaries"))}
-            [:div.flex.items-center.justify-center.w-100
-             (:hulunote-databases/name (first item))]]))]]
-     ;; ====
-     (comps/footer)]))
+           (let [db-name (:hulunote-databases/name (first item))]
+             (rum/with-key
+               (database-card
+                 db-name
+                 #(js/open (str "#/app/" db-name "/diaries")))
+               db-name)))])]
+     
+     ;; Footer
+     [:div
+      {:style {:background "#1a1a2e"
+               :padding "24px 20px"
+               :text-align "center"}}
+      [:div {:style {:color "rgba(255,255,255,0.5)"
+                     :font-size "14px"}}
+       "© 2024 Hulunote - MIT License"]]]))
