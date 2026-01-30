@@ -506,3 +506,44 @@
        :err
        (fn [err]
          (prn "Failed to update note:" err))}}}))
+
+
+
+;; ==================== Database Operations ====================
+
+(re-frame/reg-event-fx
+  :create-database
+  (fn create-database
+    [{:keys [db] :as cofx}
+     [_ {:keys [database-name op-fn]}]]
+    {:db db
+     :http
+     {:uri "/hulunote/create-database"
+      :params {:database-name database-name}
+      :callback
+      {:succ
+       (fn [data]
+         (prn "Database created successfully:" data)
+         (when op-fn (op-fn data)))
+       :err
+       (fn [err]
+         (prn "Failed to create database:" err))}}}))
+
+(re-frame/reg-event-fx
+  :delete-database
+  (fn delete-database
+    [{:keys [db] :as cofx}
+     [_ {:keys [database-id database-name op-fn]}]]
+    {:db db
+     :http
+     {:uri "/hulunote/delete-database"
+      :params {:database-id database-id
+               :database-name database-name}
+      :callback
+      {:succ
+       (fn [data]
+         (prn "Database deleted successfully:" data)
+         (when op-fn (op-fn data)))
+       :err
+       (fn [err]
+         (prn "Failed to delete database:" err))}}}))
