@@ -11,6 +11,14 @@
 (defonce current-page (atom 1))
 (defonce page-size 20)
 
+;; State for note menu
+(defonce note-menu-state (atom {:visible false
+                                 :x 0
+                                 :y 0
+                                 :note-id nil
+                                 :note-title nil
+                                 :database-name nil}))
+
 (defn get-current-database-name
   "Get current database name from route params"
   [db]
@@ -61,6 +69,99 @@
 
 (defn go-to-page! [page]
   (reset! current-page page))
+
+;; ==================== Note Menu Functions ====================
+
+(defn show-note-menu!
+  "Show note menu at specified position"
+  [e note-id note-title database-name]
+  (.preventDefault e)
+  (.stopPropagation e)
+  (reset! note-menu-state
+    {:visible true
+     :x (.-clientX e)
+     :y (.-clientY e)
+     :note-id note-id
+     :note-title note-title
+     :database-name database-name}))
+
+(defn hide-note-menu!
+  "Hide note menu"
+  []
+  (swap! note-menu-state assoc :visible false))
+
+(defn delete-note!
+  "Delete a note by setting is-delete to true"
+  [note-id]
+  ;; Update backend
+  (re-frame/dispatch-sync
+    [:update-note
+     {:note-id note-id
+      :is-delete true
+      :op-fn (fn [data]
+               (prn "Note deleted:" data)
+               ;; Remove from local datascript
+               (d/transact! db/dsdb
+                 [[:db/retractEntity [:hulunote-notes/id note-id]]]))}])
+  ;; Also remove from local datascript immediately for UI responsiveness
+  (d/transact! db/dsdb
+    [[:db/retractEntity [:hulunote-notes/id note-id]]]))
+
+(rum/defc note-menu < rum/reactive
+  "Context menu component for note card"
+  []
+  (let [{:keys [visible x y note-id note-title database-name]} (rum/react note-menu-state)]
+    (when visible
+      [:div.note-context-menu
+       {:style {:position "fixed"
+                :left (str x "px")
+                :top (str y "px")
+                :background "#2a2f3a"
+                :border "1px solid #444"
+                :border-radius "6px"
+                :box-shadow "0 4px 12px rgba(0,0,0,0.3)"
+                :z-index 10000
+                :min-width "150px"
+                :padding "4px 0"}
+        :on-mouse-leave hide-note-menu!}
+       ;; Note title info
+       [:div.context-menu-header
+        {:style {:padding "8px 12px"
+                 :color "#888"
+                 :font-size "11px"
+                 :border-bottom "1px solid #444"
+                 :max-width "200px"
+                 :overflow "hidden"
+                 :text-overflow "ellipsis"
+                 :white-space "nowrap"}}
+        note-title]
+       ;; Open note option
+       [:div.context-menu-item
+        {:style {:padding "8px 12px"
+                 :cursor "pointer"
+                 :color "#fff"
+                 :font-size "13px"}
+         :on-mouse-over #(set! (-> % .-target .-style .-background) "#3a4555")
+         :on-mouse-out #(set! (-> % .-target .-style .-background) "transparent")
+         :on-click (fn [e]
+                     (.stopPropagation e)
+                     (router/go-to-note! database-name note-id)
+                     (hide-note-menu!))}
+        "📄 Open Note"]
+       ;; Delete note option
+       [:div.context-menu-item
+        {:style {:padding "8px 12px"
+                 :cursor "pointer"
+                 :color "#ff6b6b"
+                 :font-size "13px"}
+         :on-mouse-over #(set! (-> % .-target .-style .-background) "#3a4555")
+         :on-mouse-out #(set! (-> % .-target .-style .-background) "transparent")
+         :on-click (fn [e]
+                     (.stopPropagation e)
+                     (when (js/confirm (str "Are you sure you want to delete \"" note-title "\"?"))
+                       (delete-note! note-id))
+                     (hide-note-menu!))}
+        "🗑️ Delete Note"]])))
 
 (rum/defc pagination-controls < rum/reactive
   [total-count]
@@ -124,16 +225,36 @@
             :border-radius "8px"
             :cursor "pointer"
             :transition "all 0.2s ease"
-            :border "1px solid rgba(255,255,255,0.1)"}}
-   [:div {:style {:font-size "16px" 
-                  :font-weight "500"
-                  :margin-bottom "8px"}}
-    note-title]
-   [:div {:style {:font-size "12px"
-                  :color "rgba(255,255,255,0.5)"}}
-    (str "Updated: " (if (and updated-at (seq updated-at)) 
-                       (subs updated-at 0 (min 19 (count updated-at)))
-                       "Unknown"))]])
+            :border "1px solid rgba(255,255,255,0.1)"
+            :display "flex"
+            :justify-content "space-between"
+            :align-items "center"}}
+   [:div {:style {:flex 1}}
+    [:div {:style {:font-size "16px" 
+                   :font-weight "500"
+                   :margin-bottom "8px"}}
+     note-title]
+    [:div {:style {:font-size "12px"
+                   :color "rgba(255,255,255,0.5)"}}
+     (str "Updated: " (if (and updated-at (seq updated-at)) 
+                        (subs updated-at 0 (min 19 (count updated-at)))
+                        "Unknown"))]]
+   ;; More options button (...)
+   [:div.note-more-btn
+    {:on-click (fn [e]
+                 (.stopPropagation e)
+                 (show-note-menu! e note-id note-title database-name))
+     :style {:padding "8px"
+             :cursor "pointer"
+             :border-radius "4px"
+             :color "rgba(255,255,255,0.5)"
+             :font-size "18px"
+             :font-weight "bold"
+             :line-height "1"
+             :transition "all 0.2s ease"}
+     :on-mouse-over #(set! (-> % .-currentTarget .-style .-background) "rgba(255,255,255,0.1)")
+     :on-mouse-out #(set! (-> % .-currentTarget .-style .-background) "transparent")}
+    "⋯"]])
 
 (rum/defc all-notes-page < rum/reactive
   [db]
@@ -186,4 +307,7 @@
           ;; Pagination
           (pagination-controls (count all-notes))])
        
-       [:div {:style {:height "50px"}}]]]]))
+       [:div {:style {:height "50px"}}]]]
+     
+     ;; Global note menu
+     (note-menu)]))
