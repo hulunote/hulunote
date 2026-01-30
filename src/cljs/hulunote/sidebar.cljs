@@ -240,7 +240,7 @@
          ;; Sidebar header with logo
          [:div.sidebar-header
           [:div.flex.items-center
-           [:img {:src "/img/hulunote.webp"
+           [:img {:src (u/asset-path "/img/hulunote.webp")
                   :width "24px"
                   :style {:border-radius "50%"}}]
            [:span.sidebar-title.ml2 "HULUNOTE"]]]

@@ -127,7 +127,7 @@
     {:on-click #(router/switch-router! "/")
      :width "30px"
      :style {:border-radius "50%"}
-     :src "/img/hulunote.webp"}]
+     :src (u/asset-path "/img/hulunote.webp")}]
    [:div.pl3.pointer
     {:on-click #(router/switch-router! "/")
      :style {:font-size "18px"
@@ -143,15 +143,15 @@
    [:div.flex.inner-wrapper
     [:div.flex.items-center.flex.flex-auto
      [:div.main-hulu-name.pl3.pointer
-      {:on-click #(js/open "https://hulunote.io")
+      {:on-click #(u/open-url "https://hulunote.io")
        :style {:font-size "24px"
                :color "while"
                :font-weight "700"}}
       "HULUNOTE"]]
     [:div.flex.items-center
-     [:div.head-bar-pl.pointer.nav-link {:on-click #(js/open "https://www.whatsapp.com/")}
+     [:div.head-bar-pl.pointer.nav-link {:on-click #(u/open-url "https://www.whatsapp.com/")}
       (show-whatsapp-qrcode)]
-     [:div.head-bar-pl.pointer.nav-link {:on-click #(js/open "https://telegram.org/")}
+     [:div.head-bar-pl.pointer.nav-link {:on-click #(u/open-url "https://telegram.org/")}
       (show-telegram-qrcode)]
 
      [:div.pr3.pl3
@@ -168,7 +168,7 @@
    [:div.flex.flex-row.justify-center.mt5
     [:div.flex.flex-column.pa3
      [:div.b {:style {:font-size "25px"}} "Help"]
-     [:div.b.pt3.pointer #(js/open "https://forum.hulunote.io") "Forum"]
+     [:div.b.pt3.pointer {:on-click #(u/open-url "https://github.com/hulunote/hulunote")} "GitHub"]
      [:div.b.pt3 "WhatsApp group"]
      [:div.b.pt3 "Telegram group"]]
     [:div.flex.flex-column.pa3.ml4
@@ -177,8 +177,8 @@
      [:div.b.pt3 "Blog"]]
     [:div.flex.flex-column.pa3.ml4
      [:div.b {:style {:font-size "25px"}} "About"]
-     [:div.b.pt3.pointer {:on-click #(js/open "https://twitter.com/hulunote")} "Twitter"]
-     [:div.b.pt3.pointer {:on-click #(js/open "https://youtube.com/@hulunote")} "YouTube"]
+     [:div.b.pt3.pointer {:on-click #(u/open-url "https://twitter.com/hulunote")} "Twitter"]
+     [:div.b.pt3.pointer {:on-click #(u/open-url "https://youtube.com/@hulunote")} "YouTube"]
      [:div.b.pt3 "About us"]]]
    [:div.flex.justify-center.pa3 "© 2023 Hulunote"]])
 
@@ -348,7 +348,7 @@
    (rum/adapt-class Tooltip
      {:title
       (html [:div.pa2
-             [:img.mt2 {:src "/img/WhatsApp.png"}]
+             [:img.mt2 {:src (u/asset-path "/img/WhatsApp.png")}]
              [:div.flex.justify-center.w-100.flex-column.pa2.mt2
               [:div "Scan the QR code to add a WhatsApp robot, bind your mail, join a group or chat, and you can organize and summarize your chats through AI"]]])
       :arrow true}
@@ -359,7 +359,7 @@
    (rum/adapt-class Tooltip
      {:title
       (html [:div.pa2
-             [:img.mt2 {:src "/img/telegram-hulunote.jpg"}]
+             [:img.mt2 {:src (u/asset-path "/img/telegram-hulunote.jpg")}]
              [:div.flex.justify-center.w-100.flex-column.pa2.mt2
               [:div "Scan the QR code to add a Telegram robot, bind your mail, join a group or chat, and you can organize and summarize your chats through AI"]]])
       :arrow true}

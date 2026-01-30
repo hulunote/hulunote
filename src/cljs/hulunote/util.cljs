@@ -114,12 +114,29 @@
     (array-seq
       (.getElementsByClassName js/document class))))
 
-(defn is-dev?
-  "你或者127就是开发者"
+(defn is-electron?
+  "检测是否在 Electron 环境中运行"
   []
-  (re-find
-    #"127.0.0.1"
-    (-> js/location .-host)))
+  (and (exists? js/window)
+       (exists? js/window.electronAPI)
+       (.-isElectron js/window.electronAPI)))
+
+(defn is-dev?
+  "你或者127就是开发者，Electron 打包后不是开发环境"
+  []
+  (and (not (is-electron?))
+       (re-find
+         #"127.0.0.1|localhost"
+         (-> js/location .-host))))
+
+(defn asset-path
+  "获取静态资源路径，支持 Electron 和 Web 环境"
+  [path]
+  (if (is-electron?)
+    ;; Electron 环境：使用相对路径（从 html 目录出发）
+    (str ".." path)
+    ;; Web 环境：使用绝对路径
+    path))
 
 (defn get-params
   []

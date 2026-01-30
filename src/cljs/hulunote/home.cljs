@@ -61,7 +61,7 @@
      [:img.pointer
       {:width "36px"
        :style {:border-radius "50%"}
-       :src "/img/hulunote.webp"}]
+       :src (u/asset-path "/img/hulunote.webp")}]
      [:div.pl3
       {:style {:font-size "22px"
                :font-weight "700"
