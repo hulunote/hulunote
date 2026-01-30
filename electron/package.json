@@ -1,0 +1,102 @@
+{
+  "name": "hulunote",
+  "version": "1.0.0",
+  "description": "Hulunote - Open-Source Outliner with Bidirectional Linking",
+  "main": "main.js",
+  "author": {
+    "name": "Hulunote Team",
+    "email": "chanshunli@gmail.com"
+  },
+  "license": "MIT",
+  "homepage": "https://github.com/hulunote/hulunote",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/hulunote/hulunote.git"
+  },
+  "scripts": {
+    "start": "electron .",
+    "start:dev": "NODE_ENV=development electron .",
+    "build": "node build.js",
+    "dist": "electron-builder",
+    "dist:mac": "electron-builder --mac",
+    "dist:win": "electron-builder --win",
+    "dist:linux": "electron-builder --linux",
+    "dist:all": "electron-builder --mac --win --linux",
+    "postinstall": "electron-builder install-app-deps"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "electron": "^28.1.0",
+    "electron-builder": "^24.9.1"
+  },
+  "build": {
+    "appId": "com.hulunote.app",
+    "productName": "Hulunote",
+    "copyright": "Copyright © 2024 Hulunote Team",
+    "directories": {
+      "output": "dist",
+      "buildResources": "build"
+    },
+    "files": [
+      "main.js",
+      "preload.js",
+      "app/**/*",
+      "icons/**/*"
+    ],
+    "extraMetadata": {
+      "main": "main.js"
+    },
+    "mac": {
+      "category": "public.app-category.productivity",
+      "icon": "icons/icon.icns",
+      "target": [
+        {
+          "target": "dmg",
+          "arch": ["x64", "arm64"]
+        },
+        {
+          "target": "zip",
+          "arch": ["x64", "arm64"]
+        }
+      ],
+      "darkModeSupport": true,
+      "hardenedRuntime": true,
+      "gatekeeperAssess": false
+    },
+    "win": {
+      "icon": "icons/icon.ico",
+      "target": [
+        {
+          "target": "nsis",
+          "arch": ["x64", "ia32"]
+        },
+        {
+          "target": "portable",
+          "arch": ["x64"]
+        }
+      ]
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "Hulunote"
+    },
+    "linux": {
+      "icon": "icons",
+      "target": [
+        "AppImage",
+        "deb",
+        "rpm"
+      ],
+      "category": "Office",
+      "maintainer": "Hulunote Team <chanshunli@gmail.com>"
+    },
+    "publish": {
+      "provider": "github",
+      "owner": "hulunote",
+      "repo": "hulunote"
+    }
+  }
+}

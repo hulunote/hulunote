@@ -69,4 +69,4 @@ resources/public/manifest.edn
 
 resources/public/test-all-navs.json
 resources/public/test-all-notes.json
-
+node_modules
