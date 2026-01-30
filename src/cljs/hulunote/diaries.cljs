@@ -13,6 +13,9 @@
 (defonce editing-note-id (atom nil))
 (defonce editing-note-title (atom ""))
 
+;; State to track if we've initialized the daily note
+(defonce daily-note-initialized? (atom #{}))
+
 (defn get-current-database-name
   "Get current database name from route params"
   [db]
@@ -77,7 +80,22 @@
        {:on-click #(start-editing-title! note-id note-title)}
        note-title])))
 
-(rum/defc diaries-page < rum/reactive
+;; Lifecycle mixin to initialize daily note when component mounts
+(def daily-note-init-mixin
+  {:did-mount
+   (fn [state]
+     (let [[db] (:rum/args state)
+           database-name (get-current-database-name db)]
+       (when (and database-name (not (@daily-note-initialized? database-name)))
+         (swap! daily-note-initialized? conj database-name)
+         ;; Ensure today's daily note exists
+         (sidebar/ensure-daily-note! database-name
+           {:navigate? false
+            :on-ready (fn [note-info]
+                       (prn "Daily note ready:" note-info))})))
+     state)})
+
+(rum/defc diaries-page < rum/reactive daily-note-init-mixin
   [db]
   (let [daily-list (db/sort-daily-list (db/get-daily-list db))
         database-name (get-current-database-name db)
@@ -106,7 +124,19 @@
           [:button.new-note-btn
            {:on-click #(sidebar/create-new-note! database-name)}
            [:span.new-note-btn-icon "+"]
-           "Create First Note"]]
+           "Create First Note"]
+          ;; Add quick create today's note button
+          [:button
+           {:style {:margin-top "16px"
+                    :background "linear-gradient(135deg, #667eea 0%, #764ba2 100%)"
+                    :color "#fff"
+                    :border "none"
+                    :border-radius "8px"
+                    :padding "12px 24px"
+                    :font-size "14px"
+                    :cursor "pointer"}
+            :on-click #(sidebar/ensure-daily-note! database-name {:navigate? true})}
+           (str "📅 Create Today's Note (" (sidebar/get-today-title) ")")]]
          
          ;; Show existing notes
          (for [item daily-list]

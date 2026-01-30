@@ -357,6 +357,59 @@ hulu-text-font {
     background: rgba(100, 100, 100, 0.5);
 }
 
+/* ==================== Context Menu ==================== */
+
+.nav-context-menu {
+    animation: contextMenuFadeIn 0.15s ease-out;
+    user-select: none;
+}
+
+@keyframes contextMenuFadeIn {
+    from {
+        opacity: 0;
+        transform: scale(0.95);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+.context-menu-item {
+    user-select: none;
+    transition: background 0.1s ease;
+}
+
+.context-menu-item:active {
+    background: #4a5568 !important;
+}
+
+.context-menu-header {
+    user-select: all;
+}
+
+/* ==================== Head Dot / Row Click ==================== */
+
+.head-dot {
+    transition: background 0.1s ease;
+    border-radius: 4px;
+}
+
+.head-dot:hover {
+    background: rgba(255, 255, 255, 0.03);
+}
+
+/* ==================== Daily Note Button ==================== */
+
+.daily-note-btn {
+    transition: all 0.2s ease !important;
+}
+
+.daily-note-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+}
+
 /* ==================== Page Layout ==================== */
 
 .page-wrapper {
@@ -695,5 +748,9 @@ hulu-text-font {
     
     .pagination {
         flex-wrap: wrap;
+    }
+    
+    .nav-context-menu {
+        max-width: 90vw;
     }
 }

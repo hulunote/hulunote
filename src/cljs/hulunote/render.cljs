@@ -16,6 +16,15 @@
 (defonce editing-nav-id (atom nil))
 (defonce editing-content (atom ""))
 
+;; State for context menu
+(defonce context-menu-state (atom {:visible false
+                                    :x 0
+                                    :y 0
+                                    :nav-id nil
+                                    :content ""
+                                    :note-id nil
+                                    :database-name nil}))
+
 (defn toggle-nav-display!
   "Toggle the is-display property of a nav (expand/collapse children)"
   [db nav-id current-is-display note-id database-name]
@@ -59,6 +68,110 @@
         :content new-content}])
     ;; Clear editing state
     (cancel-editing!)))
+
+;; ==================== Context Menu Functions ====================
+
+(defn show-context-menu!
+  "Show context menu at specified position"
+  [e nav-id content note-id database-name]
+  (.preventDefault e)
+  (.stopPropagation e)
+  (reset! context-menu-state
+    {:visible true
+     :x (.-clientX e)
+     :y (.-clientY e)
+     :nav-id nav-id
+     :content content
+     :note-id note-id
+     :database-name database-name}))
+
+(defn hide-context-menu!
+  "Hide context menu"
+  []
+  (swap! context-menu-state assoc :visible false))
+
+(defn copy-nav-content!
+  "Copy nav content to clipboard"
+  [content]
+  (let [textarea (.createElement js/document "textarea")]
+    (set! (.-value textarea) (or content ""))
+    (set! (.-style textarea) "position: fixed; left: -9999px;")
+    (.appendChild (.-body js/document) textarea)
+    (.select textarea)
+    (.execCommand js/document "copy")
+    (.removeChild (.-body js/document) textarea)
+    (u/alert "Content copied to clipboard!")))
+
+(defn delete-nav!
+  "Delete a nav node"
+  [nav-id note-id database-name]
+  (let [nav (u/get-nav-by-id @db/dsdb nav-id)
+        parid (:origin-parid nav)]
+    ;; Remove from parent's children in local datascript
+    (when parid
+      (d/transact! db/dsdb
+        [[:db/retract [:id parid] :parid [:id nav-id]]]))
+    ;; Delete the nav entity
+    (d/transact! db/dsdb
+      [[:db/retractEntity [:id nav-id]]])
+    ;; Sync deletion to backend
+    (re-frame/dispatch-sync
+      [:delete-nav
+       {:database-name database-name
+        :note-id note-id
+        :id nav-id}])))
+
+(rum/defc context-menu < rum/reactive
+  "Context menu component for nav bullet"
+  []
+  (let [{:keys [visible x y nav-id content note-id database-name]} (rum/react context-menu-state)]
+    (when visible
+      [:div.nav-context-menu
+       {:style {:position "fixed"
+                :left (str x "px")
+                :top (str y "px")
+                :background "#2a2f3a"
+                :border "1px solid #444"
+                :border-radius "6px"
+                :box-shadow "0 4px 12px rgba(0,0,0,0.3)"
+                :z-index 10000
+                :min-width "150px"
+                :padding "4px 0"}
+        :on-mouse-leave hide-context-menu!}
+       ;; Show current position info
+       [:div.context-menu-header
+        {:style {:padding "8px 12px"
+                 :color "#888"
+                 :font-size "11px"
+                 :border-bottom "1px solid #444"}}
+        (str "Node ID: " (subs (or nav-id "") 0 8) "...")]
+       ;; Copy content option
+       [:div.context-menu-item
+        {:style {:padding "8px 12px"
+                 :cursor "pointer"
+                 :color "#fff"
+                 :font-size "13px"}
+         :on-mouse-over #(set! (-> % .-target .-style .-background) "#3a4555")
+         :on-mouse-out #(set! (-> % .-target .-style .-background) "transparent")
+         :on-click (fn [e]
+                     (.stopPropagation e)
+                     (copy-nav-content! content)
+                     (hide-context-menu!))}
+        "📋 Copy Content"]
+       ;; Delete node option
+       [:div.context-menu-item
+        {:style {:padding "8px 12px"
+                 :cursor "pointer"
+                 :color "#ff6b6b"
+                 :font-size "13px"}
+         :on-mouse-over #(set! (-> % .-target .-style .-background) "#3a4555")
+         :on-mouse-out #(set! (-> % .-target .-style .-background) "transparent")
+         :on-click (fn [e]
+                     (.stopPropagation e)
+                     (when (js/confirm "Are you sure you want to delete this node?")
+                       (delete-nav! nav-id note-id database-name))
+                     (hide-context-menu!))}
+        "🗑️ Delete Node"]])))
 
 ;; ==================== Sibling Navigation Helpers ====================
 
@@ -236,12 +349,38 @@
    - Tab: indent (increase depth, become child of prev sibling)
    - Shift+Tab: outdent (decrease depth, become sibling of parent)
    - Enter: save and create new sibling
-   - Escape: cancel editing"
+   - Escape: cancel editing
+   - Backspace/Delete: delete node when content is empty"
   [e nav-id note-id database-name]
   (let [key-code (.-keyCode e)
         shift? (.-shiftKey e)
-        saved-content @editing-content]
+        saved-content @editing-content
+        current-content @editing-content]
     (cond
+      ;; Backspace key (8) or Delete key (46) - delete node when content is empty
+      (and (or (= key-code 8) (= key-code 46))
+           (empty? current-content))
+      (do
+        (.preventDefault e)
+        ;; Find previous sibling or parent to focus after deletion
+        (let [prev-sibling (find-prev-sibling nav-id)
+              nav (u/get-nav-by-id @db/dsdb nav-id)
+              parent-nav (when-let [parid (:origin-parid nav)]
+                          (u/get-nav-by-id @db/dsdb parid))
+              next-focus-id (or (:id prev-sibling)
+                               (when (and parent-nav 
+                                         (not= (:id parent-nav) db/root-id)
+                                         (not= (:content parent-nav) "ROOT"))
+                                 (:id parent-nav)))]
+          ;; Delete the current nav
+          (delete-nav! nav-id note-id database-name)
+          ;; Focus on the previous sibling or parent
+          (when next-focus-id
+            (let [next-nav (u/get-nav-by-id @db/dsdb next-focus-id)]
+              (js/setTimeout
+                #(start-editing! next-focus-id (or (:content next-nav) ""))
+                50)))))
+      
       ;; Tab key - indent (make child of previous sibling)
       (and (= key-code 9) (not shift?))
       (do
@@ -284,8 +423,8 @@
     (seq (:parid nav))))
 
 (rum/defc nav-bullet < rum/reactive
-  "Bullet point component with expand/collapse functionality"
-  [db nav-id is-display note-id database-name]
+  "Bullet point component with expand/collapse functionality and context menu"
+  [db nav-id is-display note-id database-name content]
   (let [has-child (has-children? db nav-id)]
     [:span {:class (str "controls hulu-text-font " 
                         (when has-child "has-children"))
@@ -302,7 +441,9 @@
             :on-click (fn [e]
                         (u/stop-click-bubble e)
                         (when has-child
-                          (toggle-nav-display! db nav-id is-display note-id database-name)))}
+                          (toggle-nav-display! db nav-id is-display note-id database-name)))
+            :on-context-menu (fn [e]
+                              (show-context-menu! e nav-id content note-id database-name))}
      (if has-child
        ;; Show triangle for nodes with children
        [:span {:class (str "expand-icon " (if is-display "expanded" "collapsed"))
@@ -346,8 +487,7 @@
         :on-key-down #(handle-key-down % nav-id note-id database-name)
         :on-blur #(save-nav-content! nav-id note-id database-name)}]
       [:span.nav-content
-       {:on-click #(start-editing! nav-id content)
-        :style {:cursor "text"
+       {:style {:cursor "text"
                 :min-height "20px"
                 :display "inline-block"
                 :min-width "100px"}}
@@ -361,13 +501,20 @@
                 hulunote-note content parser-content
                 properties same-deep-order updated-at
                 created-at last-user-cursor]}
-        (u/get-nav-by-id db id)]
+        (u/get-nav-by-id db id)
+        is-editing (= id (rum/react editing-nav-id))]
     [:div.nav-item
+     ;; Entire row is clickable to enter edit mode
      [:div.head-dot.flex
       {:style {:padding-left "13px"
                :padding-top "5px"
-               :padding-bottom "5px"}}
-      (nav-bullet db id is-display note-id database-name)
+               :padding-bottom "5px"
+               :cursor "text"}
+       :on-click (fn [e]
+                   ;; Only start editing if not clicking on bullet
+                   (when-not (.. e -target -classList (contains "controls"))
+                     (start-editing! id content)))}
+      (nav-bullet db id is-display note-id database-name content)
       (nav-content-editor id content note-id database-name)]
      (when is-display
        [:div.content-box {:style {:margin-left "24px"
@@ -388,3 +535,8 @@
                                  ;; Try to get database name from database-id
                                  db-id))]
         (nav-input db id actual-note-id actual-db-name)))))
+
+;; Global context menu - render at app level
+(rum/defc global-context-menu < rum/reactive
+  []
+  (context-menu))

@@ -49,6 +49,9 @@
   (let [db (rum/react conn)
         {:keys [route-name params]} (db/get-route db)]
     [:div
+     {:on-click (fn [e]
+                  ;; Close context menu when clicking outside
+                  (render/hide-context-menu!))}
      (case route-name
        ;; Root path: show home page if not logged in or expired, otherwise show database list
        :database (if (u/is-expired?)
@@ -67,6 +70,8 @@
        :price (price-page db)
        :download (download-page db)
        (not-found-component))
+     ;; Global context menu - rendered at app level
+     (render/global-context-menu)
      (comps/toast db)]))
 
 (defn hook-browser-navigation! []
