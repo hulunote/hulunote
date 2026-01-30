@@ -122,7 +122,8 @@
       
       ;; Title
       [:div.flex.flex-row.items-center.justify-between
-       {:style {:margin-bottom "32px"}}
+       {:style {:margin-bottom "32px"
+                :margin-top "60px"}}
        [:h1 {:style {:font-size "32px"
                      :font-weight "700"
                      :color "#1a1a2e"
