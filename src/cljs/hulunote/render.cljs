@@ -8,6 +8,7 @@
             [re-frame.core :as re-frame]))
 
 (declare render-navs)
+(declare get-visible-nav-list)
 
 (rum/defc label [text]
   [:div {:class "label"} text])
@@ -15,6 +16,9 @@
 ;; State atom for tracking which nav is being edited
 (defonce editing-nav-id (atom nil))
 (defonce editing-content (atom ""))
+
+;; State for cursor position (used for up/down navigation to maintain column position)
+(defonce target-cursor-column (atom nil))
 
 ;; State for context menu
 (defonce context-menu-state (atom {:visible false
@@ -41,16 +45,51 @@
         :is-display new-is-display}])))
 
 (defn start-editing!
-  "Start editing a nav"
+  "Start editing a nav with optional cursor position"
+  ([nav-id content]
+   (start-editing! nav-id content nil))
+  ([nav-id content cursor-pos]
+   (reset! editing-nav-id nav-id)
+   (reset! editing-content (or content ""))
+   ;; Set cursor position after the input is rendered
+   (when cursor-pos
+     (js/setTimeout
+       (fn []
+         (when-let [input (.querySelector js/document ".nav-editor-input")]
+           (let [len (count (or content ""))
+                 pos (min cursor-pos len)]
+             (.setSelectionRange input pos pos))))
+       10))))
+
+(defn start-editing-at-end!
+  "Start editing a nav with cursor at the end"
   [nav-id content]
   (reset! editing-nav-id nav-id)
-  (reset! editing-content (or content "")))
+  (reset! editing-content (or content ""))
+  (js/setTimeout
+    (fn []
+      (when-let [input (.querySelector js/document ".nav-editor-input")]
+        (let [len (count (or content ""))]
+          (.setSelectionRange input len len))))
+    10))
+
+(defn start-editing-at-start!
+  "Start editing a nav with cursor at the beginning"
+  [nav-id content]
+  (reset! editing-nav-id nav-id)
+  (reset! editing-content (or content ""))
+  (js/setTimeout
+    (fn []
+      (when-let [input (.querySelector js/document ".nav-editor-input")]
+        (.setSelectionRange input 0 0)))
+    10))
 
 (defn cancel-editing!
   "Cancel editing"
   []
   (reset! editing-nav-id nil)
-  (reset! editing-content ""))
+  (reset! editing-content "")
+  (reset! target-cursor-column nil))
 
 (defn save-nav-content!
   "Save the edited content of a nav"
@@ -234,6 +273,57 @@
     (when (seq children)
       (:same-deep-order (last children)))))
 
+;; ==================== Visual Navigation Helpers ====================
+;; These functions help navigate between visible nodes (respecting collapsed state)
+
+(defn collect-visible-navs
+  "Recursively collect all visible navs in display order.
+   Only includes children if parent's is-display is true.
+   Returns a vector of {:id nav-id :content content}"
+  [nav-id]
+  (let [nav (u/get-nav-by-id @db/dsdb nav-id)
+        nav-with-children (u/get-nav-sub-navs-sorted @db/dsdb nav-id)
+        children (:parid nav-with-children)
+        is-display (:is-display nav)]
+    (if (and (seq children) is-display)
+      ;; Has visible children - include this nav and recurse into children
+      (into [{:id nav-id :content (:content nav)}]
+            (mapcat #(collect-visible-navs (:id %)) children))
+      ;; No children or collapsed - just this nav
+      [{:id nav-id :content (:content nav)}])))
+
+(defn get-visible-nav-list
+  "Get a flat list of all visible navs starting from root-nav-id.
+   This represents the visual order of navs as seen by the user."
+  [root-nav-id]
+  (let [root-nav (u/get-nav-sub-navs-sorted @db/dsdb root-nav-id)
+        children (:parid root-nav)]
+    ;; Start from root's children (don't include root itself)
+    (vec (mapcat #(collect-visible-navs (:id %)) children))))
+
+(defn find-visible-nav-index
+  "Find the index of a nav in the visible nav list"
+  [visible-list nav-id]
+  (first (keep-indexed (fn [idx item]
+                         (when (= (:id item) nav-id) idx))
+                       visible-list)))
+
+(defn get-prev-visible-nav
+  "Get the previous visible nav (the one above in visual hierarchy)"
+  [root-nav-id current-nav-id]
+  (let [visible-list (get-visible-nav-list root-nav-id)
+        current-idx (find-visible-nav-index visible-list current-nav-id)]
+    (when (and current-idx (> current-idx 0))
+      (nth visible-list (dec current-idx)))))
+
+(defn get-next-visible-nav
+  "Get the next visible nav (the one below in visual hierarchy)"
+  [root-nav-id current-nav-id]
+  (let [visible-list (get-visible-nav-list root-nav-id)
+        current-idx (find-visible-nav-index visible-list current-nav-id)]
+    (when (and current-idx (< current-idx (dec (count visible-list))))
+      (nth visible-list (inc current-idx)))))
+
 ;; ==================== Nav Operations ====================
 
 (defn create-sibling-nav!
@@ -344,8 +434,21 @@
 
 ;; ==================== Keyboard Event Handler ====================
 
+(defn get-root-nav-id
+  "Get the root nav id for the current note"
+  [note-id]
+  (when note-id
+    (let [note (d/q '[:find (pull ?e [:hulunote-notes/root-nav-id]) .
+                      :in $ ?note-id
+                      :where [?e :hulunote-notes/id ?note-id]]
+                 @db/dsdb note-id)]
+      (:hulunote-notes/root-nav-id note))))
+
 (defn handle-key-down
   "Handle keyboard events in edit mode.
+   - Arrow Up/Down: navigate between visible nodes (like editing a document)
+   - Arrow Left at position 0: move to end of previous visible node
+   - Arrow Right at end: move to start of next visible node
    - Tab: indent (increase depth, become child of prev sibling)
    - Shift+Tab: outdent (decrease depth, become sibling of parent)
    - Enter: save and create new sibling
@@ -355,8 +458,72 @@
   (let [key-code (.-keyCode e)
         shift? (.-shiftKey e)
         saved-content @editing-content
-        current-content @editing-content]
+        current-content @editing-content
+        input (.-target e)
+        cursor-pos (.-selectionStart input)
+        content-length (count current-content)
+        root-nav-id (get-root-nav-id note-id)]
     (cond
+      ;; Arrow Up (38) - move to previous visible node
+      (= key-code 38)
+      (when-let [prev-nav (get-prev-visible-nav root-nav-id nav-id)]
+        (.preventDefault e)
+        ;; Save current content first
+        (d/transact! db/dsdb
+          [[:db/add [:id nav-id] :content current-content]])
+        ;; Remember target column for maintaining position across lines
+        (when-not @target-cursor-column
+          (reset! target-cursor-column cursor-pos))
+        (let [prev-content (or (:content prev-nav) "")
+              prev-len (count prev-content)
+              ;; Try to maintain the same column position, but clamp to content length
+              new-cursor-pos (min @target-cursor-column prev-len)]
+          (start-editing! (:id prev-nav) prev-content new-cursor-pos)))
+      
+      ;; Arrow Down (40) - move to next visible node
+      (= key-code 40)
+      (when-let [next-nav (get-next-visible-nav root-nav-id nav-id)]
+        (.preventDefault e)
+        ;; Save current content first
+        (d/transact! db/dsdb
+          [[:db/add [:id nav-id] :content current-content]])
+        ;; Remember target column for maintaining position across lines
+        (when-not @target-cursor-column
+          (reset! target-cursor-column cursor-pos))
+        (let [next-content (or (:content next-nav) "")
+              next-len (count next-content)
+              ;; Try to maintain the same column position, but clamp to content length
+              new-cursor-pos (min @target-cursor-column next-len)]
+          (start-editing! (:id next-nav) next-content new-cursor-pos)))
+      
+      ;; Arrow Left (37) at position 0 - move to end of previous visible node
+      (and (= key-code 37) (= cursor-pos 0) (not shift?))
+      (when-let [prev-nav (get-prev-visible-nav root-nav-id nav-id)]
+        (.preventDefault e)
+        ;; Save current content first
+        (d/transact! db/dsdb
+          [[:db/add [:id nav-id] :content current-content]])
+        ;; Clear target column since we're doing horizontal movement
+        (reset! target-cursor-column nil)
+        (let [prev-content (or (:content prev-nav) "")]
+          (start-editing-at-end! (:id prev-nav) prev-content)))
+      
+      ;; Arrow Right (39) at end - move to start of next visible node
+      (and (= key-code 39) (= cursor-pos content-length) (not shift?))
+      (when-let [next-nav (get-next-visible-nav root-nav-id nav-id)]
+        (.preventDefault e)
+        ;; Save current content first
+        (d/transact! db/dsdb
+          [[:db/add [:id nav-id] :content current-content]])
+        ;; Clear target column since we're doing horizontal movement
+        (reset! target-cursor-column nil)
+        (let [next-content (or (:content next-nav) "")]
+          (start-editing-at-start! (:id next-nav) next-content)))
+      
+      ;; Other arrow keys - clear target column when not up/down
+      (or (= key-code 37) (= key-code 39))
+      (reset! target-cursor-column nil)
+      
       ;; Backspace key (8) or Delete key (46) - delete node when content is empty
       (and (or (= key-code 8) (= key-code 46))
            (empty? current-content))
@@ -367,18 +534,21 @@
               nav (u/get-nav-by-id @db/dsdb nav-id)
               parent-nav (when-let [parid (:origin-parid nav)]
                           (u/get-nav-by-id @db/dsdb parid))
-              next-focus-id (or (:id prev-sibling)
+              ;; Try to use visible navigation for better UX
+              prev-visible (get-prev-visible-nav root-nav-id nav-id)
+              next-focus-id (or (:id prev-visible)
+                               (:id prev-sibling)
                                (when (and parent-nav 
                                          (not= (:id parent-nav) db/root-id)
                                          (not= (:content parent-nav) "ROOT"))
                                  (:id parent-nav)))]
           ;; Delete the current nav
           (delete-nav! nav-id note-id database-name)
-          ;; Focus on the previous sibling or parent
+          ;; Focus on the previous visible node
           (when next-focus-id
             (let [next-nav (u/get-nav-by-id @db/dsdb next-focus-id)]
               (js/setTimeout
-                #(start-editing! next-focus-id (or (:content next-nav) ""))
+                #(start-editing-at-end! next-focus-id (or (:content next-nav) ""))
                 50)))))
       
       ;; Tab key - indent (make child of previous sibling)
@@ -405,6 +575,7 @@
       (and (= key-code 13) (not shift?))
       (do
         (.preventDefault e)
+        (reset! target-cursor-column nil)
         (save-nav-content! nav-id note-id database-name)
         (js/setTimeout
           #(create-sibling-nav! nav-id note-id database-name)
@@ -412,7 +583,13 @@
       
       ;; Escape key - cancel
       (= key-code 27)
-      (cancel-editing!))))
+      (cancel-editing!)
+      
+      ;; Any other key - clear target column (typing resets column tracking)
+      :else
+      (when (and (not (#{37 38 39 40} key-code)) ; not arrow keys
+                 (not (#{16 17 18 91} key-code))) ; not modifier keys
+        (reset! target-cursor-column nil)))))
 
 ;; ==================== UI Components ====================
 
@@ -513,6 +690,7 @@
        :on-click (fn [e]
                    ;; Only start editing if not clicking on bullet
                    (when-not (.. e -target -classList (contains "controls"))
+                     (reset! target-cursor-column nil)
                      (start-editing! id content)))}
       (nav-bullet db id is-display note-id database-name content)
       (nav-content-editor id content note-id database-name)]
