@@ -21,13 +21,13 @@
     "dist:mac": "electron-builder --mac",
     "dist:win": "electron-builder --win",
     "dist:linux": "electron-builder --linux",
-    "dist:all": "electron-builder --mac --win --linux",
-    "postinstall": "electron-builder install-app-deps"
+    "dist:all": "electron-builder --mac --win --linux"
   },
   "dependencies": {},
   "devDependencies": {
     "electron": "^28.1.0",
-    "electron-builder": "^24.9.1"
+    "electron-builder": "^25.1.8",
+    "typescript": "^5.3.3"
   },
   "build": {
     "appId": "com.hulunote.app",
@@ -48,30 +48,20 @@
     },
     "mac": {
       "category": "public.app-category.productivity",
-      "icon": "icons/icon.icns",
+      "icon": "icons/icon.png",
       "target": [
         {
           "target": "dmg",
-          "arch": ["x64", "arm64"]
-        },
-        {
-          "target": "zip",
-          "arch": ["x64", "arm64"]
+          "arch": ["universal"]
         }
       ],
-      "darkModeSupport": true,
-      "hardenedRuntime": true,
-      "gatekeeperAssess": false
+      "darkModeSupport": true
     },
     "win": {
-      "icon": "icons/icon.ico",
+      "icon": "icons/icon.png",
       "target": [
         {
           "target": "nsis",
-          "arch": ["x64", "ia32"]
-        },
-        {
-          "target": "portable",
           "arch": ["x64"]
         }
       ]
@@ -87,16 +77,9 @@
       "icon": "icons",
       "target": [
         "AppImage",
-        "deb",
-        "rpm"
+        "deb"
       ],
-      "category": "Office",
-      "maintainer": "Hulunote Team <chanshunli@gmail.com>"
-    },
-    "publish": {
-      "provider": "github",
-      "owner": "hulunote",
-      "repo": "hulunote"
+      "category": "Office"
     }
   }
 }
