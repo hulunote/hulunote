@@ -7,10 +7,114 @@
             [hulunote.parser :as parser]
             [instaparse.core :as insta]
             [hulunote.storage :as storage]
+            [re-frame.core :as re-frame]
             ["@material-ui/core" :refer [Tooltip]])
   (:require-macros
    [daiquiri.core :refer [html]])
   (:import (goog.date DateTime Interval)))
+
+;; ==================== Bi-directional Link Functions ====================
+
+(defn get-current-database-name
+  "Get current database name from URL hash, with URL decoding"
+  []
+  (let [hash (.-hash js/window.location)
+        ;; Parse hash like "#/app/database-name/..."
+        match (re-find #"#/app/([^/]+)/" hash)]
+    (when match
+      ;; URL decode the database name (e.g., "Test%20Knowledge%20Base" -> "Test Knowledge Base")
+      (js/decodeURIComponent (second match)))))
+
+(defn find-note-by-title
+  "Find a note by its title in the current database"
+  [db title]
+  (d/q '[:find ?note-id .
+         :in $ ?title
+         :where
+         [?e :hulunote-notes/title ?title]
+         [?e :hulunote-notes/id ?note-id]]
+    db title))
+
+(defn get-value
+  "Get value from map, trying both keyword and string keys"
+  [m k]
+  (or (get m k)
+      (get m (name k))
+      (get m (keyword (clojure.string/replace (name k) "/" "-")))))
+
+(defn navigate-to-note-by-title!
+  "Navigate to a note by title. If not found, create it first."
+  [title]
+  (let [database-name (get-current-database-name)
+        existing-note-id (find-note-by-title @db/dsdb title)]
+    (prn "navigate-to-note-by-title! database-name:" database-name "title:" title "existing-note-id:" existing-note-id)
+    (if existing-note-id
+      ;; Note exists, navigate directly
+      (router/go-to-note! database-name existing-note-id)
+      ;; Note doesn't exist, create it first
+      (when database-name
+        (re-frame/dispatch-sync
+          [:create-note
+           {:database-name database-name
+            :title title
+            :op-fn (fn [note-info]
+                     (prn "Note created from bi-directional link:" note-info)
+                     ;; Try different possible key formats from backend
+                     (let [id (or (get-value note-info :hulunote-notes/id)
+                                  (get-value note-info :id)
+                                  (:id note-info))
+                           root-nav-id (or (get-value note-info :hulunote-notes/root-nav-id)
+                                           (get-value note-info :root-nav-id)
+                                           (:root_nav_id note-info)
+                                           (:root-nav-id note-info))]
+                       (prn "Parsed bi-directional link note - id:" id "root-nav-id:" root-nav-id)
+                       (if (and id root-nav-id)
+                         (do
+                           ;; Add note to local datascript
+                           (d/transact! db/dsdb
+                             [{:hulunote-notes/id id
+                               :hulunote-notes/title title
+                               :hulunote-notes/root-nav-id root-nav-id
+                               :hulunote-notes/database-id database-name
+                               :hulunote-notes/is-delete false
+                               :hulunote-notes/is-public false
+                               :hulunote-notes/is-shortcut false
+                               :hulunote-notes/updated-at (.toISOString (js/Date.))}])
+                           ;; Add root nav to datascript
+                           (d/transact! db/dsdb
+                             [{:id root-nav-id
+                               :content "ROOT"
+                               :hulunote-note id
+                               :same-deep-order 0
+                               :is-display true
+                               :origin-parid db/root-id}])
+                           ;; Create the first editable nav node
+                           (let [first-nav-id (str (d/squuid))]
+                             (re-frame/dispatch-sync
+                               [:create-nav
+                                {:database-name database-name
+                                 :note-id id
+                                 :id first-nav-id
+                                 :parid root-nav-id
+                                 :content ""
+                                 :order 0
+                                 :op-fn (fn [nav-data]
+                                          (prn "First nav created for bi-directional link note:" nav-data)
+                                          ;; Add nav to local datascript
+                                          (d/transact! db/dsdb
+                                            [{:id first-nav-id
+                                              :content ""
+                                              :hulunote-note id
+                                              :same-deep-order 0
+                                              :is-display true
+                                              :origin-parid root-nav-id}
+                                             [:db/add [:id root-nav-id] :parid [:id first-nav-id]]])
+                                          ;; Navigate to the new note page
+                                          (router/go-to-note! database-name id))}])))
+                         ;; If no root-nav-id, just navigate (backend may auto-create)
+                         (when id
+                           (prn "Warning: No root-nav-id returned for bi-directional link note, navigating anyway")
+                           (router/go-to-note! database-name id)))))}])))))
 
 ;; Header for editor pages - fixed at top with proper height
 (rum/defc header-editor []
@@ -80,17 +184,41 @@
 
 
 (defn render-recursion-page-link
+  "Render a clickable page link [[title]] that navigates to the note"
   [title]
-  [:span.hulunote-note-link
-   [:span.link-style.blue "[["]
-   [:span.link-titlt-style title]
-   [:span.link-style.blue "]]"]])
+  (let [title-str (if (sequential? title)
+                    (apply str (flatten title))
+                    (str title))]
+    [:span.hulunote-note-link
+     {:style {:cursor "pointer"}
+      :on-click (fn [e]
+                  (u/stop-click-bubble e)
+                  (navigate-to-note-by-title! title-str))}
+     [:span.link-style.blue "[["]
+     [:span.link-title-style
+      {:style {:color "#4a90d9"
+               :text-decoration "underline"
+               :text-decoration-style "dotted"}}
+      title-str]
+     [:span.link-style.blue "]]"]]))
 
 (defn render-recursion-page-tag
+  "Render a clickable page tag #title that navigates to the note"
   [title]
-  [:span.hulunote-note-link
-   [:span.link-style.blue "#"]
-   [:span.link-titlt-style title]])
+  (let [title-str (if (sequential? title)
+                    (apply str (flatten title))
+                    (str title))]
+    [:span.hulunote-note-link
+     {:style {:cursor "pointer"}
+      :on-click (fn [e]
+                  (u/stop-click-bubble e)
+                  (navigate-to-note-by-title! title-str))}
+     [:span.link-style.blue "#"]
+     [:span.link-title-style
+      {:style {:color "#4a90d9"
+               :text-decoration "underline"
+               :text-decoration-style "dotted"}}
+      title-str]]))
 
 (declare parse-and-render)
 

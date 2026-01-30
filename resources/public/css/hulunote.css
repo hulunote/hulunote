@@ -754,3 +754,48 @@ hulu-text-font {
         max-width: 90vw;
     }
 }
+
+
+/* ==================== Bi-directional Links ==================== */
+
+.hulunote-note-link {
+    display: inline;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.hulunote-note-link:hover {
+    opacity: 0.8;
+}
+
+.hulunote-note-link:active {
+    opacity: 0.6;
+}
+
+.link-title-style {
+    color: #4a90d9 !important;
+    text-decoration: underline;
+    text-decoration-style: dotted;
+    text-underline-offset: 2px;
+    transition: all 0.15s ease;
+}
+
+.link-title-style:hover {
+    color: #6ab0ff !important;
+    text-decoration-style: solid;
+}
+
+.link-style.blue {
+    color: #7c8bab !important;
+    font-weight: 500;
+}
+
+/* Page link hover effect - highlight the brackets */
+.hulunote-note-link:hover .link-style.blue {
+    color: #4a90d9 !important;
+}
+
+/* Hashtag specific styles */
+.hulunote-note-link .link-style.blue:first-child {
+    margin-right: 0;
+}
