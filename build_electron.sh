@@ -9,6 +9,12 @@ echo "=================================="
 echo "Hulunote Electron Build"
 echo "=================================="
 
+export PATH="/usr/local/opt/openjdk@8/bin:$PATH"
+export CPPFLAGS="-I/usr/local/opt/openjdk@8/include"
+
+echo "build hulunote cljs"
+npx shadow-cljs release hulunote
+
 # Colors for output
 RED='\033[0;31m'
 GREEN='\033[0;32m'
