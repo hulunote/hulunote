@@ -262,7 +262,7 @@
                    :font-size "14px"
                    :font-weight "500"
                    :cursor "pointer"
-                   :display "flex"
+                   :display "none";;"flex"
                    :align-items "center"
                    :justify-content "center"
                    :margin-bottom "16px"
