@@ -12,6 +12,8 @@ echo "=================================="
 export PATH="/usr/local/opt/openjdk@8/bin:$PATH"
 export CPPFLAGS="-I/usr/local/opt/openjdk@8/include"
 
+rm -fr electron/app/ electron/dist/
+
 echo "build hulunote cljs"
 npx shadow-cljs release hulunote
 
