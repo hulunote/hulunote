@@ -8,6 +8,12 @@
             [hulunote.components :as comps]
             [re-frame.core :as re-frame]))
 
+;; ==================== Helper Functions ====================
+(defn remove-nil-values
+  "Remove nil values from a map to avoid datascript errors"
+  [m]
+  (into {} (remove (fn [[k v]] (nil? v)) m)))
+
 ;; ==================== State ====================
 (defonce context-menu-state (atom {:visible false
                                    :x 0
@@ -105,7 +111,8 @@
                                    {:database-name name
                                     :op-fn (fn [data]
                                              (when-let [db-info (:database data)]
-                                               (d/transact! db/dsdb [db-info]))
+                                               ;; Remove nil values before storing in datascript
+                                               (d/transact! db/dsdb [(remove-nil-values db-info)]))
                                              (swap! create-modal-state assoc :visible false :database-name "")
                                              (u/alert (str "Database \"" name "\" created successfully")))}])))))
            :style {:width "100%"
@@ -138,7 +145,8 @@
                               {:database-name name
                                :op-fn (fn [data]
                                         (when-let [db-info (:database data)]
-                                          (d/transact! db/dsdb [db-info]))
+                                          ;; Remove nil values before storing in datascript
+                                          (d/transact! db/dsdb [(remove-nil-values db-info)]))
                                         (swap! create-modal-state assoc :visible false :database-name "")
                                         (u/alert (str "Database \"" name "\" created successfully")))}]))))
            :style {:padding "12px 24px"
@@ -233,7 +241,8 @@
           {:op-fn
            (fn [{:keys [database-list settings]}]
              (doseq [item database-list]
-               (d/transact! db/dsdb [item])))}])
+               ;; Remove nil values before storing in datascript
+               (d/transact! db/dsdb [(remove-nil-values item)])))}])
        state)}
   rum/reactive
   [state db]
