@@ -9,19 +9,12 @@
             [hulunote.storage :as storage]
             [hulunote.db :as db]))
 
-(defn valid-cell-number [mail]
-  (re-frame/dispatch-sync
-    [:send-ack-msg  {:email mail
-                     :op-fn #(u/alert (str "Verification code sent!"))}]))
 
-(defn alert-fn [a]
-  )
-
-(defn signup-api [{:keys [username password platform-code ack-number]}]
+(defn signup-api [{:keys [username password platform-code registration-code]}]
   (re-frame/dispatch-sync
     [:web-signup {:email username
                   :password password
-                  :ack-number ack-number
+                  :registration_code registration-code
                   :binding-code platform-code
                   :op-fn #(u/alert (str "Sign up successful!"))}]))
 
@@ -113,7 +106,7 @@
   (rum/local "" ::password)
   (rum/local "" ::password-confirm)
   (rum/local "" ::platform-code)
-  (rum/local "" ::cell-ack)
+  (rum/local "" ::registration-code)
   [state db]
   (let [is-signup (if (::code state)
                     (atom true)
@@ -122,7 +115,7 @@
         password (::password state)
         password-confirm (::password-confirm state)
         platform-code (::platform-code state)
-        cell-ack (::cell-ack state)]
+        registration-code (::registration-code state)]
     [:div.flex.flex-column
      {:style {:min-height "100vh"
               :background "#f8f9fa"}}
@@ -197,51 +190,23 @@
         (when @is-signup
           [:div
            ;; Platform Code
-           (input-field "Bind Code (Optional)" "Platform binding code" "text"
+           #_(input-field "Bind Code (Optional)" "Platform binding code" "text"
                         (if (::code state) (::code state) @platform-code)
                         #(reset! platform-code (.. % -target -value)))
            
-           ;; Verification Code
-           [:div {:style {:margin-bottom "20px"}}
-            [:label {:style {:display "block"
-                             :font-size "14px"
-                             :font-weight "600"
-                             :color "#1a1a2e"
-                             :margin-bottom "8px"}}
-             "Verification Code"]
-            [:div.flex {:style {:gap "12px"}}
-             [:input {:style {:flex "1"
-                              :padding "12px 16px"
-                              :font-size "15px"
-                              :border "2px solid #e0e0e0"
-                              :border-radius "10px"
-                              :outline "none"
-                              :box-sizing "border-box"}
-                      :placeholder "Enter code"
-                      :type "text"
-                      :on-change #(reset! cell-ack (.. % -target -value))}]
-             [:button.pointer
-              {:on-click #(valid-cell-number @username)
-               :style {:padding "12px 20px"
-                       :font-size "14px"
-                       :font-weight "600"
-                       :color "#667eea"
-                       :background "#f0f0ff"
-                       :border "2px solid #667eea"
-                       :border-radius "10px"
-                       :cursor "pointer"
-                       :white-space "nowrap"}}
-              "Send"]]]])]
+           ;; Registration Code
+           (input-field "Registration Code" "Enter your registration code" "text"
+                        @registration-code
+                        #(reset! registration-code (.. % -target -value)))])]
        
        ;; Submit Button
        [:div {:style {:margin-bottom "24px"}}
         (if @is-signup
           (primary-button "Create Account"
                           #(signup-api {:username @username
-                                        :cell-number @username
                                         :password @password
                                         :platform-code @platform-code
-                                        :ack-number @cell-ack}))
+                                        :registration-code @registration-code}))
           (primary-button "Sign In"
                           #(if (or (empty? @username) (empty? @password))
                              (u/alert "Email and password are required")

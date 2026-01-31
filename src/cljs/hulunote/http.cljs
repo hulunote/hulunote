@@ -307,7 +307,7 @@
   :web-signup
   (fn web-signup
     [{:keys [db]  :as cofx}
-     [_ {:keys [email password ack-number binding-code op-fn]}]]
+     [_ {:keys [email password ack-number binding-code registration_code op-fn]}]]
     {:db db
      :http
      {:uri "/login/web-signup"
@@ -316,6 +316,7 @@
                :password password
                :ack-number ack-number
                :binding-code binding-code
+               :registration_code registration_code
                :binding-platform "whatsapp"}
       :callback
       {:succ
