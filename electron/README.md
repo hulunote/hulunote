@@ -97,7 +97,7 @@ electron/
 The backend server URL is configured in `main.js`:
 
 - Development: `http://127.0.0.1:6689`
-- Production: `http://104.244.95.160:6689`
+- Production: `https://www.hulunote.top`
 
 To change the production backend URL, edit the `BACKEND_URL` constant in `main.js`.
 

@@ -11,7 +11,7 @@ const isDev = process.env.NODE_ENV === 'development' || !app.isPackaged;
 // Backend server URL
 const BACKEND_URL = isDev 
   ? 'http://127.0.0.1:6689' 
-  : 'http://104.244.95.160:6689';
+  : 'https://www.hulunote.top';
 
 function createWindow() {
   // Create the browser window
