@@ -16,7 +16,7 @@
                   :password password
                   :registration_code registration-code
                   :binding-code platform-code
-                  :op-fn #(u/alert (str "Sign up successful!"))}]))
+                  :op-fn #(u/alert (str "Sign up successful! Please reload for Signin"))}]))
 
 (defn login-api [{:keys [username password]}]
   (re-frame/dispatch-sync
