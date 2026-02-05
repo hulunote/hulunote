@@ -47,6 +47,7 @@ open http://localhost:6689
 
 - Frontend: https://github.com/hulunote/hulunote
 - Backend: https://github.com/hulunote/hulunote-rust
+- TUI: https://github.com/hulunote/hulunote-tui
 
 ## License
 
