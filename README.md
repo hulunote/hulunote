@@ -5,6 +5,7 @@ An open-source outliner note-taking application with bidirectional linking.
 Inspired by Roam Research, designed for networked thought.
 
 ![](./demo.png)
+![](./demo-tui.png)
 
 ## Features
 
