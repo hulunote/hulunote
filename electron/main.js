@@ -35,7 +35,9 @@ function createWindow() {
     webPreferences: {
       nodeIntegration: false,
       contextIsolation: true,
-      preload: path.join(__dirname, 'preload.js')
+      preload: path.join(__dirname, 'preload.js'),
+      // 开发模式下禁用 web security 以避免 CORS 问题
+      webSecurity: !isDev
     },
     icon: path.join(__dirname, 'icons', 'icon.png'),
     titleBarStyle: process.platform === 'darwin' ? 'hiddenInset' : 'default',
