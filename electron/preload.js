@@ -8,6 +8,16 @@ contextBridge.exposeInMainWorld('electronAPI', {
   getPlatform: () => ipcRenderer.invoke('get-platform'),
   isElectron: true,
 
+  // ============= Chat / OpenRouter API =============
+  chat: {
+    setApiKey: (apiKey) => ipcRenderer.invoke('chat:set-api-key', apiKey),
+    getApiKey: () => ipcRenderer.invoke('chat:get-api-key'),
+    setModel: (model) => ipcRenderer.invoke('chat:set-model', model),
+    getModel: () => ipcRenderer.invoke('chat:get-model'),
+    getModels: () => ipcRenderer.invoke('chat:get-models'),
+    sendMessage: (params) => ipcRenderer.invoke('chat:send-message', params),
+  },
+
   // ============= MCP Configuration =============
   mcp: {
     // Settings management
@@ -27,6 +37,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
     // Tool operations
     listTools: (clientId) => ipcRenderer.invoke('mcp:list-tools', clientId),
     callTool: (params) => ipcRenderer.invoke('mcp:call-tool', params),
+    getAllTools: () => ipcRenderer.invoke('mcp:get-all-tools'),
 
     // Resource operations
     listResources: (clientId) => ipcRenderer.invoke('mcp:list-resources', clientId),

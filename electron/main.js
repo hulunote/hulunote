@@ -3,14 +3,20 @@ const path = require('path');
 const fs = require('fs');
 const fsPromises = require('fs').promises;
 const McpClientManager = require('./mcp/mcpClientManager');
+const { OpenRouterClient } = require('./api/openRouterClient');
 
 // MCP Manager instance
 let mcpManager = null;
+
+// OpenRouter client instance
+let openRouterClient = null;
 
 // MCP Configuration
 const MCP_CONFIG_PATH = path.join(app.getPath('userData'), 'hulunote-mcp-config.json');
 const DEFAULT_MCP_CONFIG = {
   mcpServers: [],
+  apiKey: '',
+  model: 'anthropic/claude-3.5-sonnet',
   lastUpdated: new Date().toISOString()
 };
 
@@ -402,6 +408,221 @@ ipcMain.handle('mcp:is-connected', async (event, clientId) => {
     return { success: true, connected };
   } catch (error) {
     return { success: false, error: error.message, connected: false };
+  }
+});
+
+// Get all tools from all connected MCP clients (for AI function calling)
+ipcMain.handle('mcp:get-all-tools', async () => {
+  try {
+    if (!mcpManager) {
+      return { success: true, tools: [] };
+    }
+
+    const clientIds = mcpManager.getAllClientIds();
+    const allTools = [];
+
+    for (const clientId of clientIds) {
+      try {
+        const tools = await mcpManager.listTools(clientId);
+        for (const tool of tools) {
+          allTools.push({
+            ...tool,
+            clientId: clientId
+          });
+        }
+      } catch (error) {
+        console.error(`Error getting tools for client ${clientId}:`, error);
+      }
+    }
+
+    return { success: true, tools: allTools };
+  } catch (error) {
+    console.error('Error getting all MCP tools:', error);
+    return { success: false, error: error.message, tools: [] };
+  }
+});
+
+// ============= OpenRouter / Chat IPC Handlers =============
+
+// Set API key
+ipcMain.handle('chat:set-api-key', async (event, apiKey) => {
+  try {
+    const settings = await loadMcpSettings();
+    settings.apiKey = apiKey;
+    await saveMcpSettings(settings);
+
+    // Create or update OpenRouter client
+    if (apiKey) {
+      openRouterClient = new OpenRouterClient(apiKey);
+    } else {
+      openRouterClient = null;
+    }
+
+    return { success: true };
+  } catch (error) {
+    console.error('Error setting API key:', error);
+    return { success: false, error: error.message };
+  }
+});
+
+// Get API key
+ipcMain.handle('chat:get-api-key', async () => {
+  try {
+    const settings = await loadMcpSettings();
+    return { success: true, apiKey: settings.apiKey || '' };
+  } catch (error) {
+    console.error('Error getting API key:', error);
+    return { success: false, error: error.message };
+  }
+});
+
+// Set model
+ipcMain.handle('chat:set-model', async (event, model) => {
+  try {
+    const settings = await loadMcpSettings();
+    settings.model = model;
+    await saveMcpSettings(settings);
+    return { success: true };
+  } catch (error) {
+    console.error('Error setting model:', error);
+    return { success: false, error: error.message };
+  }
+});
+
+// Get model
+ipcMain.handle('chat:get-model', async () => {
+  try {
+    const settings = await loadMcpSettings();
+    return { success: true, model: settings.model || 'anthropic/claude-3.5-sonnet' };
+  } catch (error) {
+    console.error('Error getting model:', error);
+    return { success: false, error: error.message };
+  }
+});
+
+// Get available models
+ipcMain.handle('chat:get-models', async () => {
+  try {
+    if (!openRouterClient) {
+      const settings = await loadMcpSettings();
+      if (!settings.apiKey) {
+        return { success: false, error: 'API key not set' };
+      }
+      openRouterClient = new OpenRouterClient(settings.apiKey);
+    }
+    const models = await openRouterClient.getModels();
+    return { success: true, models };
+  } catch (error) {
+    console.error('Error getting models:', error);
+    return { success: false, error: error.message };
+  }
+});
+
+// Send chat message
+ipcMain.handle('chat:send-message', async (event, { messages, useTools }) => {
+  try {
+    if (!openRouterClient) {
+      const settings = await loadMcpSettings();
+      if (!settings.apiKey) {
+        return { success: false, error: 'API key not set. Please configure your OpenRouter API key.' };
+      }
+      openRouterClient = new OpenRouterClient(settings.apiKey);
+    }
+
+    const settings = await loadMcpSettings();
+    const model = settings.model || 'anthropic/claude-3.5-sonnet';
+
+    // Get MCP tools if requested
+    let tools = null;
+    if (useTools && mcpManager) {
+      const clientIds = mcpManager.getAllClientIds();
+      if (clientIds.length > 0) {
+        tools = [];
+        for (const clientId of clientIds) {
+          try {
+            const clientTools = await mcpManager.listTools(clientId);
+            for (const tool of clientTools) {
+              tools.push({
+                type: 'function',
+                function: {
+                  name: `${clientId}__${tool.name}`,
+                  description: tool.description || '',
+                  parameters: tool.inputSchema || { type: 'object', properties: {} }
+                }
+              });
+            }
+          } catch (error) {
+            console.error(`Error getting tools for ${clientId}:`, error);
+          }
+        }
+      }
+    }
+
+    const response = await openRouterClient.sendMessage({
+      model,
+      messages,
+      tools: tools && tools.length > 0 ? tools : null
+    });
+
+    // Check if the response contains tool calls
+    const assistantMessage = response.choices[0].message;
+
+    if (assistantMessage.tool_calls && assistantMessage.tool_calls.length > 0) {
+      // Execute tool calls
+      const toolResults = [];
+
+      for (const toolCall of assistantMessage.tool_calls) {
+        const fullName = toolCall.function.name;
+        const [clientId, ...toolNameParts] = fullName.split('__');
+        const toolName = toolNameParts.join('__');
+
+        let args = {};
+        try {
+          args = JSON.parse(toolCall.function.arguments || '{}');
+        } catch (e) {
+          console.error('Error parsing tool arguments:', e);
+        }
+
+        try {
+          const result = await mcpManager.callTool(clientId, toolName, args);
+          toolResults.push({
+            tool_call_id: toolCall.id,
+            role: 'tool',
+            content: JSON.stringify(result)
+          });
+        } catch (error) {
+          toolResults.push({
+            tool_call_id: toolCall.id,
+            role: 'tool',
+            content: JSON.stringify({ error: error.message })
+          });
+        }
+      }
+
+      // Send tool results back to the model
+      const followUpMessages = [
+        ...messages,
+        assistantMessage,
+        ...toolResults
+      ];
+
+      const followUpResponse = await openRouterClient.sendMessage({
+        model,
+        messages: followUpMessages
+      });
+
+      return {
+        success: true,
+        response: followUpResponse,
+        toolCalls: assistantMessage.tool_calls,
+        toolResults: toolResults
+      };
+    }
+
+    return { success: true, response };
+  } catch (error) {
+    console.error('Error sending message:', error);
+    return { success: false, error: error.message };
   }
 });
 
