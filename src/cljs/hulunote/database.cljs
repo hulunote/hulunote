@@ -6,6 +6,7 @@
             [hulunote.router :as router]
             [hulunote.storage :as storage]
             [hulunote.components :as comps]
+            [hulunote.http :as http]
             [re-frame.core :as re-frame]))
 
 ;; ==================== Helper Functions ====================
@@ -348,7 +349,9 @@
                (database-card
                  db-name
                  db-id
-                 #(js/open (str "#/app/" db-name "/diaries")))
+                 (fn []
+                   (http/database-data-load db-name)
+                   (router/go-to-diaries! db-name)))
                db-id)))])]
      
      ;; Context menu
