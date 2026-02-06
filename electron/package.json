@@ -23,7 +23,9 @@
     "dist:linux": "electron-builder --linux",
     "dist:all": "electron-builder --mac --win --linux"
   },
-  "dependencies": {},
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^0.5.0"
+  },
   "devDependencies": {
     "electron": "^28.1.0",
     "electron-builder": "^25.1.8",

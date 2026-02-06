@@ -278,10 +278,14 @@
                         #(router/go-to-diaries! database-name)
                         (= route-name :diaries))
           
-          (sidebar-item "📝" "All Notes" 
+          (sidebar-item "📝" "All Notes"
                         #(router/go-to-all-notes! database-name)
                         (= route-name :all-notes))
-          
+
+          (sidebar-item "🔌" "MCP Settings"
+                        #(router/go-to-mcp-settings! database-name)
+                        (= route-name :mcp-settings))
+
           ;; Note list section
           [:div.sidebar-section-title "Recent Notes"]
           

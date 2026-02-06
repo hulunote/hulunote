@@ -19,11 +19,14 @@
      ["/app/:database/diaries" :diaries]
      ["/app/:database/notes" :all-notes]
      ["/app/:database/note/:note-id" :single-note]
+     ["/app/:database/mcp-settings" :mcp-settings]
      ;; 首页：登录，主页，价格，下载
      ["/login" :login]
      ["/main" :main]
      ["/price" :price]
-     ["/download" :download]]
+     ["/download" :download]
+     ;; MCP 设置页面（全局，不需要 database）
+     ["/mcp-settings" :mcp-settings-global]]
     {:compile rc/compile-request-coercers
      :data {:coercion rsc/coercion}}))
 
@@ -44,6 +47,13 @@
   "Navigate to diaries page"
   [database-name]
   (switch-router! (str "/app/" database-name "/diaries")))
+
+(defn go-to-mcp-settings!
+  "Navigate to MCP settings page"
+  [& [database-name]]
+  (if database-name
+    (switch-router! (str "/app/" database-name "/mcp-settings"))
+    (switch-router! "/mcp-settings")))
 
 (defn is-route-in-login []
   (= (.-hash js/window.location)

@@ -22,7 +22,8 @@
    [hulunote.all-notes :as all-notes]
    [hulunote.single-note :as single-note]
    [hulunote.login :as login]
-   [hulunote.components :as comps])
+   [hulunote.components :as comps]
+   [hulunote.mcp-ui :as mcp-ui])
   (:require-macros
    [hulunote.share :refer [profile]])
   (:import goog.History))
@@ -64,6 +65,9 @@
        :diaries (diaries/diaries-page db)
        :all-notes (all-notes/all-notes-page db)
        :single-note (single-note/single-note-page db)
+       ;; MCP settings pages
+       :mcp-settings (mcp-ui/mcp-settings-panel (:database params))
+       :mcp-settings-global (mcp-ui/mcp-settings-panel nil)
        ;; Public pages: login, main, price, download
        :login (login/login-page db)
        :main (home/home-page db)

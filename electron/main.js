@@ -1,6 +1,18 @@
 const { app, BrowserWindow, Menu, shell, ipcMain } = require('electron');
 const path = require('path');
 const fs = require('fs');
+const fsPromises = require('fs').promises;
+const McpClientManager = require('./mcp/mcpClientManager');
+
+// MCP Manager instance
+let mcpManager = null;
+
+// MCP Configuration
+const MCP_CONFIG_PATH = path.join(app.getPath('userData'), 'hulunote-mcp-config.json');
+const DEFAULT_MCP_CONFIG = {
+  mcpServers: [],
+  lastUpdated: new Date().toISOString()
+};
 
 // Keep a global reference of the window object
 let mainWindow;
@@ -155,13 +167,265 @@ function createMenu() {
   Menu.setApplicationMenu(menu);
 }
 
+// ============= MCP Configuration Management =============
+
+async function loadMcpSettings() {
+  try {
+    const data = await fsPromises.readFile(MCP_CONFIG_PATH, 'utf-8');
+    return JSON.parse(data);
+  } catch (error) {
+    if (error.code === 'ENOENT') {
+      await saveMcpSettings(DEFAULT_MCP_CONFIG);
+      return DEFAULT_MCP_CONFIG;
+    }
+    throw error;
+  }
+}
+
+async function saveMcpSettings(settings) {
+  try {
+    settings.lastUpdated = new Date().toISOString();
+    await fsPromises.writeFile(MCP_CONFIG_PATH, JSON.stringify(settings, null, 2), 'utf-8');
+    return true;
+  } catch (error) {
+    console.error('Failed to save MCP settings:', error);
+    throw error;
+  }
+}
+
+// Initialize MCP Manager
+async function initMcpManager() {
+  try {
+    mcpManager = new McpClientManager();
+    await mcpManager.initSDK();
+    console.log('MCP Manager initialized successfully');
+  } catch (error) {
+    console.error('Failed to initialize MCP Manager:', error);
+  }
+}
+
+// ============= MCP IPC Handlers =============
+
+// Load MCP settings
+ipcMain.handle('mcp:load-settings', async () => {
+  try {
+    const settings = await loadMcpSettings();
+    return { success: true, data: settings };
+  } catch (error) {
+    console.error('Error loading MCP settings:', error);
+    return { success: false, error: error.message };
+  }
+});
+
+// Save MCP settings
+ipcMain.handle('mcp:save-settings', async (event, settings) => {
+  try {
+    await saveMcpSettings(settings);
+    return { success: true };
+  } catch (error) {
+    console.error('Error saving MCP settings:', error);
+    return { success: false, error: error.message };
+  }
+});
+
+// Get MCP servers list
+ipcMain.handle('mcp:get-servers', async () => {
+  try {
+    const settings = await loadMcpSettings();
+    const connectedClients = mcpManager ? mcpManager.getAllClientIds() : [];
+    const servers = (settings.mcpServers || []).map(server => ({
+      ...server,
+      connected: connectedClients.includes(server.name)
+    }));
+    return { success: true, data: servers };
+  } catch (error) {
+    console.error('Error getting MCP servers:', error);
+    return { success: false, error: error.message, data: [] };
+  }
+});
+
+// Add MCP server
+ipcMain.handle('mcp:add-server', async (event, serverConfig) => {
+  try {
+    const settings = await loadMcpSettings();
+
+    // Check if server with same name exists
+    const existingIndex = settings.mcpServers.findIndex(s => s.name === serverConfig.name);
+
+    if (existingIndex >= 0) {
+      // Update existing server
+      settings.mcpServers[existingIndex] = {
+        ...serverConfig,
+        updatedAt: new Date().toISOString()
+      };
+    } else {
+      // Add new server
+      settings.mcpServers.push({
+        ...serverConfig,
+        id: `server-${Date.now()}`,
+        createdAt: new Date().toISOString()
+      });
+    }
+
+    await saveMcpSettings(settings);
+    return { success: true, servers: settings.mcpServers };
+  } catch (error) {
+    console.error('Error adding MCP server:', error);
+    return { success: false, error: error.message };
+  }
+});
+
+// Remove MCP server
+ipcMain.handle('mcp:remove-server', async (event, serverName) => {
+  try {
+    const settings = await loadMcpSettings();
+    settings.mcpServers = settings.mcpServers.filter(s => s.name !== serverName);
+    await saveMcpSettings(settings);
+
+    // Disconnect client if connected
+    if (mcpManager && mcpManager.isConnected(serverName)) {
+      await mcpManager.removeClient(serverName);
+    }
+
+    return { success: true, servers: settings.mcpServers };
+  } catch (error) {
+    console.error('Error removing MCP server:', error);
+    return { success: false, error: error.message };
+  }
+});
+
+// Create/connect MCP client
+ipcMain.handle('mcp:create-client', async (event, serverConfig) => {
+  try {
+    if (!mcpManager) {
+      throw new Error('MCP Manager not initialized');
+    }
+    const result = await mcpManager.createClient(serverConfig);
+
+    // Notify renderer of connection
+    if (mainWindow) {
+      mainWindow.webContents.send('mcp:server-connected', {
+        name: serverConfig.name,
+        ...result
+      });
+    }
+
+    return { success: true, ...result };
+  } catch (error) {
+    console.error('Error creating MCP client:', error);
+    return { success: false, error: error.message };
+  }
+});
+
+// Disconnect MCP client
+ipcMain.handle('mcp:disconnect-client', async (event, clientId) => {
+  try {
+    if (!mcpManager) {
+      throw new Error('MCP Manager not initialized');
+    }
+    await mcpManager.removeClient(clientId);
+
+    // Notify renderer of disconnection
+    if (mainWindow) {
+      mainWindow.webContents.send('mcp:server-disconnected', { name: clientId });
+    }
+
+    return { success: true };
+  } catch (error) {
+    console.error('Error disconnecting MCP client:', error);
+    return { success: false, error: error.message };
+  }
+});
+
+// List tools for a client
+ipcMain.handle('mcp:list-tools', async (event, clientId) => {
+  try {
+    if (!mcpManager) {
+      throw new Error('MCP Manager not initialized');
+    }
+    const tools = await mcpManager.listTools(clientId);
+    return { success: true, tools };
+  } catch (error) {
+    console.error('Error listing MCP tools:', error);
+    return { success: false, error: error.message, tools: [] };
+  }
+});
+
+// Call a tool
+ipcMain.handle('mcp:call-tool', async (event, { clientId, toolName, args }) => {
+  try {
+    if (!mcpManager) {
+      throw new Error('MCP Manager not initialized');
+    }
+    const result = await mcpManager.callTool(clientId, toolName, args || {});
+    return { success: true, result };
+  } catch (error) {
+    console.error('Error calling MCP tool:', error);
+    return { success: false, error: error.message };
+  }
+});
+
+// List resources for a client
+ipcMain.handle('mcp:list-resources', async (event, clientId) => {
+  try {
+    if (!mcpManager) {
+      throw new Error('MCP Manager not initialized');
+    }
+    const resources = await mcpManager.listResources(clientId);
+    return { success: true, resources };
+  } catch (error) {
+    console.error('Error listing MCP resources:', error);
+    return { success: false, error: error.message, resources: [] };
+  }
+});
+
+// Read a resource
+ipcMain.handle('mcp:read-resource', async (event, { clientId, uri }) => {
+  try {
+    if (!mcpManager) {
+      throw new Error('MCP Manager not initialized');
+    }
+    const result = await mcpManager.readResource(clientId, uri);
+    return { success: true, result };
+  } catch (error) {
+    console.error('Error reading MCP resource:', error);
+    return { success: false, error: error.message };
+  }
+});
+
+// Check if client is connected
+ipcMain.handle('mcp:is-connected', async (event, clientId) => {
+  try {
+    const connected = mcpManager ? mcpManager.isConnected(clientId) : false;
+    return { success: true, connected };
+  } catch (error) {
+    return { success: false, error: error.message, connected: false };
+  }
+});
+
+// ============= Application Lifecycle =============
+
 // This method will be called when Electron has finished initialization
-app.whenReady().then(createWindow);
+app.whenReady().then(async () => {
+  await initMcpManager();
+  createWindow();
+});
 
 // Quit when all windows are closed
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') {
     app.quit();
+  }
+});
+
+// Clean up MCP connections before quit
+app.on('before-quit', async () => {
+  if (mcpManager) {
+    try {
+      await mcpManager.disconnectAll();
+    } catch (error) {
+      console.error('Error disconnecting MCP clients on quit:', error);
+    }
   }
 });
 
