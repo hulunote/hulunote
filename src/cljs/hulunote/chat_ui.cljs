@@ -267,15 +267,30 @@
      {:style {:min-height "100vh"
               :background "#f8f9fa"}}
 
-     ;; Header
+     ;; Header (with macOS traffic light padding)
      [:div.td-navbar
       {:style {:display "flex"
                :align-items "center"
                :justify-content "space-between"
                :padding "0 32px"
+               :padding-top "28px"
                :height "60px"
-               :background "linear-gradient(135deg, #667eea 0%, #764ba2 100%)"}}
+               :background "linear-gradient(135deg, #667eea 0%, #764ba2 100%)"
+               :-webkit-app-region "drag"}}
       [:div.flex.items-center
+       {:style {:-webkit-app-region "no-drag"}}
+       ;; Back button
+       [:button.pointer
+        {:on-click #(js/history.back)
+         :style {:background "rgba(255,255,255,0.2)"
+                 :border "none"
+                 :padding "6px 12px"
+                 :border-radius "6px"
+                 :color "#fff"
+                 :font-size "18px"
+                 :cursor "pointer"
+                 :margin-right "12px"}}
+        "\u2190"]
        [:img.pointer
         {:on-click #(router/switch-router! "/")
          :width "36px"
@@ -287,7 +302,8 @@
                  :font-weight "700"
                  :color "#fff"}}
         "HULUNOTE"]]
-      [:div.flex.items-center {:style {:gap "16px"}}
+      [:div.flex.items-center {:style {:gap "16px"
+                                       :-webkit-app-region "no-drag"}}
        ;; MCP status
        [:div {:style {:color "#fff"
                       :font-size "13px"
@@ -318,7 +334,7 @@
                :margin "0 auto"
                :width "100%"
                :padding "20px"
-               :margin-top "60px"}}
+               :margin-top "88px"}}
 
       ;; API Key warning
       (when-not api-key-set?

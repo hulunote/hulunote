@@ -255,15 +255,18 @@
               :background "#f8f9fa"}
       :on-click #(swap! context-menu-state assoc :visible false)}
      
-     ;; Header
+     ;; Header (with macOS traffic light padding)
      [:div.td-navbar
       {:style {:display "flex"
                :align-items "center"
                :justify-content "space-between"
                :padding "0 32px"
+               :padding-top "28px"
                :height "60px"
-               :background "linear-gradient(135deg, #667eea 0%, #764ba2 100%)"}}
+               :background "linear-gradient(135deg, #667eea 0%, #764ba2 100%)"
+               :-webkit-app-region "drag"}}
       [:div.flex.items-center
+       {:style {:-webkit-app-region "no-drag"}}
        [:img.pointer
         {:on-click #(router/switch-router! "/main")
          :width "36px"

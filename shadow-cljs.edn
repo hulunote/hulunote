@@ -5,7 +5,7 @@
         :host "0.0.0.0"}
 
  :builds {:hulunote {:target :browser
-                     :output-dir "../hulunote-rust/resources/public/hulunote"
+                     :output-dir "resources/public/hulunote"
                      :asset-path "/hulunote"
                      :compiler-options {:infer-externs :auto
                                         :externs ["datascript/externs.js"]}

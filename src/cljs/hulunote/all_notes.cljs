@@ -271,6 +271,18 @@
      ;; Main content area
      [:div.main-content-area
       {:class (when sidebar-collapsed? "sidebar-collapsed")}
+      ;; Back button
+      [:div {:style {:padding "8px 16px"}}
+       [:button
+        {:on-click #(js/history.back)
+         :style {:background "transparent"
+                 :border "1px solid rgba(255,255,255,0.2)"
+                 :color "#fff"
+                 :padding "6px 12px"
+                 :border-radius "4px"
+                 :cursor "pointer"
+                 :font-size "13px"}}
+        "← Back"]]
       [:div.flex.flex-column
        {:style {:padding "20px"
                 :max-width "900px"

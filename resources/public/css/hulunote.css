@@ -433,6 +433,7 @@ hulu-text-font {
     display: flex;
     flex-direction: column;
     overflow: hidden;
+    padding-top: 28px; /* macOS traffic light buttons spacing */
 }
 
 .left-sidebar.collapsed {
@@ -442,7 +443,7 @@ hulu-text-font {
 .sidebar-toggle-btn {
     position: fixed;
     left: var(--sidebar-width);
-    top: 16px;
+    top: 36px; /* 28px macOS spacing + 8px */
     width: 32px;
     height: 32px;
     background: #3d4455;
@@ -594,6 +595,7 @@ hulu-text-font {
     transition: margin-left 0.3s ease;
     min-height: 100vh;
     overflow-y: auto;
+    padding-top: 28px; /* macOS traffic light buttons spacing */
 }
 
 .main-content-area.sidebar-collapsed {

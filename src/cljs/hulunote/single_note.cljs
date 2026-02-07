@@ -252,28 +252,27 @@
      ;; Main content area
      [:div.main-content-area
       {:class (when sidebar-collapsed? "sidebar-collapsed")}
+      ;; Back button
+      [:div {:style {:padding "8px 16px"}}
+       [:button
+        {:on-click #(router/go-to-diaries! database)
+         :style {:background "transparent"
+                 :border "1px solid rgba(255,255,255,0.2)"
+                 :color "#fff"
+                 :padding "6px 12px"
+                 :border-radius "4px"
+                 :cursor "pointer"
+                 :font-size "13px"}}
+        "← Back to Diaries"]]
       [:div.flex.flex-column.overflow-scroll-new
        {:style {:padding "20px"
                 :max-width "900px"
                 :margin "0 auto"
                 :min-height "100vh"}}
-       
+
        (if note-info
          (let [[note-title root-nav-id] note-info]
            [:div
-            ;; Back button
-            [:div {:style {:margin-bottom "16px"}}
-             [:button
-              {:on-click #(router/go-to-diaries! database)
-               :style {:background "transparent"
-                       :border "1px solid rgba(255,255,255,0.2)"
-                       :color "#fff"
-                       :padding "6px 12px"
-                       :border-radius "4px"
-                       :cursor "pointer"
-                       :font-size "13px"}}
-              "← Back to Diaries"]]
-            
             ;; Editable note title with context menu
             [:div.note-title-wrapper
              {:style {:margin-bottom "24px"}}

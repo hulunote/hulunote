@@ -536,15 +536,30 @@
      {:style {:min-height "100vh"
               :background "#f8f9fa"}}
 
-     ;; Header
+     ;; Header (with macOS traffic light padding)
      [:div.td-navbar
       {:style {:display "flex"
                :align-items "center"
                :justify-content "space-between"
                :padding "0 32px"
+               :padding-top "28px"
                :height "60px"
-               :background "linear-gradient(135deg, #667eea 0%, #764ba2 100%)"}}
+               :background "linear-gradient(135deg, #667eea 0%, #764ba2 100%)"
+               :-webkit-app-region "drag"}}
       [:div.flex.items-center
+       {:style {:-webkit-app-region "no-drag"}}
+       ;; Back button
+       [:button.pointer
+        {:on-click #(js/history.back)
+         :style {:background "rgba(255,255,255,0.2)"
+                 :border "none"
+                 :padding "6px 12px"
+                 :border-radius "6px"
+                 :color "#fff"
+                 :font-size "18px"
+                 :cursor "pointer"
+                 :margin-right "12px"}}
+        "\u2190"]
        [:img.pointer
         {:on-click #(router/switch-router! "/")
          :width "36px"
@@ -557,7 +572,8 @@
                  :color "#fff"}}
         "HULUNOTE"]]
       [:div {:style {:color "#fff"
-                     :font-size "14px"}}
+                     :font-size "14px"
+                     :-webkit-app-region "no-drag"}}
        "MCP Settings"]]
 
      ;; Main content
@@ -573,7 +589,7 @@
                      :justify-content "space-between"
                      :align-items "center"
                      :margin-bottom "32px"
-                     :margin-top "60px"}}
+                     :margin-top "88px"}}
        [:div
         [:h1 {:style {:font-size "32px"
                       :font-weight "700"
