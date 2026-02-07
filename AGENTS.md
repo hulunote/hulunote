@@ -10,29 +10,11 @@ This file is the repo’s **always-on working agreement**. If you are an agent, 
 
 ## Issues and PRs (format)
 
-### Issues
+Keep issues/PRs concise to reduce always-on context usage.
 
-When creating an issue, keep it structured and easy to triage.
+For detailed guidance and examples, see:
 
-**CLI note:** when posting issue bodies/comments from a terminal, use a real multiline body (e.g. a file, stdin heredoc like `<<'EOF' ... EOF`, or similar). Avoid embedding literal `"\n"` sequences or accidental `" "` tokens that break Markdown formatting.
-
-- **Title:** actionable and specific
-- **Problem / Request:** 2–5 sentences
-- **Context:** what you were trying to do and why
-- **Steps to reproduce (for bugs):** numbered list
-- **Expected vs actual behavior**
-- **Environment:** OS, browser/runtime, versions if relevant
-- **Logs / screenshots:** redact secrets
-
-### Pull Requests
-
-PRs should be easy to review and safe to merge:
-
-- **Scope:** one concern per PR whenever possible
-- **Why:** what problem this solves
-- **What changed:** brief bullets, point to key files
-- **How to verify:** commands and/or manual checklist
-- **Risk / rollout notes:** anything reviewers should watch for
+- `docs/issues-and-prs.md`
 
 ## Read Before You Act
 
