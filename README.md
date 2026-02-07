@@ -1,58 +1,84 @@
 # Hulunote
 
-An open-source outliner note-taking application with bidirectional linking.
+Hulunote is an open-source outliner note-taking application with bidirectional linking.
 
 Inspired by Roam Research, designed for networked thought.
 
 ![](./demo.png)
-![](./demo-tui.png)
 
 ## Features
 
-- **Outliner Structure** - Organize thoughts in hierarchical bullet points with infinite nesting
-- **Bidirectional Links** - Connect ideas with `[[wiki-style links]]` and backlinks
-- **Daily Notes** - Journaling with automatic date-based pages
-- **Multiple Databases** - Separate workspaces for different projects
+- **Outliner Structure** — Organize thoughts in hierarchical bullet points with infinite nesting
+- **Bidirectional Links** — Connect ideas with `[[wiki-style links]]` and backlinks
+- **Daily Notes** — Journaling with automatic date-based pages
+- **Multiple Databases** — Separate workspaces for different projects
+- **MCP Client** — Experimental MCP client integration
 
-### MCP client
+## Screenshots
+
+TUI:
+![](./demo-tui.png)
+
+MCP client:
 ![](./demo1-mcp-chat.png)
 ![](./demo1-mcp-setting.png)
 
-## Tech Stack
+## Repositories
 
-| Component | Technology |
-|-----------|------------|
-| Backend | Rust (Axum, SQLx) |
-| Frontend | ClojureScript (Rum, DataScript, Shadow-cljs) |
-| Database | PostgreSQL |
+- Frontend (this repo): https://github.com/hulunote/hulunote
+- Backend: https://github.com/hulunote/hulunote-rust
+- TUI: https://github.com/hulunote/hulunote-tui
 
-## Quick Start
+## Quick Start (Frontend Dev Only)
+
+Start the frontend development server:
 
 ```bash
-# 1. Initialize database
-createdb hulunote_open
-psql -d hulunote_open -f hulunote-rust/init.sql
+npx shadow-cljs watch hulunote
+```
 
-# 2. Start backend
-cd hulunote-rust
-cargo run
+Then open the app in your browser:
 
-# 3. Start frontend
-cd hulunote
-yarn
-shadow-cljs watch hulunote
-
-# 4. Open browser
+```bash
 open http://localhost:6689
 ```
 
-**Test Account:** `chanshunli@gmail.com` / `123456`
+**Test Account (for local/dev use):** `chanshunli@gmail.com` / `123456`
 
-## Links
+## Configuration
 
-- Frontend: https://github.com/hulunote/hulunote
-- Backend: https://github.com/hulunote/hulunote-rust
-- TUI: https://github.com/hulunote/hulunote-tui
+- **Backend API Base URL (dev):** configured via `:closure-defines` in `shadow-cljs.edn` (`hulunote.http/API_BASE_URL`).
+
+## Clients (Browser / Electron)
+
+### Browser (dev)
+
+Run:
+
+```bash
+npx shadow-cljs watch hulunote
+```
+
+### Electron (dev)
+
+Run:
+
+```bash
+cd electron
+npm run start:dev
+```
+
+### Electron (build)
+
+Run:
+
+```bash
+./clean_build_electron.sh
+```
+
+## Contributing
+
+See `CONTRIBUTING.md`.
 
 ## License
 
