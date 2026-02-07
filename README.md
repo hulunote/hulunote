@@ -14,6 +14,10 @@ Inspired by Roam Research, designed for networked thought.
 - **Daily Notes** - Journaling with automatic date-based pages
 - **Multiple Databases** - Separate workspaces for different projects
 
+### MCP client
+![](./demo1-mcp-chat.png)
+![](./demo1-mcp-setting.png)
+
 ## Tech Stack
 
 | Component | Technology |
