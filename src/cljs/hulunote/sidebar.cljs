@@ -286,6 +286,10 @@
                         #(router/go-to-mcp-settings! database-name)
                         (= route-name :mcp-settings))
 
+          (sidebar-item "💬" "MCP Chat"
+                        #(router/go-to-mcp-chat! database-name)
+                        (= route-name :mcp-chat))
+
           ;; Note list section
           [:div.sidebar-section-title "Recent Notes"]
           

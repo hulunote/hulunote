@@ -23,7 +23,8 @@
    [hulunote.single-note :as single-note]
    [hulunote.login :as login]
    [hulunote.components :as comps]
-   [hulunote.mcp-ui :as mcp-ui])
+   [hulunote.mcp-ui :as mcp-ui]
+   [hulunote.chat-ui :as chat-ui])
   (:require-macros
    [hulunote.share :refer [profile]])
   (:import goog.History))
@@ -68,6 +69,9 @@
        ;; MCP settings pages
        :mcp-settings (mcp-ui/mcp-settings-panel (:database params))
        :mcp-settings-global (mcp-ui/mcp-settings-panel nil)
+       ;; MCP chat pages
+       :mcp-chat (chat-ui/chat-page (:database params))
+       :mcp-chat-global (chat-ui/chat-page nil)
        ;; Public pages: login, main, price, download
        :login (login/login-page db)
        :main (home/home-page db)

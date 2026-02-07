@@ -20,13 +20,15 @@
      ["/app/:database/notes" :all-notes]
      ["/app/:database/note/:note-id" :single-note]
      ["/app/:database/mcp-settings" :mcp-settings]
+     ["/app/:database/mcp-chat" :mcp-chat]
      ;; 首页：登录，主页，价格，下载
      ["/login" :login]
      ["/main" :main]
      ["/price" :price]
      ["/download" :download]
      ;; MCP 设置页面（全局，不需要 database）
-     ["/mcp-settings" :mcp-settings-global]]
+     ["/mcp-settings" :mcp-settings-global]
+     ["/mcp-chat" :mcp-chat-global]]
     {:compile rc/compile-request-coercers
      :data {:coercion rsc/coercion}}))
 
@@ -54,6 +56,13 @@
   (if database-name
     (switch-router! (str "/app/" database-name "/mcp-settings"))
     (switch-router! "/mcp-settings")))
+
+(defn go-to-mcp-chat!
+  "Navigate to MCP chat page"
+  [& [database-name]]
+  (if database-name
+    (switch-router! (str "/app/" database-name "/mcp-chat"))
+    (switch-router! "/mcp-chat")))
 
 (defn is-route-in-login []
   (= (.-hash js/window.location)
