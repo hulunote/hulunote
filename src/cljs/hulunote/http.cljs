@@ -1,5 +1,6 @@
 (ns hulunote.http
-  (:require [datascript.core :as d]
+  (:require [clojure.string :as str]
+            [datascript.core :as d]
             [hulunote.import :as import]
             [hulunote.db :as db]
             [cljs-http.client :as http]
@@ -8,6 +9,8 @@
             ;; 临时的 => 需要删除！TODO
             [re-frame.core :as re-frame]
             [hulunote.util :as u]))
+
+(goog-define API_BASE_URL "https://www.hulunote.top")
 
 (defn info [& args]
   ;;
@@ -185,10 +188,22 @@
     (doseq [cb-1 cb]
       (execute-cb cb-1 arg))))
 
+(defn- normalize-base [s]
+  (let [s (str/trim (or s ""))]
+    (cond
+      (str/blank? s) ""
+      (str/ends-with? s "/") (subs s 0 (dec (count s)))
+      :else s)))
+
+(defn- api-base-url []
+  (let [base (normalize-base API_BASE_URL)]
+    (when (str/blank? base)
+      (throw (js/Error.
+              "Missing API base URL. Please set hulunote.http/API_BASE_URL via build config (closure-defines).")))
+    base))
+
 (defn http-uri [uri]
-  (if (u/is-dev?)
-    (str "http://127.0.0.1:6689" uri)
-    (str "https://www.hulunote.top" uri)))
+  (str (api-base-url) uri))
 
 (defn go-http-queue
   "go队列里面包含进去！顺序一定对, 不用await！"

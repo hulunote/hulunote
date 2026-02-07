@@ -47,7 +47,7 @@ src/test/resources/public/js/test/js/
 resources/public/export/
 resources/public/data/
 resources/public/athens/
-resources/public/hulunote/
+resources/public/app/
 resources/public/admin/
 resources/public/user_manage/
 resources/unpacked/manifest.json
@@ -72,4 +72,3 @@ resources/public/test-all-notes.json
 node_modules
 electron/app/
 electron/dist/
-

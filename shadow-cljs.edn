@@ -5,15 +5,18 @@
         :host "0.0.0.0"}
 
  :builds {:hulunote {:target :browser
-                     :output-dir "../hulunote-rust/resources/public/hulunote"
+                     ;; DEV should be self-contained in this repo:
+                     ;; write compiled assets into this repo, and serve static files from this repo.
+                     :output-dir "resources/public/app"
                      :asset-path "/hulunote"
                      :compiler-options {:infer-externs :auto
-                                        :externs ["datascript/externs.js"]}
+                                        :externs ["datascript/externs.js"]
+                                        :closure-defines {hulunote.http/API_BASE_URL "http://127.0.0.1:6689"}}
                      :modules
                      {:hulunote {:init-fn hulunote.core/init!}}
                      :devtools
                      {:http-port  8803
-                      :http-root  "../hulunote-rust/resources/public"
+                      :http-root  "resources/public"
                       :after-load hulunote.core/after-load
                       :preloads [shadow.remote.runtime.cljs.browser]}
                      ;; release 模式才用 advanced 优化

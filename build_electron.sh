@@ -50,29 +50,29 @@ fi
 echo -e "${GREEN}✓ npm: $(npm --version)${NC}"
 
 # Check if ClojureScript is compiled
-if [ ! -f "$PROJECT_DIR/resources/public/hulunote/hulunote.js" ]; then
+if [ ! -f "$PROJECT_DIR/resources/public/app/hulunote.js" ]; then
     echo ""
     echo -e "${YELLOW}Warning: ClojureScript not compiled${NC}"
     echo "Attempting to compile with shadow-cljs..."
-    
+
     if ! command_exists npx; then
         echo -e "${RED}Error: npx is not available${NC}"
         exit 1
     fi
-    
+
     cd "$PROJECT_DIR"
-    
+
     # Install dependencies if needed
     if [ ! -d "node_modules" ]; then
         echo "Installing project dependencies..."
         yarn install || npm install
     fi
-    
+
     # Compile ClojureScript
     echo "Compiling ClojureScript (this may take a minute)..."
     npx shadow-cljs release hulunote
-    
-    if [ ! -f "$PROJECT_DIR/resources/public/hulunote/hulunote.js" ]; then
+
+    if [ ! -f "$PROJECT_DIR/resources/public/app/hulunote.js" ]; then
         echo -e "${RED}Error: ClojureScript compilation failed${NC}"
         exit 1
     fi
