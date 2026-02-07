@@ -14,6 +14,25 @@ Inspired by Roam Research, designed for networked thought.
 - **Multiple Databases** — Separate workspaces for different projects
 - **MCP Client** — Experimental MCP client integration
 
+## Quick Start
+
+```bash
+# Start the frontend dev server
+npx shadow-cljs watch hulunote
+
+# Build a packaged Electron distributable
+npx shadow-cljs release hulunote
+
+# Run the Electron app in dev mode
+cd electron && npm run start:dev
+```
+
+**Test Account (for local/dev use):** `chanshunli@gmail.com` / `123456`
+
+## Configuration
+
+- **Backend API Base URL (dev):** configured via `:closure-defines` in `shadow-cljs.edn` (`hulunote.http/API_BASE_URL`).
+
 ## Screenshots
 
 TUI:
@@ -28,53 +47,6 @@ MCP client:
 - Frontend (this repo): https://github.com/hulunote/hulunote
 - Backend: https://github.com/hulunote/hulunote-rust
 - TUI: https://github.com/hulunote/hulunote-tui
-
-## Quick Start (Frontend Dev Only)
-
-Start the frontend development server:
-
-```bash
-npx shadow-cljs watch hulunote
-```
-
-Then open the app in your browser:
-
-```bash
-open http://localhost:6689
-```
-
-**Test Account (for local/dev use):** `chanshunli@gmail.com` / `123456`
-
-## Configuration
-
-- **Backend API Base URL (dev):** configured via `:closure-defines` in `shadow-cljs.edn` (`hulunote.http/API_BASE_URL`).
-
-## Clients (Browser / Electron)
-
-### Browser (dev)
-
-Run:
-
-```bash
-npx shadow-cljs watch hulunote
-```
-
-### Electron (dev)
-
-Run:
-
-```bash
-cd electron
-npm run start:dev
-```
-
-### Electron (build)
-
-Run:
-
-```bash
-./clean_build_electron.sh
-```
 
 ## Contributing
 
