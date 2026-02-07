@@ -42,8 +42,8 @@ Before changing anything, locate the source of truth:
    - `README.md`
    - `scripts/` (preferred entrypoints when present)
 2. **Build configuration**
-   - `shadow-cljs.edn` (browser build)
-   - `shadow-cljs-electron.edn` and `electron/` (Electron)
+   - `shadow-cljs-dev.edn` (browser dev/build config)
+   - `electron/` (Electron runtime/packaging)
    - `package.json` (JS deps)
    - `deps.edn` (Clojure/ClojureScript deps + aliases)
 
@@ -57,7 +57,7 @@ This section is a convenience only. If it gets out of date, trust the repo tree.
 - `scripts/` — helper scripts / dev workflows
 - `resources/` — static assets (and/or build outputs depending on config)
 - `electron/` — Electron packaging/runtime
-- `shadow-cljs*.edn` — build configuration
+- `shadow-cljs-dev.edn` — build configuration
 - `package.json` / lockfile — JS dependencies
 - `deps.edn` — Clojure/ClojureScript deps & aliases
 
