@@ -45,7 +45,8 @@
       "preload.js",
       "app/**/*",
       "icons/**/*",
-      "mcp/**/*"
+      "mcp/**/*",
+      "api/**/*"
     ],
     "extraMetadata": {
       "main": "main.js"
