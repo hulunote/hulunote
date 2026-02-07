@@ -26,11 +26,6 @@ let mainWindow;
 // Determine if we're in development mode
 const isDev = process.env.NODE_ENV === 'development' || !app.isPackaged;
 
-// Backend server URL
-const BACKEND_URL = isDev 
-  ? 'http://127.0.0.1:6689' 
-  : 'https://www.hulunote.top';
-
 function createWindow() {
   // Create the browser window
   mainWindow = new BrowserWindow({
