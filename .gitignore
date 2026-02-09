@@ -72,3 +72,4 @@ resources/public/test-all-notes.json
 node_modules
 electron/app/
 electron/dist/
+resources/public/hulunote/
