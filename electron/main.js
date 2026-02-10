@@ -621,12 +621,64 @@ ipcMain.handle('chat:send-message', async (event, { messages, useTools }) => {
   }
 });
 
+// ============= Built-in MCP Server =============
+
+async function startBuiltinMcpServer() {
+  if (!mcpManager) {
+    console.error('MCP Manager not ready, cannot start built-in server');
+    return;
+  }
+
+  try {
+    // Resolve path to the compiled CLJS MCP server
+    const mcpServerPath = isDev
+      ? path.join(__dirname, '..', 'mcp-server.js')
+      : path.join(__dirname, 'mcp-server.js');
+
+    if (!fs.existsSync(mcpServerPath)) {
+      console.warn('Built-in MCP server not found at:', mcpServerPath);
+      return;
+    }
+
+    // Read API token from config
+    const settings = await loadMcpSettings();
+    const apiToken = settings.apiToken || process.env.HULUNOTE_API_TOKEN || '';
+    const apiBase = settings.apiBase || process.env.HULUNOTE_API_BASE || 'https://www.hulunote.top';
+
+    const serverConfig = {
+      name: 'hulunote-builtin',
+      command: process.execPath.includes('Electron')
+        ? 'node'
+        : process.execPath,
+      args: [mcpServerPath],
+      env: {
+        HULUNOTE_API_TOKEN: apiToken,
+        HULUNOTE_API_BASE: apiBase
+      }
+    };
+
+    await mcpManager.createClient(serverConfig);
+    console.log('Built-in Hulunote MCP server started successfully');
+
+    // Notify renderer
+    if (mainWindow) {
+      mainWindow.webContents.send('mcp:server-connected', {
+        name: 'hulunote-builtin',
+        builtin: true
+      });
+    }
+  } catch (error) {
+    console.error('Failed to start built-in MCP server:', error);
+  }
+}
+
 // ============= Application Lifecycle =============
 
 // This method will be called when Electron has finished initialization
 app.whenReady().then(async () => {
   await initMcpManager();
   createWindow();
+  await startBuiltinMcpServer();
 });
 
 // Quit when all windows are closed
