@@ -25,6 +25,10 @@
                  :op-fn (fn [data]
                           (swap! storage/jwt-auth merge {:hulunote (:hulunote data)
                                                          :token (:token data)})
+                          ;; Send token to Electron main process to start built-in MCP server
+                          (when (and (exists? js/window.electronAPI)
+                                     (.-setAuthToken js/window.electronAPI))
+                            (.setAuthToken js/window.electronAPI (:token data)))
                           (router/switch-router! "/"))}]))
 
 ;; Input field component

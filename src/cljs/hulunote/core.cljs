@@ -113,6 +113,12 @@
                 #"/")
               2))]
       (http/database-data-load db)))
+  ;; Send stored auth token to Electron to start built-in MCP server
+  (when-let [token (:token @hulunote.storage/jwt-auth)]
+    (when (and (seq token)
+               (exists? js/window.electronAPI)
+               (.-setAuthToken js/window.electronAPI))
+      (.setAuthToken js/window.electronAPI token)))
   (hook-browser-navigation!)
   (render))
 

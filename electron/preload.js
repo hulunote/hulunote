@@ -18,6 +18,9 @@ contextBridge.exposeInMainWorld('electronAPI', {
     sendMessage: (params) => ipcRenderer.invoke('chat:send-message', params),
   },
 
+  // ============= Auth =============
+  setAuthToken: (token) => ipcRenderer.invoke('hulunote:set-auth-token', token),
+
   // ============= MCP Configuration =============
   mcp: {
     // Settings management
