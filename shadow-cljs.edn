@@ -21,4 +21,9 @@
                       :preloads [shadow.remote.runtime.cljs.browser]}
                      ;; release 模式才用 advanced 优化
                      :release
-                     {:compiler-options {:optimizations :advanced}}}}}
+                     {:compiler-options {:optimizations :advanced}}}
+
+          :mcp-server {:target :node-script
+                       :main hulunote.mcp-server/main
+                       :output-to "mcp-server.js"
+                       :compiler-options {:infer-externs :auto}}}}
