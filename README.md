@@ -4,7 +4,7 @@ Hulunote is an open-source outliner note-taking application with bidirectional l
 
 Inspired by Roam Research, designed for networked thought.
 
-![](./demo.png)
+![](./images/demo.png)
 
 ## Features
 
@@ -36,11 +36,11 @@ cd electron && npm run start:dev
 ## Screenshots
 
 TUI:
-![](./demo-tui.png)
+![](./images/demo-tui.png)
 
 MCP client:
-![](./demo1-mcp-chat.png)
-![](./demo1-mcp-setting.png)
+![](./images/demo1-mcp-chat.png)
+![](./images/demo1-mcp-setting.png)
 
 ## Repositories
 
