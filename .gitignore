@@ -73,3 +73,5 @@ node_modules
 electron/app/
 electron/dist/
 resources/public/hulunote/
+shadow-cljs-electron.edn
+mcp-server.js
