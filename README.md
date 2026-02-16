@@ -47,6 +47,9 @@ MCP client:
 - Frontend (this repo): https://github.com/hulunote/hulunote
 - Backend: https://github.com/hulunote/hulunote-rust
 - TUI: https://github.com/hulunote/hulunote-tui
+- App: https://github.com/ypyf/hulunote-app
+- Android: https://github.com/hulunote/hulunote-android
+- IOS: https://github.com/hulunote/hulunote-ios (TODO)
 
 ## Contributing
 
