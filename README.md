@@ -49,7 +49,7 @@ MCP client:
 - TUI: https://github.com/hulunote/hulunote-tui
 - App: https://github.com/hulunote/hulunote-app
 - Android: https://github.com/hulunote/hulunote-android
-- IOS: https://github.com/hulunote/hulunote-ios (TODO)
+- IOS: https://github.com/hulunote/hulunote-ios
 
 ## Contributing
 
