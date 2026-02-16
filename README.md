@@ -5,6 +5,7 @@ Hulunote is an open-source outliner note-taking application with bidirectional l
 Inspired by Roam Research, designed for networked thought.
 
 ![](./images/ios-demo-all.png)
+![](./images/demo.png)
 
 ## Features
 
