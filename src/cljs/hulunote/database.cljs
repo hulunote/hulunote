@@ -75,7 +75,7 @@
                 :z-index 10000}
         :on-mouse-leave #(swap! context-menu-state assoc :visible false)}
 
-       ;; Import Notes option
+       ;; Import JSON option
        [:div.context-menu-item.pointer
         {:style {:padding "10px 16px"
                  :display "flex"
@@ -88,17 +88,38 @@
          :on-click (fn [e]
                      (.stopPropagation e)
                      (when-not importing
-                       ;; Save target db-id, close menu, then trigger file picker
                        (reset! import-target-db-id database-id)
                        (swap! context-menu-state assoc :visible false)
-                       ;; Use setTimeout so the file input (in database-page) stays in DOM
                        (js/setTimeout
                          (fn []
                            (when-let [input (.getElementById js/document "import-json-input")]
                              (.click input)))
                          100)))}
         [:span {:style {:color "#667eea"}} "\uD83D\uDCE5"]
-        [:span {:style {:color "#333"}} (if importing "Importing..." "Import Notes (JSON)")]]
+        [:span {:style {:color "#333"}} (if importing "Importing..." "Import JSON")]]
+
+       ;; Import ZIP option
+       [:div.context-menu-item.pointer
+        {:style {:padding "10px 16px"
+                 :display "flex"
+                 :align-items "center"
+                 :gap "8px"
+                 :transition "background 0.2s"
+                 :opacity (if importing 0.5 1)}
+         :on-mouse-enter #(set! (.. % -target -style -background) "#f5f5f5")
+         :on-mouse-leave #(set! (.. % -target -style -background) "transparent")
+         :on-click (fn [e]
+                     (.stopPropagation e)
+                     (when-not importing
+                       (reset! import-target-db-id database-id)
+                       (swap! context-menu-state assoc :visible false)
+                       (js/setTimeout
+                         (fn []
+                           (when-let [input (.getElementById js/document "import-zip-input")]
+                             (.click input)))
+                         100)))}
+        [:span {:style {:color "#764ba2"}} "\uD83D\uDDDC\uFE0F"]
+        [:span {:style {:color "#333"}} (if importing "Importing..." "Import ZIP")]]
 
        ;; Divider
        [:div {:style {:height "1px"
@@ -423,7 +444,7 @@
                    (router/go-to-diaries! db-name)))
                db-id)))])]
      
-     ;; Hidden file input for import (must live outside context-menu so it persists)
+     ;; Hidden file inputs for import (must live outside context-menu so they persist)
      [:input
       {:id "import-json-input"
        :type "file"
@@ -435,7 +456,17 @@
                           db-id @import-target-db-id]
                       (when (and db-id (> (.-length files) 0))
                         (import-notes-to-database! db-id files))
-                      ;; Reset so same files can be re-selected
+                      (set! (.. e -target -value) "")))}]
+     [:input
+      {:id "import-zip-input"
+       :type "file"
+       :accept ".zip"
+       :style {:display "none"}
+       :on-change (fn [e]
+                    (let [files (.. e -target -files)
+                          db-id @import-target-db-id]
+                      (when (and db-id (> (.-length files) 0))
+                        (import-notes-to-database! db-id files))
                       (set! (.. e -target -value) "")))}]
 
      ;; Context menu

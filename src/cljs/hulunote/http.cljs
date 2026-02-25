@@ -10,7 +10,8 @@
             [re-frame.core :as re-frame]
             [hulunote.util :as u]))
 
-(goog-define API_BASE_URL "https://www.hulunote.top")
+;;(goog-define API_BASE_URL "https://www.hulunote.top")
+(goog-define API_BASE_URL "http://127.0.0.1:6689")
 
 (defn info [& args]
   ;;
