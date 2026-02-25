@@ -48,7 +48,7 @@
 (rum/defc home-page [db]
   [:div.flex.flex-column
    {:style {:min-height "100vh"}}
-   
+
    ;; Header
    [:div.td-navbar
     {:style {:display "flex"
@@ -102,7 +102,7 @@
                   :font-weight "600"
                   :cursor "pointer"}}
          "My Databases"]])]]
-   
+
    ;; Hero Section
    [:div.flex.flex-column.items-center.justify-center
     {:style {:background "linear-gradient(135deg, #667eea 0%, #764ba2 100%)"
@@ -124,7 +124,7 @@
                  :margin "0 0 40px 0"
                  :max-width "500px"}}
      "Inspired by Roam Research, designed for networked thought"]
-    
+
     [:div.flex.flex-row
      {:style {:gap "16px"}}
      [:button.pointer
@@ -157,7 +157,7 @@
                :display "flex"
                :align-items "center"}}
       "View Source"]]]
-   
+
    ;; Features Section
    [:div
     {:style {:background "#f8f9fa"
@@ -183,7 +183,7 @@
                     "Journaling with automatic date-based pages to build consistent writing habits")
       (feature-card "📚" "Multiple Databases"
                     "Separate workspaces for different projects with isolated data for focused work")]]]
-   
+
    ;; AI Section - Future Vision
    [:div
     {:style {:background "linear-gradient(135deg, #1a1a2e 0%, #2d2d44 100%)"
@@ -234,7 +234,7 @@
                       :border-radius "20px"
                       :font-size "14px"}}
        "💬 AI-Powered Q&A"]]]]
-   
+
    ;; Tech Stack Section
    [:div
     {:style {:background "#fff"
@@ -252,7 +252,7 @@
                :grid-template-columns "repeat(auto-fit, minmax(300px, 1fr))"
                :gap "40px"
                :width "100%"}}
-      
+
       ;; Backend
       [:div
        {:style {:background "#f8f9fa"
@@ -267,7 +267,7 @@
        (tech-item "Framework" "Axum")
        (tech-item "ORM" "SQLx")
        (tech-item "Database" "PostgreSQL")]
-      
+
       ;; Frontend
       [:div
        {:style {:background "#f8f9fa"
@@ -282,7 +282,7 @@
        (tech-item "UI Library" "Rum")
        (tech-item "State" "DataScript")
        (tech-item "Build Tool" "Shadow-cljs")]]]]
-   
+
    ;; Quick Start Section
    [:div
     {:style {:background "#f8f9fa"
@@ -318,10 +318,10 @@
      [:div.mt4
       {:style {:color "#666"
                :font-size "14px"}}
-      "Test Account: " [:code {:style {:background "#eee" :padding "2px 8px" :border-radius "4px"}} "chanshunli@gmail.com"] 
-      " / " 
+      "Test Account: " [:code {:style {:background "#eee" :padding "2px 8px" :border-radius "4px"}} "chanshunli@gmail.com"]
+      " / "
       [:code {:style {:background "#eee" :padding "2px 8px" :border-radius "4px"}} "123456"]]]]
-   
+
    ;; CTA Section
    [:div
     {:style {:background "linear-gradient(135deg, #667eea 0%, #764ba2 100%)"
@@ -363,7 +363,7 @@
                :font-weight "600"
                :text-decoration "none"}}
       "Backend Repo"]]]
-   
+
    ;; Footer
    [:div
     {:style {:background "#1a1a2e"
@@ -389,4 +389,4 @@
       "GitHub"]]
     [:div {:style {:color "rgba(255,255,255,0.5)"
                    :font-size "14px"}}
-     "© 2024 Hulunote - MIT License"]]])
+     "© 2026  Hulunote - MIT License"]]])

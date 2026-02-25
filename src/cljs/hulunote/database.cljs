@@ -7,7 +7,8 @@
             [hulunote.storage :as storage]
             [hulunote.components :as comps]
             [hulunote.http :as http]
-            [re-frame.core :as re-frame]))
+            [re-frame.core :as re-frame]
+            [clojure.string :as str]))
 
 ;; ==================== Helper Functions ====================
 (defn remove-nil-values
@@ -25,9 +26,39 @@
 (defonce create-modal-state (atom {:visible false
                                    :database-name ""}))
 
+(defonce import-state (atom {:importing false
+                              :result nil}))
+
+;; ==================== Import Helper ====================
+(defn import-notes-to-database!
+  "Upload multiple JSON files to import notes into a database via fetch API"
+  [database-id files]
+  (reset! import-state {:importing true :result nil})
+  (let [form-data (js/FormData.)]
+    (.append form-data "database-id" database-id)
+    (doseq [file files]
+      (.append form-data "files" file))
+    (-> (js/fetch (http/http-uri "/hulunote/import-notes")
+          (clj->js {:method "POST"
+                    :headers {"X-FUNCTOR-API-TOKEN" (:token @storage/jwt-auth)}
+                    :body form-data}))
+        (.then (fn [resp] (.json resp)))
+        (.then (fn [data]
+                 (let [result (js->clj data :keywordize-keys true)]
+                   (reset! import-state {:importing false :result result})
+                   (if (:success result)
+                     (u/alert (str "Import complete: " (:imported-count result) " note(s) imported"
+                                   (when (> (:error-count result) 0)
+                                     (str ", " (:error-count result) " error(s)"))))
+                     (u/alert (str "Import failed: " (:error result)))))))
+        (.catch (fn [err]
+                  (reset! import-state {:importing false :result nil})
+                  (u/alert (str "Import failed: " err)))))))
+
 ;; ==================== Context Menu Component ====================
 (rum/defc context-menu < rum/reactive []
-  (let [{:keys [visible x y database-name database-id]} (rum/react context-menu-state)]
+  (let [{:keys [visible x y database-name database-id]} (rum/react context-menu-state)
+        {:keys [importing]} (rum/react import-state)]
     (when visible
       [:div.context-menu
        {:style {:position "fixed"
@@ -37,9 +68,49 @@
                 :border-radius "8px"
                 :box-shadow "0 4px 12px rgba(0,0,0,0.15)"
                 :padding "8px 0"
-                :min-width "150px"
+                :min-width "180px"
                 :z-index 10000}
         :on-mouse-leave #(swap! context-menu-state assoc :visible false)}
+
+       ;; Hidden file input for import
+       [:input
+        {:id "import-json-input"
+         :type "file"
+         :multiple true
+         :accept ".json"
+         :style {:display "none"}
+         :on-change (fn [e]
+                      (let [files (.. e -target -files)]
+                        (when (> (.-length files) 0)
+                          (import-notes-to-database! database-id files))
+                        ;; Reset so same files can be re-selected
+                        (set! (.. e -target -value) "")))}]
+
+       ;; Import Notes option
+       [:div.context-menu-item.pointer
+        {:style {:padding "10px 16px"
+                 :display "flex"
+                 :align-items "center"
+                 :gap "8px"
+                 :transition "background 0.2s"
+                 :opacity (if importing 0.5 1)}
+         :on-mouse-enter #(set! (.. % -target -style -background) "#f5f5f5")
+         :on-mouse-leave #(set! (.. % -target -style -background) "transparent")
+         :on-click (fn [e]
+                     (.stopPropagation e)
+                     (when-not importing
+                       (when-let [input (.getElementById js/document "import-json-input")]
+                         (.click input))
+                       (swap! context-menu-state assoc :visible false)))}
+        [:span {:style {:color "#667eea"}} "\uD83D\uDCE5"]
+        [:span {:style {:color "#333"}} (if importing "Importing..." "Import Notes (JSON)")]]
+
+       ;; Divider
+       [:div {:style {:height "1px"
+                      :background "#eee"
+                      :margin "4px 0"}}]
+
+       ;; Delete Database option
        [:div.context-menu-item.pointer
         {:style {:padding "10px 16px"
                  :display "flex"
@@ -60,7 +131,7 @@
                                       [[:db/retractEntity [:hulunote-databases/id database-id]]])
                                     (u/alert (str "Database \"" database-name "\" deleted successfully")))}]))
                      (swap! context-menu-state assoc :visible false))}
-        [:span {:style {:color "#ff4d4f"}} "🗑️"]
+        [:span {:style {:color "#ff4d4f"}} "\uD83D\uDDD1\uFE0F"]
         [:span {:style {:color "#ff4d4f"}} "Delete Database"]]])))
 
 ;; ==================== Create Modal Component ====================
@@ -370,4 +441,4 @@
                :text-align "center"}}
       [:div {:style {:color "rgba(255,255,255,0.5)"
                      :font-size "14px"}}
-       "© 2024 Hulunote - MIT License"]]]))
+       "© 2026 Hulunote - MIT License"]]]))

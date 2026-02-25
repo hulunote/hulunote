@@ -479,4 +479,4 @@
                :text-align "center"}}
       [:div {:style {:color "rgba(255,255,255,0.5)"
                      :font-size "14px"}}
-       "© 2024 Hulunote - MIT License"]]]))
+       "© 2026  Hulunote - MIT License"]]]))

@@ -35,7 +35,7 @@
   "build": {
     "appId": "com.hulunote.app",
     "productName": "Hulunote",
-    "copyright": "Copyright © 2024 Hulunote Team",
+    "copyright": "Copyright © 2026  Hulunote Team",
     "directories": {
       "output": "dist",
       "buildResources": "build"

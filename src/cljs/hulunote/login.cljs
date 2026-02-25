@@ -123,7 +123,7 @@
     [:div.flex.flex-column
      {:style {:min-height "100vh"
               :background "#f8f9fa"}}
-     
+
      ;; Header
      [:div
       {:style {:display "flex"
@@ -143,12 +143,12 @@
                  :font-weight "700"
                  :color "#fff"}}
         "HULUNOTE"]]]
-     
+
      ;; Main Content
      [:div.flex.flex-column.items-center.justify-center
       {:style {:flex "1"
                :padding "40px 20px"}}
-      
+
       ;; Login Card
       [:div
        {:style {:background "#fff"
@@ -157,7 +157,7 @@
                 :width "100%"
                 :max-width "400px"
                 :box-shadow "0 10px 40px rgba(0,0,0,0.1)"}}
-       
+
        ;; Logo & Title
        [:div.flex.flex-column.items-center
         {:style {:margin-bottom "32px"}}
@@ -175,21 +175,21 @@
          (if @is-signup
            "Start your note-taking journey"
            "Sign in to continue to Hulunote")]]
-       
+
        ;; Form Fields
        [:div {:style {:margin-bottom "24px"}}
-        
+
         ;; Email
         (input-field "Email" "Enter your email" "email" @username
                      #(reset! username (.. % -target -value)))
-        
+
         ;; Password
         (input-field "Password" "Enter your password" "password" @password
                      #(reset! password (.. % -target -value))
                      {:on-key-down #(when (= (.-which %) 13)
                                       (.click (u/get-ele "login-button")))
                       :id "password-input"})
-        
+
         ;; Signup only fields
         (when @is-signup
           [:div
@@ -197,12 +197,12 @@
            #_(input-field "Bind Code (Optional)" "Platform binding code" "text"
                         (if (::code state) (::code state) @platform-code)
                         #(reset! platform-code (.. % -target -value)))
-           
+
            ;; Registration Code
            (input-field "Registration Code" "Enter your registration code" "text"
                         @registration-code
                         #(reset! registration-code (.. % -target -value)))])]
-       
+
        ;; Submit Button
        [:div {:style {:margin-bottom "24px"}}
         (if @is-signup
@@ -216,7 +216,7 @@
                              (u/alert "Email and password are required")
                              (login-api {:username @username :password @password}))
                           {:id "login-button"}))]
-       
+
        ;; Divider
        [:div.flex.items-center
         {:style {:margin-bottom "24px"}}
@@ -230,7 +230,7 @@
         [:div {:style {:flex "1"
                        :height "1px"
                        :background "#e0e0e0"}}]]
-       
+
        ;; Toggle Login/Signup
        [:div.flex.justify-center
         {:style {:font-size "14px"
@@ -240,7 +240,7 @@
            (link-button "Sign In" #(reset! is-signup false))]
           [:span "Don't have an account? "
            (link-button "Sign Up" #(reset! is-signup true))])]]]
-     
+
      ;; Footer
      [:div
       {:style {:background "#1a1a2e"
@@ -248,4 +248,4 @@
                :text-align "center"}}
       [:div {:style {:color "rgba(255,255,255,0.5)"
                      :font-size "14px"}}
-       "© 2024 Hulunote - MIT License"]]]))
+       "© 2026  Hulunote - MIT License"]]]))
