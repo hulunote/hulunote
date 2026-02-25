@@ -29,6 +29,9 @@
 (defonce import-state (atom {:importing false
                               :result nil}))
 
+;; Holds the database-id to import into (set before opening file picker)
+(defonce import-target-db-id (atom nil))
+
 ;; ==================== Import Helper ====================
 (defn import-notes-to-database!
   "Upload multiple JSON files to import notes into a database via fetch API"
@@ -72,20 +75,6 @@
                 :z-index 10000}
         :on-mouse-leave #(swap! context-menu-state assoc :visible false)}
 
-       ;; Hidden file input for import
-       [:input
-        {:id "import-json-input"
-         :type "file"
-         :multiple true
-         :accept ".json"
-         :style {:display "none"}
-         :on-change (fn [e]
-                      (let [files (.. e -target -files)]
-                        (when (> (.-length files) 0)
-                          (import-notes-to-database! database-id files))
-                        ;; Reset so same files can be re-selected
-                        (set! (.. e -target -value) "")))}]
-
        ;; Import Notes option
        [:div.context-menu-item.pointer
         {:style {:padding "10px 16px"
@@ -99,9 +88,15 @@
          :on-click (fn [e]
                      (.stopPropagation e)
                      (when-not importing
-                       (when-let [input (.getElementById js/document "import-json-input")]
-                         (.click input))
-                       (swap! context-menu-state assoc :visible false)))}
+                       ;; Save target db-id, close menu, then trigger file picker
+                       (reset! import-target-db-id database-id)
+                       (swap! context-menu-state assoc :visible false)
+                       ;; Use setTimeout so the file input (in database-page) stays in DOM
+                       (js/setTimeout
+                         (fn []
+                           (when-let [input (.getElementById js/document "import-json-input")]
+                             (.click input)))
+                         100)))}
         [:span {:style {:color "#667eea"}} "\uD83D\uDCE5"]
         [:span {:style {:color "#333"}} (if importing "Importing..." "Import Notes (JSON)")]]
 
@@ -428,9 +423,24 @@
                    (router/go-to-diaries! db-name)))
                db-id)))])]
      
+     ;; Hidden file input for import (must live outside context-menu so it persists)
+     [:input
+      {:id "import-json-input"
+       :type "file"
+       :multiple true
+       :accept ".json"
+       :style {:display "none"}
+       :on-change (fn [e]
+                    (let [files (.. e -target -files)
+                          db-id @import-target-db-id]
+                      (when (and db-id (> (.-length files) 0))
+                        (import-notes-to-database! db-id files))
+                      ;; Reset so same files can be re-selected
+                      (set! (.. e -target -value) "")))}]
+
      ;; Context menu
      (context-menu)
-     
+
      ;; Create modal
      (create-modal)
      
