@@ -75,4 +75,4 @@ electron/dist/
 resources/public/hulunote/
 shadow-cljs-electron.edn
 mcp-server.js
-shadow-cljs-web-dev.edn
+shadow-cljs-dev.edn
