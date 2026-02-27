@@ -4,6 +4,7 @@ const fs = require('fs');
 const fsPromises = require('fs').promises;
 const McpClientManager = require('./mcp/mcpClientManager');
 const { OpenRouterClient } = require('./api/openRouterClient');
+const { createDeepAgent } = require('./agent');
 
 // MCP Manager instance
 let mcpManager = null;
@@ -528,7 +529,7 @@ ipcMain.handle('chat:get-models', async () => {
   }
 });
 
-// Send chat message
+// Send chat message (using createDeepAgent)
 ipcMain.handle('chat:send-message', async (event, { messages, useTools }) => {
   try {
     if (!openRouterClient) {
@@ -542,122 +543,27 @@ ipcMain.handle('chat:send-message', async (event, { messages, useTools }) => {
     const settings = await loadMcpSettings();
     const model = settings.model || 'anthropic/claude-3.5-sonnet';
 
-    // Get MCP tools if requested
-    let tools = null;
-    if (useTools && mcpManager) {
-      const clientIds = mcpManager.getAllClientIds();
-      if (clientIds.length > 0) {
-        tools = [];
-        for (const clientId of clientIds) {
-          try {
-            const clientTools = await mcpManager.listTools(clientId);
-            for (const tool of clientTools) {
-              tools.push({
-                type: 'function',
-                function: {
-                  name: `${clientId}__${tool.name}`,
-                  description: tool.description || '',
-                  parameters: tool.inputSchema || { type: 'object', properties: {} }
-                }
-              });
-            }
-          } catch (error) {
-            console.error(`Error getting tools for ${clientId}:`, error);
-          }
-        }
+    // Load sub-agent config if present
+    const subAgents = settings.subAgents || [];
+
+    // Build onProgress callback to push events to renderer
+    const onProgress = (progressEvent) => {
+      if (mainWindow) {
+        mainWindow.webContents.send('chat:progress', progressEvent);
       }
-    }
+    };
 
-    // ReAct loop: Plan → Act → Observe → Repeat until done
-    const MAX_ITERATIONS = 20; // Safety limit to prevent infinite loops
-    let currentMessages = [...messages];
-    let allToolCalls = [];
-    let allToolResults = [];
-    let iteration = 0;
-
-    while (iteration < MAX_ITERATIONS) {
-      iteration++;
-      console.log(`[ReAct] Iteration ${iteration}/${MAX_ITERATIONS}`);
-
-      const response = await openRouterClient.sendMessage({
-        model,
-        messages: currentMessages,
-        tools: tools && tools.length > 0 ? tools : null
-      });
-
-      const assistantMessage = response.choices[0].message;
-
-      // If no tool calls, the agent is done reasoning — return final response
-      if (!assistantMessage.tool_calls || assistantMessage.tool_calls.length === 0) {
-        console.log(`[ReAct] Done after ${iteration} iteration(s), no more tool calls`);
-        return {
-          success: true,
-          response,
-          toolCalls: allToolCalls.length > 0 ? allToolCalls : undefined,
-          toolResults: allToolResults.length > 0 ? allToolResults : undefined,
-          iterations: iteration
-        };
-      }
-
-      // Execute all tool calls in this iteration
-      console.log(`[ReAct] Executing ${assistantMessage.tool_calls.length} tool call(s)`);
-      const iterationToolResults = [];
-
-      for (const toolCall of assistantMessage.tool_calls) {
-        const fullName = toolCall.function.name;
-        const [clientId, ...toolNameParts] = fullName.split('__');
-        const toolName = toolNameParts.join('__');
-
-        let args = {};
-        try {
-          args = JSON.parse(toolCall.function.arguments || '{}');
-        } catch (e) {
-          console.error('Error parsing tool arguments:', e);
-        }
-
-        try {
-          const result = await mcpManager.callTool(clientId, toolName, args);
-          iterationToolResults.push({
-            tool_call_id: toolCall.id,
-            role: 'tool',
-            content: JSON.stringify(result)
-          });
-        } catch (error) {
-          iterationToolResults.push({
-            tool_call_id: toolCall.id,
-            role: 'tool',
-            content: JSON.stringify({ error: error.message })
-          });
-        }
-      }
-
-      // Accumulate for final return
-      allToolCalls.push(...assistantMessage.tool_calls);
-      allToolResults.push(...iterationToolResults);
-
-      // Build conversation for next iteration: append assistant message + tool results
-      currentMessages = [
-        ...currentMessages,
-        assistantMessage,
-        ...iterationToolResults
-      ];
-    }
-
-    // Safety: hit max iterations, do one final call without tools to get a summary
-    console.log(`[ReAct] Hit max iterations (${MAX_ITERATIONS}), requesting final response`);
-    const finalResponse = await openRouterClient.sendMessage({
+    const runAgent = createDeepAgent({
+      llmClient: openRouterClient,
       model,
-      messages: currentMessages
+      mcpManager: (useTools && mcpManager) ? mcpManager : null,
+      subAgents,
+      maxIterations: 20,
+      onProgress
     });
 
-    return {
-      success: true,
-      response: finalResponse,
-      toolCalls: allToolCalls,
-      toolResults: allToolResults,
-      iterations: MAX_ITERATIONS,
-      maxIterationsReached: true
-    };
+    const result = await runAgent(messages);
+    return result;
   } catch (error) {
     console.error('Error sending message:', error);
     return { success: false, error: error.message };

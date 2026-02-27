@@ -15,6 +15,7 @@
   (atom {:messages []           ; [{:role "user"/"assistant" :content "..."}]
          :input ""              ; 当前输入
          :loading? false        ; 是否正在等待回复
+         :progress nil          ; 实时进度信息 {:type "iteration" :iteration 1 ...}
          :api-key ""            ; API Key
          :api-key-set? false    ; API Key 是否已设置
          :model "anthropic/claude-3.5-sonnet"
@@ -53,7 +54,12 @@
       (when-let [ch (chat/get-model!)]
         (let [result (js->clj-safe (<! ch))]
           (when (:success result)
-            (swap! chat-state assoc :model (:model result))))))))
+            (swap! chat-state assoc :model (:model result))))))
+    ;; 注册进度监听器
+    (when-let [on-progress (some-> js/window .-electronAPI .-chat .-onProgress)]
+      (on-progress
+       (fn [data]
+         (swap! chat-state assoc :progress (js->clj-safe data)))))))
 
 ;; ==================== 发送消息 ====================
 
@@ -67,13 +73,14 @@
                :messages all-messages
                :input ""
                :loading? true
+               :progress nil
                :error nil)
         ;; 发送请求
         (go
           (when-let [ch (chat/send-message! {:messages all-messages
                                              :use-tools use-tools?})]
             (let [result (js->clj-safe (<! ch))]
-              (swap! chat-state assoc :loading? false)
+              (swap! chat-state assoc :loading? false :progress nil)
               (if (:success result)
                 (let [response (:response result)
                       assistant-content (get-in response [:choices 0 :message :content] "")
@@ -263,7 +270,7 @@
        state)}
   rum/reactive
   [state database-name]
-  (let [{:keys [messages input loading? api-key-set? use-tools? error model]}
+  (let [{:keys [messages input loading? progress api-key-set? use-tools? error model]}
         (rum/react chat-state)
         {:keys [servers connected-clients]} (rum/react mcp-state/mcp-state)
         connected-count (count connected-clients)]
@@ -387,7 +394,7 @@
          (for [[idx msg] (map-indexed vector messages)]
            (rum/with-key (message-bubble msg) idx)))
 
-       ;; Loading indicator
+       ;; Loading indicator with progress
        (when loading?
          [:div {:style {:display "flex"
                         :justify-content "flex-start"
@@ -397,7 +404,13 @@
                          :border-radius "16px"
                          :color "#666"
                          :font-size "14px"}}
-           "Thinking..."]])]
+           (if progress
+             (case (:type progress)
+               "iteration"   (str "Thinking... (iteration " (:iteration progress) "/" (:maxIterations progress) ")")
+               "tool_calls"  (str "Calling tools: " (str/join ", " (:tools progress)))
+               "max_iterations" "Wrapping up (max iterations reached)..."
+               "Thinking...")
+             "Thinking...")]])]
 
       ;; Input area
       [:div {:style {:display "flex"

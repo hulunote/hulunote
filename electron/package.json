@@ -46,7 +46,8 @@
       "app/**/*",
       "icons/**/*",
       "mcp/**/*",
-      "api/**/*"
+      "api/**/*",
+      "agent/**/*"
     ],
     "extraMetadata": {
       "main": "main.js"
