@@ -568,18 +568,40 @@ ipcMain.handle('chat:send-message', async (event, { messages, useTools }) => {
       }
     }
 
-    const response = await openRouterClient.sendMessage({
-      model,
-      messages,
-      tools: tools && tools.length > 0 ? tools : null
-    });
+    // ReAct loop: Plan → Act → Observe → Repeat until done
+    const MAX_ITERATIONS = 20; // Safety limit to prevent infinite loops
+    let currentMessages = [...messages];
+    let allToolCalls = [];
+    let allToolResults = [];
+    let iteration = 0;
 
-    // Check if the response contains tool calls
-    const assistantMessage = response.choices[0].message;
+    while (iteration < MAX_ITERATIONS) {
+      iteration++;
+      console.log(`[ReAct] Iteration ${iteration}/${MAX_ITERATIONS}`);
 
-    if (assistantMessage.tool_calls && assistantMessage.tool_calls.length > 0) {
-      // Execute tool calls
-      const toolResults = [];
+      const response = await openRouterClient.sendMessage({
+        model,
+        messages: currentMessages,
+        tools: tools && tools.length > 0 ? tools : null
+      });
+
+      const assistantMessage = response.choices[0].message;
+
+      // If no tool calls, the agent is done reasoning — return final response
+      if (!assistantMessage.tool_calls || assistantMessage.tool_calls.length === 0) {
+        console.log(`[ReAct] Done after ${iteration} iteration(s), no more tool calls`);
+        return {
+          success: true,
+          response,
+          toolCalls: allToolCalls.length > 0 ? allToolCalls : undefined,
+          toolResults: allToolResults.length > 0 ? allToolResults : undefined,
+          iterations: iteration
+        };
+      }
+
+      // Execute all tool calls in this iteration
+      console.log(`[ReAct] Executing ${assistantMessage.tool_calls.length} tool call(s)`);
+      const iterationToolResults = [];
 
       for (const toolCall of assistantMessage.tool_calls) {
         const fullName = toolCall.function.name;
@@ -595,13 +617,13 @@ ipcMain.handle('chat:send-message', async (event, { messages, useTools }) => {
 
         try {
           const result = await mcpManager.callTool(clientId, toolName, args);
-          toolResults.push({
+          iterationToolResults.push({
             tool_call_id: toolCall.id,
             role: 'tool',
             content: JSON.stringify(result)
           });
         } catch (error) {
-          toolResults.push({
+          iterationToolResults.push({
             tool_call_id: toolCall.id,
             role: 'tool',
             content: JSON.stringify({ error: error.message })
@@ -609,27 +631,33 @@ ipcMain.handle('chat:send-message', async (event, { messages, useTools }) => {
         }
       }
 
-      // Send tool results back to the model
-      const followUpMessages = [
-        ...messages,
+      // Accumulate for final return
+      allToolCalls.push(...assistantMessage.tool_calls);
+      allToolResults.push(...iterationToolResults);
+
+      // Build conversation for next iteration: append assistant message + tool results
+      currentMessages = [
+        ...currentMessages,
         assistantMessage,
-        ...toolResults
+        ...iterationToolResults
       ];
-
-      const followUpResponse = await openRouterClient.sendMessage({
-        model,
-        messages: followUpMessages
-      });
-
-      return {
-        success: true,
-        response: followUpResponse,
-        toolCalls: assistantMessage.tool_calls,
-        toolResults: toolResults
-      };
     }
 
-    return { success: true, response };
+    // Safety: hit max iterations, do one final call without tools to get a summary
+    console.log(`[ReAct] Hit max iterations (${MAX_ITERATIONS}), requesting final response`);
+    const finalResponse = await openRouterClient.sendMessage({
+      model,
+      messages: currentMessages
+    });
+
+    return {
+      success: true,
+      response: finalResponse,
+      toolCalls: allToolCalls,
+      toolResults: allToolResults,
+      iterations: MAX_ITERATIONS,
+      maxIterationsReached: true
+    };
   } catch (error) {
     console.error('Error sending message:', error);
     return { success: false, error: error.message };

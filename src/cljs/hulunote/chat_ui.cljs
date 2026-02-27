@@ -76,16 +76,20 @@
               (swap! chat-state assoc :loading? false)
               (if (:success result)
                 (let [response (:response result)
-                      assistant-content (get-in response [:choices 0 :message :content] "")]
-                  ;; 添加助手回复
-                  (when (not (str/blank? assistant-content))
-                    (add-message! "assistant" assistant-content))
+                      assistant-content (get-in response [:choices 0 :message :content] "")
+                      iterations (:iterations result)]
                   ;; 如果有工具调用，显示信息
                   (when-let [tool-calls (:toolCalls result)]
                     (add-message! "system"
-                                  (str "Used tools: "
+                                  (str "ReAct loop: " (or iterations 1) " iteration(s), "
+                                       (count tool-calls) " tool call(s): "
                                        (str/join ", "
-                                                 (map #(get-in % [:function :name]) tool-calls))))))
+                                                 (map #(get-in % [:function :name]) tool-calls))
+                                       (when (:maxIterationsReached result)
+                                         " [max iterations reached]"))))
+                  ;; 添加助手回复
+                  (when (not (str/blank? assistant-content))
+                    (add-message! "assistant" assistant-content)))
                 (do
                   (swap! chat-state assoc :error (:error result))
                   (add-message! "error" (str "Error: " (:error result))))))))))))
