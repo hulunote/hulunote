@@ -16,12 +16,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
     getModel: () => ipcRenderer.invoke('chat:get-model'),
     getModels: () => ipcRenderer.invoke('chat:get-models'),
     sendMessage: (params) => ipcRenderer.invoke('chat:send-message', params),
-    onProgress: (callback) => {
-      ipcRenderer.on('chat:progress', (event, data) => callback(data));
-    },
-    removeProgressListener: () => {
-      ipcRenderer.removeAllListeners('chat:progress');
-    },
+    getProgress: () => ipcRenderer.invoke('chat:get-progress'),
   },
 
   // ============= Auth =============

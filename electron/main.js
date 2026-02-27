@@ -529,6 +529,15 @@ ipcMain.handle('chat:get-models', async () => {
   }
 });
 
+// ============= Agent Progress (polling-based) =============
+
+let agentProgressLog = [];
+
+ipcMain.handle('chat:get-progress', () => {
+  const items = agentProgressLog.splice(0);
+  return items;
+});
+
 // Send chat message (using createDeepAgent)
 ipcMain.handle('chat:send-message', async (event, { messages, useTools }) => {
   try {
@@ -546,10 +555,31 @@ ipcMain.handle('chat:send-message', async (event, { messages, useTools }) => {
     // Load sub-agent config if present
     const subAgents = settings.subAgents || [];
 
-    // Build onProgress callback to push events to renderer
+    // Clear progress log for new request
+    agentProgressLog = [];
+
+    // Build onProgress callback that accumulates messages for polling
     const onProgress = (progressEvent) => {
-      if (mainWindow) {
-        mainWindow.webContents.send('chat:progress', progressEvent);
+      if (progressEvent.type === 'iteration') {
+        agentProgressLog.push(`[Iteration ${progressEvent.iteration}/${progressEvent.maxIterations}] Thinking...`);
+      } else if (progressEvent.type === 'tool_executing') {
+        const toolDisplay = progressEvent.tool.includes('__')
+          ? progressEvent.tool.split('__').slice(1).join('__')
+          : progressEvent.tool;
+        agentProgressLog.push(`[Iteration ${progressEvent.iteration}] Calling: ${toolDisplay}`);
+      } else if (progressEvent.type === 'tool_done') {
+        const toolDisplay = progressEvent.tool.includes('__')
+          ? progressEvent.tool.split('__').slice(1).join('__')
+          : progressEvent.tool;
+        const preview = progressEvent.resultPreview
+          ? ` — ${progressEvent.resultPreview.slice(0, 80)}${progressEvent.resultPreview.length > 80 ? '...' : ''}`
+          : '';
+        agentProgressLog.push(`[Iteration ${progressEvent.iteration}] Done: ${toolDisplay}${preview}`);
+      } else if (progressEvent.type === 'tool_calls') {
+        const tools = progressEvent.tools.map(t => t.includes('__') ? t.split('__').slice(1).join('__') : t);
+        agentProgressLog.push(`[Iteration ${progressEvent.iteration}] Tools: ${tools.join(', ')}`);
+      } else if (progressEvent.type === 'max_iterations') {
+        agentProgressLog.push(`[Max iterations reached] Generating final response...`);
       }
     };
 

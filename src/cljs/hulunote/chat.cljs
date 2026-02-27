@@ -69,3 +69,9 @@
     (let [js-params (clj->js {:messages messages
                               :useTools (boolean use-tools)})]
       (promise->chan (.sendMessage (.-chat js/window.electronAPI) js-params)))))
+
+(defn get-progress!
+  "获取 agent 执行进度（轮询方式）"
+  []
+  (when (chat-available?)
+    (promise->chan (.getProgress (.-chat js/window.electronAPI)))))

@@ -111,6 +111,14 @@ class AgentRunner {
           console.error('[AgentRunner] Error parsing tool arguments:', e);
         }
 
+        // Notify: tool is about to execute
+        this.onProgress({
+          type: 'tool_executing',
+          iteration,
+          tool: fullName,
+          args
+        });
+
         let resultContent;
         try {
           // Check if any middleware provides this tool (has _executor)
@@ -134,6 +142,15 @@ class AgentRunner {
         for (const mw of this.middleware) {
           resultContent = await mw.afterToolExecution(fullName, args, resultContent, state);
         }
+
+        // Notify: tool execution done
+        const preview = typeof resultContent === 'string' ? resultContent.slice(0, 200) : '';
+        this.onProgress({
+          type: 'tool_done',
+          iteration,
+          tool: fullName,
+          resultPreview: preview
+        });
 
         iterationToolResults.push({
           tool_call_id: toolCall.id,

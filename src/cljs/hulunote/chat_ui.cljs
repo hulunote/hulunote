@@ -15,7 +15,7 @@
   (atom {:messages []           ; [{:role "user"/"assistant" :content "..."}]
          :input ""              ; 当前输入
          :loading? false        ; 是否正在等待回复
-         :progress nil          ; 实时进度信息 {:type "iteration" :iteration 1 ...}
+         :progress-log []       ; 工具调用活动日志 ["[Iteration 1] Calling: ..." ...]
          :api-key ""            ; API Key
          :api-key-set? false    ; API Key 是否已设置
          :model "anthropic/claude-3.5-sonnet"
@@ -55,11 +55,30 @@
         (let [result (js->clj-safe (<! ch))]
           (when (:success result)
             (swap! chat-state assoc :model (:model result))))))
-    ;; 注册进度监听器
-    (when-let [on-progress (some-> js/window .-electronAPI .-chat .-onProgress)]
-      (on-progress
-       (fn [data]
-         (swap! chat-state assoc :progress (js->clj-safe data)))))))
+))
+
+;; ==================== 进度轮询 ====================
+
+(defonce progress-timer (atom nil))
+
+(declare stop-progress-polling!)
+
+(defn start-progress-polling! []
+  (stop-progress-polling!)
+  (reset! progress-timer
+          (js/setInterval
+           (fn []
+             (go
+               (when-let [ch (chat/get-progress!)]
+                 (let [items (js->clj (<! ch))]
+                   (when (and (sequential? items) (seq items))
+                     (swap! chat-state update :progress-log into items))))))
+           500)))
+
+(defn stop-progress-polling! []
+  (when-let [timer @progress-timer]
+    (js/clearInterval timer)
+    (reset! progress-timer nil)))
 
 ;; ==================== 发送消息 ====================
 
@@ -73,14 +92,22 @@
                :messages all-messages
                :input ""
                :loading? true
-               :progress nil
+               :progress-log []
                :error nil)
+        ;; 启动进度轮询
+        (start-progress-polling!)
         ;; 发送请求
         (go
           (when-let [ch (chat/send-message! {:messages all-messages
                                              :use-tools use-tools?})]
             (let [result (js->clj-safe (<! ch))]
-              (swap! chat-state assoc :loading? false :progress nil)
+              ;; 停止轮询，做最后一次拉取
+              (stop-progress-polling!)
+              (when-let [final-ch (chat/get-progress!)]
+                (let [final-items (js->clj (<! final-ch))]
+                  (when (and (sequential? final-items) (seq final-items))
+                    (swap! chat-state update :progress-log into final-items))))
+              (swap! chat-state assoc :loading? false)
               (if (:success result)
                 (let [response (:response result)
                       assistant-content (get-in response [:choices 0 :message :content] "")
@@ -100,6 +127,7 @@
                 (do
                   (swap! chat-state assoc :error (:error result))
                   (add-message! "error" (str "Error: " (:error result))))))))))))
+
 
 ;; ==================== 保存设置 ====================
 
@@ -270,7 +298,7 @@
        state)}
   rum/reactive
   [state database-name]
-  (let [{:keys [messages input loading? progress api-key-set? use-tools? error model]}
+  (let [{:keys [messages input loading? progress-log api-key-set? use-tools? error model]}
         (rum/react chat-state)
         {:keys [servers connected-clients]} (rum/react mcp-state/mcp-state)
         connected-count (count connected-clients)]
@@ -394,23 +422,48 @@
          (for [[idx msg] (map-indexed vector messages)]
            (rum/with-key (message-bubble msg) idx)))
 
-       ;; Loading indicator with progress
+       ;; Loading indicator with activity log
        (when loading?
-         [:div {:style {:display "flex"
-                        :justify-content "flex-start"
-                        :margin-top "12px"}}
-          [:div {:style {:padding "12px 16px"
-                         :background "#f5f5f5"
-                         :border-radius "16px"
-                         :color "#666"
-                         :font-size "14px"}}
-           (if progress
-             (case (:type progress)
-               "iteration"   (str "Thinking... (iteration " (:iteration progress) "/" (:maxIterations progress) ")")
-               "tool_calls"  (str "Calling tools: " (str/join ", " (:tools progress)))
-               "max_iterations" "Wrapping up (max iterations reached)..."
-               "Thinking...")
-             "Thinking...")]])]
+         [:div {:style {:margin-top "12px"}}
+          ;; Activity log - show each tool call as it happens
+          (when (seq progress-log)
+            [:div {:style {:padding "10px 14px"
+                           :background "#f0f5ff"
+                           :border-radius "12px"
+                           :margin-bottom "8px"
+                           :max-height "200px"
+                           :overflow-y "auto"
+                           :border "1px solid #d6e4ff"}}
+             (for [[idx line] (map-indexed vector progress-log)]
+               [:div {:key idx
+                      :style {:font-size "12px"
+                              :font-family "monospace"
+                              :color "#1890ff"
+                              :padding "2px 0"
+                              :border-bottom (when (< idx (dec (count progress-log)))
+                                               "1px solid #e8f0fe")}}
+                line])])
+          ;; Current status line
+          [:div {:style {:display "flex"
+                         :justify-content "flex-start"}}
+           [:div {:style {:padding "12px 16px"
+                          :background "#f5f5f5"
+                          :border-radius "16px"
+                          :color "#666"
+                          :font-size "14px"
+                          :display "flex"
+                          :align-items "center"
+                          :gap "8px"}}
+            ;; Animated dot
+            [:span {:style {:display "inline-block"
+                            :width "8px"
+                            :height "8px"
+                            :border-radius "50%"
+                            :background "#667eea"
+                            :animation "pulse 1.5s ease-in-out infinite"}}]
+            (if (seq progress-log)
+              (last progress-log)
+              "Thinking...")]]])]
 
       ;; Input area
       [:div {:style {:display "flex"
