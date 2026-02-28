@@ -535,6 +535,9 @@ let agentProgressLog = [];
 
 ipcMain.handle('chat:get-progress', () => {
   const items = agentProgressLog.splice(0);
+  if (items.length > 0) {
+    console.log('[chat:get-progress] returning', items.length, 'items:', items);
+  }
   return items;
 });
 
@@ -560,6 +563,7 @@ ipcMain.handle('chat:send-message', async (event, { messages, useTools }) => {
 
     // Build onProgress callback that accumulates messages for polling
     const onProgress = (progressEvent) => {
+      console.log('[onProgress]', progressEvent.type, JSON.stringify(progressEvent).slice(0, 200));
       if (progressEvent.type === 'iteration') {
         agentProgressLog.push(`[Iteration ${progressEvent.iteration}/${progressEvent.maxIterations}] Thinking...`);
       } else if (progressEvent.type === 'tool_executing') {

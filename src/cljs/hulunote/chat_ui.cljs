@@ -68,11 +68,16 @@
   (reset! progress-timer
           (js/setInterval
            (fn []
-             (go
-               (when-let [ch (chat/get-progress!)]
-                 (let [items (js->clj (<! ch))]
-                   (when (and (sequential? items) (seq items))
-                     (swap! chat-state update :progress-log into items))))))
+             (try
+               (go
+                 (when-let [ch (chat/get-progress!)]
+                   (let [raw (<! ch)
+                         items (js->clj raw)]
+                     (js/console.log "[progress-poll]" (pr-str items))
+                     (when (and (sequential? items) (seq items))
+                       (swap! chat-state update :progress-log into items)))))
+               (catch js/Error e
+                 (js/console.error "[progress-poll] error:" e))))
            500)))
 
 (defn stop-progress-polling! []
@@ -111,16 +116,25 @@
               (if (:success result)
                 (let [response (:response result)
                       assistant-content (get-in response [:choices 0 :message :content] "")
-                      iterations (:iterations result)]
-                  ;; 如果有工具调用，显示信息
-                  (when-let [tool-calls (:toolCalls result)]
+                      iterations (:iterations result)
+                      log (:progress-log @chat-state)]
+                  ;; 显示工具调用活动日志（优先使用轮询收集的日志）
+                  (if (seq log)
+                    ;; 有轮询日志，显示详细的工具调用过程
                     (add-message! "system"
-                                  (str "ReAct loop: " (or iterations 1) " iteration(s), "
-                                       (count tool-calls) " tool call(s): "
-                                       (str/join ", "
-                                                 (map #(get-in % [:function :name]) tool-calls))
-                                       (when (:maxIterationsReached result)
-                                         " [max iterations reached]"))))
+                                  (str/join "\n" log))
+                    ;; 没有轮询日志，从返回结果中构建工具调用信息
+                    (when-let [tool-calls (:toolCalls result)]
+                      (add-message! "system"
+                                    (str "ReAct loop: " (or iterations 1) " iteration(s), "
+                                         (count tool-calls) " tool call(s):\n"
+                                         (str/join "\n"
+                                                   (map-indexed
+                                                    (fn [i tc]
+                                                      (str (inc i) ". " (get-in tc [:function :name])))
+                                                    tool-calls))
+                                         (when (:maxIterationsReached result)
+                                           "\n[max iterations reached]")))))
                   ;; 添加助手回复
                   (when (not (str/blank? assistant-content))
                     (add-message! "assistant" assistant-content)))
@@ -175,8 +189,10 @@
                         :else "#333")
                :white-space "pre-wrap"
                :word-break "break-word"
-               :font-size "14px"
-               :line-height "1.5"}}
+               :font-size (if is-system "12px" "14px")
+               :font-family (when is-system "monospace")
+               :line-height "1.5"
+               :border (when is-system "1px solid #d6e4ff")}}
       content]]))
 
 (rum/defc settings-modal < rum/reactive []
