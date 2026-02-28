@@ -1,3 +1,4 @@
+console.log('===== MAIN.JS LOADED (v2) =====');
 const { app, BrowserWindow, Menu, shell, ipcMain } = require('electron');
 const path = require('path');
 const fs = require('fs');
@@ -561,16 +562,16 @@ ipcMain.handle('chat:send-message', async (event, { messages, useTools }) => {
     // Clear progress log for new request
     agentProgressLog = [];
 
-    // Build onProgress callback that accumulates messages for polling
+    // Build onProgress callback: accumulate log + inject into renderer DOM in real-time
     const onProgress = (progressEvent) => {
-      console.log('[onProgress]', progressEvent.type, JSON.stringify(progressEvent).slice(0, 200));
+      let line = '';
       if (progressEvent.type === 'iteration') {
-        agentProgressLog.push(`[Iteration ${progressEvent.iteration}/${progressEvent.maxIterations}] Thinking...`);
+        line = `[Iteration ${progressEvent.iteration}/${progressEvent.maxIterations}] Thinking...`;
       } else if (progressEvent.type === 'tool_executing') {
         const toolDisplay = progressEvent.tool.includes('__')
           ? progressEvent.tool.split('__').slice(1).join('__')
           : progressEvent.tool;
-        agentProgressLog.push(`[Iteration ${progressEvent.iteration}] Calling: ${toolDisplay}`);
+        line = `[Iteration ${progressEvent.iteration}] Calling: ${toolDisplay}`;
       } else if (progressEvent.type === 'tool_done') {
         const toolDisplay = progressEvent.tool.includes('__')
           ? progressEvent.tool.split('__').slice(1).join('__')
@@ -578,12 +579,39 @@ ipcMain.handle('chat:send-message', async (event, { messages, useTools }) => {
         const preview = progressEvent.resultPreview
           ? ` — ${progressEvent.resultPreview.slice(0, 80)}${progressEvent.resultPreview.length > 80 ? '...' : ''}`
           : '';
-        agentProgressLog.push(`[Iteration ${progressEvent.iteration}] Done: ${toolDisplay}${preview}`);
+        line = `[Iteration ${progressEvent.iteration}] Done: ${toolDisplay}${preview}`;
       } else if (progressEvent.type === 'tool_calls') {
         const tools = progressEvent.tools.map(t => t.includes('__') ? t.split('__').slice(1).join('__') : t);
-        agentProgressLog.push(`[Iteration ${progressEvent.iteration}] Tools: ${tools.join(', ')}`);
+        line = `[Iteration ${progressEvent.iteration}] Tools: ${tools.join(', ')}`;
       } else if (progressEvent.type === 'max_iterations') {
-        agentProgressLog.push(`[Max iterations reached] Generating final response...`);
+        line = `[Max iterations reached] Generating final response...`;
+      }
+
+      if (line) {
+        agentProgressLog.push(line);
+        // Inject progress into renderer DOM in real-time
+        if (mainWindow && !mainWindow.isDestroyed()) {
+          const escapedLine = line.replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/\n/g, '\\n');
+          mainWindow.webContents.executeJavaScript(`
+            (function() {
+              var box = document.getElementById('agent-progress-box');
+              if (!box) {
+                var container = document.querySelector('.messages-container');
+                if (!container) return;
+                box = document.createElement('div');
+                box.id = 'agent-progress-box';
+                box.style.cssText = 'margin-top:12px;padding:10px 14px;background:#f0f5ff;border-radius:12px;border:1px solid #d6e4ff;max-height:200px;overflow-y:auto;font-family:monospace;font-size:12px;color:#1890ff;';
+                container.appendChild(box);
+              }
+              var item = document.createElement('div');
+              item.style.cssText = 'padding:2px 0;border-bottom:1px solid #e8f0fe;';
+              item.textContent = '${escapedLine}';
+              box.appendChild(item);
+              box.scrollTop = box.scrollHeight;
+              container.scrollTop = container.scrollHeight;
+            })();
+          `).catch(() => {});
+        }
       }
     };
 
@@ -597,6 +625,25 @@ ipcMain.handle('chat:send-message', async (event, { messages, useTools }) => {
     });
 
     const result = await runAgent(messages);
+
+    // Remove the live progress box from DOM
+    if (mainWindow && !mainWindow.isDestroyed()) {
+      mainWindow.webContents.executeJavaScript(`
+        var box = document.getElementById('agent-progress-box');
+        if (box) box.remove();
+      `).catch(() => {});
+    }
+
+    // Prepend tool call log to the assistant response content
+    if (agentProgressLog.length > 0 && result.success && result.response) {
+      const logText = '--- Tool Calls ---\n' + agentProgressLog.join('\n') + '\n--- End ---\n\n';
+      const choices = result.response.choices;
+      if (choices && choices[0] && choices[0].message) {
+        const msg = choices[0].message;
+        msg.content = logText + (msg.content || '');
+      }
+    }
+
     return result;
   } catch (error) {
     console.error('Error sending message:', error);

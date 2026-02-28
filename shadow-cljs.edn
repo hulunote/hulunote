@@ -13,7 +13,7 @@
                      {:hulunote {:init-fn hulunote.core/init!}}
                      :devtools
                      {:http-port  8803
-                      :http-root  "../hulunote-rust/resources/public"
+                      :http-root  "resources/public"
                       :after-load hulunote.core/after-load
                       :preloads [shadow.remote.runtime.cljs.browser]}
                      ;; release 模式才用 advanced 优化
