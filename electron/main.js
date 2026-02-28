@@ -562,53 +562,194 @@ ipcMain.handle('chat:send-message', async (event, { messages, useTools }) => {
     // Clear progress log for new request
     agentProgressLog = [];
 
-    // Build onProgress callback: accumulate log + inject into renderer DOM in real-time
+    // Unique ID counter for tool bubbles
+    let toolBubbleId = 0;
+
+    // Build onProgress callback: inject as chat bubbles with details
     const onProgress = (progressEvent) => {
       let line = '';
+      let icon = '';
+      let style = 'normal';
+      let detail = '';
+      let toolId = '';
+
       if (progressEvent.type === 'iteration') {
-        line = `[Iteration ${progressEvent.iteration}/${progressEvent.maxIterations}] Thinking...`;
+        line = `Thinking... (step ${progressEvent.iteration}/${progressEvent.maxIterations})`;
+        icon = '🧠';
+        style = 'thinking';
       } else if (progressEvent.type === 'tool_executing') {
         const toolDisplay = progressEvent.tool.includes('__')
           ? progressEvent.tool.split('__').slice(1).join('__')
           : progressEvent.tool;
-        line = `[Iteration ${progressEvent.iteration}] Calling: ${toolDisplay}`;
+        // Extract meaningful detail from args
+        const args = progressEvent.args || {};
+        if (args.directory_path) {
+          detail = args.directory_path;
+        } else if (args.file_path) {
+          detail = args.file_path;
+        } else if (args.path) {
+          detail = args.path;
+        } else if (args.command) {
+          detail = args.command.slice(0, 120);
+        } else if (args.query) {
+          detail = args.query.slice(0, 120);
+        } else if (args.url) {
+          detail = args.url;
+        } else {
+          const keys = Object.keys(args);
+          if (keys.length > 0) {
+            detail = keys.map(k => `${k}: ${String(args[k]).slice(0, 60)}`).join(', ');
+          }
+        }
+        // For write_file, store the content for the expandable detail
+        toolId = 'tool-' + (++toolBubbleId);
+        line = toolDisplay;
+        icon = '🔧';
+        style = 'executing';
       } else if (progressEvent.type === 'tool_done') {
         const toolDisplay = progressEvent.tool.includes('__')
           ? progressEvent.tool.split('__').slice(1).join('__')
           : progressEvent.tool;
-        const preview = progressEvent.resultPreview
-          ? ` — ${progressEvent.resultPreview.slice(0, 80)}${progressEvent.resultPreview.length > 80 ? '...' : ''}`
-          : '';
-        line = `[Iteration ${progressEvent.iteration}] Done: ${toolDisplay}${preview}`;
-      } else if (progressEvent.type === 'tool_calls') {
-        const tools = progressEvent.tools.map(t => t.includes('__') ? t.split('__').slice(1).join('__') : t);
-        line = `[Iteration ${progressEvent.iteration}] Tools: ${tools.join(', ')}`;
+        const isError = (progressEvent.resultPreview || '').includes('"isError":true') ||
+                        (progressEvent.resultPreview || '').includes('"Error');
+        line = toolDisplay;
+        icon = isError ? '❌' : '✅';
+        style = 'done';
+        // Extract result snippet for detail
+        try {
+          const parsed = JSON.parse(progressEvent.resultPreview || '{}');
+          if (parsed.content && parsed.content[0] && parsed.content[0].text) {
+            detail = parsed.content[0].text.slice(0, 200);
+          }
+        } catch(e) {
+          detail = (progressEvent.resultPreview || '').slice(0, 200);
+        }
       } else if (progressEvent.type === 'max_iterations') {
-        line = `[Max iterations reached] Generating final response...`;
+        line = 'Max iterations reached, wrapping up...';
+        icon = '⚠️';
+        style = 'thinking';
       }
 
       if (line) {
-        agentProgressLog.push(line);
-        // Inject progress into renderer DOM in real-time
+        agentProgressLog.push(icon + ' ' + line + (detail ? ' → ' + detail.slice(0, 100) : ''));
         if (mainWindow && !mainWindow.isDestroyed()) {
-          const escapedLine = line.replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/\n/g, '\\n');
+          const esc = (s) => (s || '').replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/\n/g, ' ').replace(/</g, '&lt;');
+          const escaped = esc(line);
+          const escapedDetail = esc(detail);
+          const escapedToolId = esc(toolId);
+          // For write_file expandable content
+          const argsContent = (progressEvent.args && progressEvent.args.content) || '';
+          const escapedContent = esc(argsContent.slice(0, 2000));
+          const hasContent = argsContent.length > 0;
+
           mainWindow.webContents.executeJavaScript(`
             (function() {
-              var box = document.getElementById('agent-progress-box');
-              if (!box) {
-                var container = document.querySelector('.messages-container');
-                if (!container) return;
-                box = document.createElement('div');
-                box.id = 'agent-progress-box';
-                box.style.cssText = 'margin-top:12px;padding:10px 14px;background:#f0f5ff;border-radius:12px;border:1px solid #d6e4ff;max-height:200px;overflow-y:auto;font-family:monospace;font-size:12px;color:#1890ff;';
-                container.appendChild(box);
+              var container = document.querySelector('.messages-container');
+              if (!container) return;
+
+              if ('${style}' === 'executing') {
+                var bubble = document.createElement('div');
+                bubble.className = 'agent-tool-bubble';
+                bubble.dataset.tool = '${escaped}';
+                bubble.dataset.toolid = '${escapedToolId}';
+                bubble.style.cssText = 'margin-top:8px;background:#f6f8fa;border:1px solid #d0d7de;border-radius:10px;font-size:13px;color:#1f2328;max-width:85%;animation:fadeIn 0.2s ease;overflow:hidden;';
+
+                // Header row
+                var header = document.createElement('div');
+                header.style.cssText = 'display:flex;align-items:center;gap:8px;padding:8px 14px;cursor:${hasContent ? 'pointer' : 'default'};user-select:none;';
+                // Spinner
+                var spinner = document.createElement('span');
+                spinner.className = 'tool-spinner';
+                spinner.style.cssText = 'display:inline-block;width:14px;height:14px;border:2px solid #d0d7de;border-top-color:#1f2328;border-radius:50%;animation:spin 0.8s linear infinite;flex-shrink:0;';
+                header.appendChild(spinner);
+                // Tool name
+                var nameEl = document.createElement('span');
+                nameEl.style.cssText = 'font-weight:600;font-family:-apple-system,BlinkMacSystemFont,sans-serif;';
+                nameEl.textContent = '${escaped}';
+                header.appendChild(nameEl);
+                // Detail (path/arg summary)
+                if ('${escapedDetail}') {
+                  var detailEl = document.createElement('span');
+                  detailEl.style.cssText = 'color:#656d76;font-family:ui-monospace,SFMono-Regular,monospace;font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;';
+                  detailEl.textContent = '${escapedDetail}';
+                  header.appendChild(detailEl);
+                }
+                // Expand arrow for write_file
+                if (${hasContent}) {
+                  var arrow = document.createElement('span');
+                  arrow.className = 'tool-arrow';
+                  arrow.style.cssText = 'margin-left:auto;font-size:10px;color:#656d76;transition:transform 0.2s;';
+                  arrow.textContent = '▶';
+                  header.appendChild(arrow);
+                }
+                bubble.appendChild(header);
+
+                // Expandable content panel (hidden by default)
+                if (${hasContent}) {
+                  var panel = document.createElement('div');
+                  panel.className = 'tool-content-panel';
+                  panel.style.cssText = 'display:none;padding:8px 14px;border-top:1px solid #d0d7de;background:#f8f9fb;max-height:200px;overflow-y:auto;';
+                  var pre = document.createElement('pre');
+                  pre.style.cssText = 'margin:0;font-size:11px;font-family:ui-monospace,SFMono-Regular,monospace;color:#1f2328;white-space:pre-wrap;word-break:break-all;';
+                  pre.textContent = '${escapedContent}';
+                  panel.appendChild(pre);
+                  bubble.appendChild(panel);
+                  // Toggle on click
+                  header.addEventListener('click', function() {
+                    var isOpen = panel.style.display !== 'none';
+                    panel.style.display = isOpen ? 'none' : 'block';
+                    var a = header.querySelector('.tool-arrow');
+                    if (a) a.style.transform = isOpen ? '' : 'rotate(90deg)';
+                  });
+                }
+
+                container.appendChild(bubble);
               }
-              var item = document.createElement('div');
-              item.style.cssText = 'padding:2px 0;border-bottom:1px solid #e8f0fe;';
-              item.textContent = '${escapedLine}';
-              box.appendChild(item);
-              box.scrollTop = box.scrollHeight;
+
+              if ('${style}' === 'done') {
+                // Find last matching pending bubble
+                var all = container.querySelectorAll('.agent-tool-bubble[data-tool="' + '${escaped}' + '"]');
+                var target = null;
+                for (var i = all.length - 1; i >= 0; i--) {
+                  if (all[i].querySelector('.tool-spinner')) { target = all[i]; break; }
+                }
+                if (target) {
+                  target.style.background = '#f0fdf4';
+                  target.style.borderColor = '#bbf7d0';
+                  var sp = target.querySelector('.tool-spinner');
+                  if (sp) {
+                    sp.style.cssText = 'flex-shrink:0;font-size:14px;';
+                    sp.textContent = '${icon}';
+                  }
+                  // Update detail text with result
+                  if ('${escapedDetail}') {
+                    var existingDetail = target.querySelector('span[style*="color:#656d76"]');
+                    if (existingDetail) {
+                      existingDetail.textContent = '${escapedDetail}';
+                      existingDetail.style.color = '#166534';
+                    }
+                  }
+                }
+              }
+
+              if ('${style}' === 'thinking') {
+                var old = document.getElementById('agent-thinking');
+                if (old) old.remove();
+                var th = document.createElement('div');
+                th.id = 'agent-thinking';
+                th.style.cssText = 'display:flex;align-items:center;gap:8px;margin-top:8px;padding:8px 14px;background:#fefce8;border:1px solid #fef08a;border-radius:10px;font-size:13px;color:#854d0e;max-width:80%;';
+                th.innerHTML = '<span style="font-size:14px;">${icon}</span><span style="font-family:-apple-system,BlinkMacSystemFont,sans-serif;">${escaped}</span>';
+                container.appendChild(th);
+              }
+
               container.scrollTop = container.scrollHeight;
+
+              if (!document.getElementById('agent-progress-styles')) {
+                var s = document.createElement('style');
+                s.id = 'agent-progress-styles';
+                s.textContent = '@keyframes spin{to{transform:rotate(360deg)}} @keyframes fadeIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}';
+                document.head.appendChild(s);
+              }
             })();
           `).catch(() => {});
         }
@@ -626,11 +767,12 @@ ipcMain.handle('chat:send-message', async (event, { messages, useTools }) => {
 
     const result = await runAgent(messages);
 
-    // Remove the live progress box from DOM
+    // Remove live progress bubbles from DOM
     if (mainWindow && !mainWindow.isDestroyed()) {
       mainWindow.webContents.executeJavaScript(`
-        var box = document.getElementById('agent-progress-box');
-        if (box) box.remove();
+        document.querySelectorAll('.agent-tool-bubble').forEach(function(el) { el.remove(); });
+        var th = document.getElementById('agent-thinking');
+        if (th) th.remove();
       `).catch(() => {});
     }
 
