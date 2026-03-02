@@ -661,8 +661,8 @@
       (when has-child
         [:span
          {:class (str "controls expand-icon " (if is-display "expanded" "collapsed"))
-          :style {:font-size "9px"
-                  :color "#7f8898"
+         :style {:font-size "9px"
+                  :color "var(--text-muted)"
                   :transition "transform 0.15s ease, color 0.15s ease"
                   :transform (if is-display "rotate(90deg)" "rotate(0deg)")
                   :display "inline-block"

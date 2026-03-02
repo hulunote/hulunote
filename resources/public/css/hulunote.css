@@ -3,12 +3,33 @@
     --background-theme: #313541;
     --sidebar-width: 250px;
     --sidebar-collapsed-width: 0px;
-    --theme-accent: #4a90d9;
-    --theme-accent-glow: rgba(74, 144, 217, 0.22);
+    /* UI design system tokens */
+    --color-primary: #667eea;
+    --color-primary-glow: rgba(102, 126, 234, 0.3);
+    --text-primary: #1a1a2e;
+    --text-secondary: #666666;
+    --text-muted: #999999;
+    --border-color: #e0e0e0;
+    --space-xs: 8px;
+    --space-sm: 12px;
+    --space-md: 16px;
+    --space-lg: 24px;
+    --space-xl: 32px;
+    --space-2xl: 40px;
+    --space-3xl: 48px;
+    --space-4xl: 80px;
+    --theme-accent: var(--color-primary);
+    --theme-accent-glow: var(--color-primary-glow);
+    --theme-accent-15: rgba(102, 126, 234, 0.15);
+    --theme-accent-20: rgba(102, 126, 234, 0.2);
+    --theme-accent-30: rgba(102, 126, 234, 0.3);
+    --theme-accent-hover: #6f88f0;
+    --theme-accent-strong: #5570e2;
     --bullet-idle-color: #d8d8d8;
     --bullet-collapsed-glow: rgba(216, 216, 216, 0.28);
     --bullet-size-idle: 5px;
     --bullet-size-editing: 8px;
+    --note-title-align-left: calc(var(--space-xl) + 4px);
 }
 
 body {
@@ -43,7 +64,7 @@ body {
     border-bottom-color: rgb(191, 204, 214);
     border-left-color: rgb(191, 204, 214);
     position: absolute;
-    left: 9px;
+    left: calc(var(--space-xs) + 1px);
 }
 
 div.content-box.outline-line:hover {
@@ -289,7 +310,7 @@ hulu-text-font {
     border: none !important;
     border-radius: 0 !important;
     padding: 0 !important;
-    padding-left: 1px !important;
+    padding-left: calc(var(--space-xs) / 8) !important;
     outline: none !important;
     width: 100% !important;
     min-width: 100px !important;
@@ -319,7 +340,7 @@ hulu-text-font {
 }
 
 .outline-line:hover {
-    border-right: 2px solid #4a90d9 !important;
+    border-right: 2px solid var(--theme-accent) !important;
 }
 
 .content-box {
@@ -532,8 +553,8 @@ hulu-text-font {
 }
 
 .sidebar-item.active {
-    background: rgba(74, 144, 217, 0.2);
-    border-left: 3px solid #4a90d9;
+    background: var(--theme-accent-20);
+    border-left: 3px solid var(--theme-accent);
 }
 
 .sidebar-item-icon {
@@ -555,7 +576,7 @@ hulu-text-font {
 .new-note-btn {
     margin: 12px 16px;
     padding: 10px 16px;
-    background: #4a90d9;
+    background: var(--theme-accent);
     color: #fff;
     border: none;
     border-radius: 6px;
@@ -570,7 +591,7 @@ hulu-text-font {
 }
 
 .new-note-btn:hover {
-    background: #3d7ec7;
+    background: var(--theme-accent-strong);
 }
 
 .new-note-btn-icon {
@@ -602,7 +623,7 @@ hulu-text-font {
 }
 
 .note-list-item.active {
-    background: rgba(74, 144, 217, 0.15);
+    background: var(--theme-accent-15);
     opacity: 1;
 }
 
@@ -635,7 +656,7 @@ hulu-text-font {
 .note-title-wrapper {
     display: flex;
     align-items: center;
-    padding: 8px 0;
+    padding: 8px 0 8px var(--note-title-align-left);
     margin-bottom: 8px;
 }
 
@@ -643,13 +664,13 @@ hulu-text-font {
     font-size: 1.5rem;
     font-weight: bold;
     cursor: pointer;
-    padding: 4px 8px;
+    padding: 4px 0;
     border-radius: 4px;
     transition: background 0.2s ease;
 }
 
 .note-title:hover {
-    background: rgba(255, 255, 255, 0.1);
+    background: transparent;
 }
 
 .note-title-input {
@@ -657,17 +678,17 @@ hulu-text-font {
     font-weight: bold;
     background: #2a2f3a !important;
     color: #fdfeffc4 !important;
-    border: 1px solid #4a90d9 !important;
+    border: 1px solid var(--theme-accent) !important;
     border-radius: 4px;
-    padding: 4px 8px;
+    padding: 4px 0;
     outline: none;
     width: 100%;
     max-width: 600px;
 }
 
 .note-title-input:focus {
-    border-color: #2e7ad1 !important;
-    box-shadow: 0 0 0 2px rgba(74, 144, 217, 0.2);
+    border-color: var(--theme-accent) !important;
+    box-shadow: 0 0 0 2px var(--theme-accent-glow);
 }
 
 /* ==================== All Notes Page ==================== */
@@ -684,7 +705,7 @@ hulu-text-font {
 
 .note-card:hover {
     background: rgba(255,255,255,0.1);
-    border-color: rgba(74, 144, 217, 0.3);
+    border-color: var(--theme-accent-30);
     transform: translateY(-1px);
 }
 
@@ -710,7 +731,7 @@ hulu-text-font {
 
 .pagination-btn {
     padding: 8px 16px;
-    background: #4a90d9;
+    background: var(--theme-accent);
     color: #fff;
     border: none;
     border-radius: 4px;
@@ -719,7 +740,7 @@ hulu-text-font {
 }
 
 .pagination-btn:hover:not(:disabled) {
-    background: #3d7ec7;
+    background: var(--theme-accent-strong);
 }
 
 .pagination-btn:disabled {
@@ -743,8 +764,8 @@ hulu-text-font {
 }
 
 .pagination-num.active {
-    background: #4a90d9;
-    border-color: #4a90d9;
+    background: var(--theme-accent);
+    border-color: var(--theme-accent);
 }
 
 /* ==================== Mobile Responsive ==================== */
@@ -803,7 +824,7 @@ hulu-text-font {
 }
 
 .link-title-style {
-    color: #4a90d9 !important;
+    color: var(--theme-accent) !important;
     text-decoration: underline;
     text-decoration-style: dotted;
     text-underline-offset: 2px;
@@ -811,7 +832,7 @@ hulu-text-font {
 }
 
 .link-title-style:hover {
-    color: #6ab0ff !important;
+    color: var(--theme-accent-hover) !important;
     text-decoration-style: solid;
 }
 
@@ -822,7 +843,7 @@ hulu-text-font {
 
 /* Page link hover effect - highlight the brackets */
 .hulunote-note-link:hover .link-style.blue {
-    color: #4a90d9 !important;
+    color: var(--theme-accent) !important;
 }
 
 /* Hashtag specific styles */

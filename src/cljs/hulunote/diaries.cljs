@@ -65,20 +65,12 @@
       (cancel-editing-title!))))
 
 (rum/defc note-title-editor < rum/reactive
-  "Editable note title component"
+  "Read-only note title component for diaries list"
   [note-id note-title database-name]
-  (let [is-editing (= note-id (rum/react editing-note-id))]
-    (if is-editing
-      [:input.note-title-input
-       {:type "text"
-        :auto-focus true
-        :value (rum/react editing-note-title)
-        :on-change #(reset! editing-note-title (.. % -target -value))
-        :on-key-down #(handle-title-key-down % note-id database-name)
-        :on-blur #(save-note-title! note-id database-name)}]
-      [:div.note-title
-       {:on-click #(start-editing-title! note-id note-title)}
-       note-title])))
+  [:div.note-title
+   {:style {:cursor "pointer"}
+    :on-click #(router/go-to-note! database-name note-id)}
+   note-title])
 
 ;; Lifecycle mixin to initialize daily note when component mounts
 (def daily-note-init-mixin
@@ -164,7 +156,7 @@
                (render/render-navs db root-nav-id note-id database-name)]
               
               ;; Separator
-              [:div {:style {:padding "35px 0"}}
+              [:div {:style {:padding "calc(var(--space-4xl) + var(--space-lg)) 0 calc(var(--space-xl) + 3px) 0"}}
                [:div {:style {:background "rgba(151, 151, 151, 0.25)"
                               :height "1px" :width "100%"}}]]])))
        
