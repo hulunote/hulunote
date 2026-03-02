@@ -44,6 +44,9 @@ function createWindow() {
     },
     icon: path.join(__dirname, 'icons', 'icon.png'),
     titleBarStyle: process.platform === 'darwin' ? 'hiddenInset' : 'default',
+    ...(process.platform === 'darwin'
+      ? { trafficLightPosition: { x: 14, y: 18 } }
+      : {}),
     show: false,
     backgroundColor: '#ffffff'
   });

@@ -244,65 +244,51 @@
   (let [{:keys [database note-id]} (get-route-params db)
         note-info (when note-id (get-note-by-id db note-id))
         sidebar-collapsed? (rum/react sidebar/sidebar-collapsed?)]
-    [:div.page-wrapper.night-center-boxBg.night-textColor-2
-     
-     ;; Left sidebar
-     (sidebar/left-sidebar db database)
-     
-     ;; Main content area
-     [:div.main-content-area
-      {:class (when sidebar-collapsed? "sidebar-collapsed")}
-      ;; Back button
-      [:div {:style {:padding "8px 16px"}}
-       [:button
-        {:on-click #(router/go-to-diaries! database)
-         :style {:background "transparent"
-                 :border "1px solid rgba(255,255,255,0.2)"
-                 :color "#fff"
-                 :padding "6px 12px"
-                 :border-radius "4px"
-                 :cursor "pointer"
-                 :font-size "13px"}}
-        "← Back to Diaries"]]
-      [:div.flex.flex-column.overflow-scroll-new
-       {:style {:padding "20px"
-                :max-width "900px"
-                :margin "0 auto"
-                :min-height "100vh"}}
+    [:div.night-center-boxBg.night-textColor-2
+     (sidebar/app-top-bar {:title (if note-info (first note-info) "Note")})
+     [:div.page-wrapper
+      ;; Left sidebar
+      (sidebar/left-sidebar db database)
+      ;; Main content area
+      [:div.main-content-area
+       {:class (when sidebar-collapsed? "sidebar-collapsed")}
+       [:div.flex.flex-column.overflow-scroll-new
+        {:style {:padding "20px"
+                 :max-width "900px"
+                 :margin "0 auto"
+                 :min-height "100vh"}}
 
-       (if note-info
-         (let [[note-title root-nav-id] note-info]
-           [:div
-            ;; Editable note title with context menu
-            [:div.note-title-wrapper
-             {:style {:margin-bottom "24px"}}
-             (note-title-editor note-id note-title root-nav-id database)]
-            
-            ;; Nav outline
-            [:div {:style {:padding-left "12px"}}
-             (render/render-navs db root-nav-id note-id database)]])
-         
-         ;; Note not found
-         [:div.flex.flex-column.items-center.justify-center
-          {:style {:height "50vh"}}
-          [:div {:style {:font-size "18px" :margin-bottom "16px"}} 
-           "Note not found"]
-          [:div {:style {:color "rgba(255,255,255,0.5)" :margin-bottom "20px"}}
-           (str "Note ID: " note-id)]
-          [:button
-           {:on-click #(router/go-to-diaries! database)
-            :style {:background "var(--theme-accent)"
-                    :border "none"
-                    :color "#fff"
-                    :padding "10px 20px"
-                    :border-radius "6px"
-                    :cursor "pointer"}}
-           "Go to Diaries"]])
-       
-       [:div {:style {:height "100px"}}]]]
-     
-     ;; Global title context menu
-     (title-context-menu)
-     
-     ;; Global nav context menu (from render.cljs)
-     (render/global-context-menu)]))
+        (if note-info
+          (let [[note-title root-nav-id] note-info]
+            [:div
+             ;; Editable note title with context menu
+             [:div.note-title-wrapper
+              {:style {:margin-bottom "24px"}}
+              (note-title-editor note-id note-title root-nav-id database)]
+
+             ;; Nav outline
+             [:div {:style {:padding-left "12px"}}
+              (render/render-navs db root-nav-id note-id database)]])
+
+          ;; Note not found
+          [:div.flex.flex-column.items-center.justify-center
+           {:style {:height "50vh"}}
+           [:div {:style {:font-size "18px" :margin-bottom "16px"}}
+            "Note not found"]
+           [:div {:style {:color "rgba(255,255,255,0.5)" :margin-bottom "20px"}}
+            (str "Note ID: " note-id)]
+           [:button
+            {:on-click #(router/go-to-diaries! database)
+             :style {:background "var(--theme-accent)"
+                     :border "none"
+                     :color "#fff"
+                     :padding "10px 20px"
+                     :border-radius "6px"
+                     :cursor "pointer"}}
+            "Go to Diaries"]])
+
+        [:div {:style {:height "100px"}}]]]
+      ;; Global title context menu
+      (title-context-menu)
+      ;; Global nav context menu (from render.cljs)
+      (render/global-context-menu)]]))
