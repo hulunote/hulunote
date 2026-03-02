@@ -196,7 +196,7 @@
                   (navigate-to-note-by-title! title-str))}
      [:span.link-style.blue "[["]
      [:span.link-title-style
-      {:style {:color "#4a90d9"
+      {:style {:color "var(--theme-accent)"
                :text-decoration "underline"
                :text-decoration-style "dotted"}}
       title-str]
@@ -215,7 +215,7 @@
                   (navigate-to-note-by-title! title-str))}
      [:span.link-style.blue "#"]
      [:span.link-title-style
-      {:style {:color "#4a90d9"
+      {:style {:color "var(--theme-accent)"
                :text-decoration "underline"
                :text-decoration-style "dotted"}}
       title-str]]))

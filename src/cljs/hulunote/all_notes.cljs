@@ -180,7 +180,7 @@
         {:disabled (= page 1)
          :on-click #(go-to-page! (dec page))
          :style {:padding "8px 16px"
-                 :background (if (= page 1) "#3d4455" "#4a90d9")
+                 :background (if (= page 1) "#3d4455" "var(--theme-accent)")
                  :color "#fff"
                  :border "none"
                  :border-radius "4px"
@@ -195,7 +195,7 @@
            {:key p
             :on-click #(go-to-page! p)
             :style {:padding "8px 12px"
-                    :background (if (= p page) "#4a90d9" "transparent")
+                    :background (if (= p page) "var(--theme-accent)" "transparent")
                     :color "#fff"
                     :border (if (= p page) "none" "1px solid rgba(255,255,255,0.2)")
                     :border-radius "4px"
@@ -207,7 +207,7 @@
         {:disabled (= page pages)
          :on-click #(go-to-page! (inc page))
          :style {:padding "8px 16px"
-                 :background (if (= page pages) "#3d4455" "#4a90d9")
+                 :background (if (= page pages) "#3d4455" "var(--theme-accent)")
                  :color "#fff"
                  :border "none"
                  :border-radius "4px"

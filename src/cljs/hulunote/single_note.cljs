@@ -291,7 +291,7 @@
            (str "Note ID: " note-id)]
           [:button
            {:on-click #(router/go-to-diaries! database)
-            :style {:background "#4a90d9"
+            :style {:background "var(--theme-accent)"
                     :border "none"
                     :color "#fff"
                     :padding "10px 20px"
