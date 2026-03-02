@@ -304,8 +304,24 @@
 (rum/defc parse-and-render
   [string render-params]
   (try
-    (let [result (parser/parse-to-ast string)]
+    (let [heading-match (when (string? string)
+                          (re-matches #"^(#{1,3})\s+(.+)$" string))
+          heading-level (when heading-match
+                          (count (nth heading-match 1)))
+          heading-text (when heading-match
+                         (nth heading-match 2))
+          result (when-not heading-match
+                   (parser/parse-to-ast string))]
       (cond
+        heading-match
+        (let [heading-class (case heading-level
+                              1 "markdown-heading markdown-heading-h1"
+                              2 "markdown-heading markdown-heading-h2"
+                              3 "markdown-heading markdown-heading-h3"
+                              "markdown-heading")]
+          [:span {:class heading-class}
+           (parse-and-render heading-text render-params)])
+
         (insta/failure? result)
         , [:span
            {:title (pr-str (insta/get-failure result))
