@@ -769,7 +769,9 @@
                                (when-let [db-id (:database-id nav-info)]
                                  ;; Try to get database name from database-id
                                  db-id))]
-        (nav-input db id actual-note-id actual-db-name)))))
+        (rum/with-key
+          (nav-input db id actual-note-id actual-db-name)
+          (or id dbid))))))
 
 ;; Global context menu - render at app level
 (rum/defc global-context-menu < rum/reactive

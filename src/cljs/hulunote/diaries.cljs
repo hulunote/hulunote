@@ -92,72 +92,60 @@
   (let [daily-list (db/sort-daily-list (db/get-daily-list db))
         database-name (get-current-database-name db)
         sidebar-collapsed? (rum/react sidebar/sidebar-collapsed?)]
-    [:div.page-wrapper.night-center-boxBg.night-textColor-2
-     
-     ;; Left sidebar
-     (sidebar/left-sidebar db database-name)
-     
-     ;; Main content area
-     [:div.main-content-area
-      {:class (when sidebar-collapsed? "sidebar-collapsed")}
-      ;; Back button
-      [:div {:style {:padding "8px 16px"}}
-       [:button
-        {:on-click #(js/history.back)
-         :style {:background "transparent"
-                 :border "1px solid rgba(255,255,255,0.2)"
-                 :color "#fff"
-                 :padding "6px 12px"
-                 :border-radius "4px"
-                 :cursor "pointer"
-                 :font-size "13px"}}
-        "← Back"]]
-      [:div.flex.flex-column.overflow-scroll-new
-       {:style {:padding "20px"
-                :max-width "900px"
-                :margin "0 auto"}}
-       
-       (if (empty? daily-list)
-         ;; Empty state - show message and create first note button
-         [:div.flex.flex-column.items-center.justify-center
-          {:style {:height "80vh"}}
-          [:div {:style {:font-size "24px" :margin-bottom "20px"}} 
-           "No notes yet"]
-          [:div {:style {:color "rgba(255,255,255,0.6)" :margin-bottom "30px"}}
-           "Create your first note to get started"]
-          [:button.new-note-btn
-           {:on-click #(sidebar/create-new-note! database-name)}
-           [:span.new-note-btn-icon "+"]
-           "Create First Note"]
-          ;; Add quick create today's note button
-          [:button
-           {:style {:margin-top "16px"
-                    :background "linear-gradient(135deg, #667eea 0%, #764ba2 100%)"
-                    :color "#fff"
-                    :border "none"
-                    :border-radius "8px"
-                    :padding "12px 24px"
-                    :font-size "14px"
-                    :cursor "pointer"}
-            :on-click #(sidebar/ensure-daily-note! database-name {:navigate? true})}
-           (str "📅 Create Today's Note (" (sidebar/get-today-title) ")")]]
-         
-         ;; Show existing notes
-         (for [item daily-list]
-           (let [[note-title note-id root-nav-id] item]
-             [:div {:key note-id
-                    :style {:margin-bottom "40px"}}
-              ;; Editable note title
-              [:div.note-title-wrapper
-               (note-title-editor note-id note-title database-name)]
-              
-              ;; Nav outline
-              [:div {:style {:padding-left "12px"}}
-               (render/render-navs db root-nav-id note-id database-name)]
-              
-              ;; Separator
-              [:div {:style {:padding "calc(var(--space-4xl) + var(--space-lg)) 0 calc(var(--space-xl) + 3px) 0"}}
-               [:div {:style {:background "rgba(151, 151, 151, 0.25)"
-                              :height "1px" :width "100%"}}]]])))
-       
-       [:div {:style {:height "100px"}}]]]]))
+    [:div.night-center-boxBg.night-textColor-2
+     (sidebar/app-top-bar {:title "Diaries"})
+     [:div.page-wrapper
+      ;; Left sidebar
+      (sidebar/left-sidebar db database-name)
+      ;; Main content area
+      [:div.main-content-area
+       {:class (when sidebar-collapsed? "sidebar-collapsed")}
+       [:div.flex.flex-column.overflow-scroll-new
+        {:style {:padding "20px"
+                 :max-width "900px"
+                 :margin "0 auto"}}
+
+        (if (empty? daily-list)
+          ;; Empty state - show message and create first note button
+          [:div.flex.flex-column.items-center.justify-center
+           {:style {:height "80vh"}}
+           [:div {:style {:font-size "24px" :margin-bottom "20px"}}
+            "No notes yet"]
+           [:div {:style {:color "rgba(255,255,255,0.6)" :margin-bottom "30px"}}
+            "Create your first note to get started"]
+           [:button.new-note-btn
+            {:on-click #(sidebar/create-new-note! database-name)}
+            [:span.new-note-btn-icon "+"]
+            "Create First Note"]
+           ;; Add quick create today's note button
+           [:button
+            {:style {:margin-top "16px"
+                     :background "linear-gradient(135deg, #667eea 0%, #764ba2 100%)"
+                     :color "#fff"
+                     :border "none"
+                     :border-radius "8px"
+                     :padding "12px 24px"
+                     :font-size "14px"
+                     :cursor "pointer"}
+             :on-click #(sidebar/ensure-daily-note! database-name {:navigate? true})}
+            (str "📅 Create Today's Note (" (sidebar/get-today-title) ")")]]
+
+          ;; Show existing notes
+          (for [item daily-list]
+            (let [[note-title note-id root-nav-id] item]
+              [:div {:key note-id
+                     :style {:margin-bottom "40px"}}
+               ;; Editable note title
+               [:div.note-title-wrapper
+                (note-title-editor note-id note-title database-name)]
+
+               ;; Nav outline
+               [:div {:style {:padding-left "12px"}}
+                (render/render-navs db root-nav-id note-id database-name)]
+
+               ;; Separator
+               [:div {:style {:padding "calc(var(--space-4xl) + var(--space-lg)) 0 calc(var(--space-xl) + 3px) 0"}}
+                [:div {:style {:background "rgba(151, 151, 151, 0.25)"
+                               :height "1px" :width "100%"}}]]])))
+
+        [:div {:style {:height "100px"}}]]]]]))

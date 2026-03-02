@@ -263,63 +263,50 @@
         page (rum/react current-page)
         paginated-notes (get-paginated-notes all-notes page)
         sidebar-collapsed? (rum/react sidebar/sidebar-collapsed?)]
-    [:div.page-wrapper.night-center-boxBg.night-textColor-2
-     
-     ;; Left sidebar
-     (sidebar/left-sidebar db database-name)
-     
-     ;; Main content area
-     [:div.main-content-area
-      {:class (when sidebar-collapsed? "sidebar-collapsed")}
-      ;; Back button
-      [:div {:style {:padding "8px 16px"}}
-       [:button
-        {:on-click #(js/history.back)
-         :style {:background "transparent"
-                 :border "1px solid rgba(255,255,255,0.2)"
-                 :color "#fff"
-                 :padding "6px 12px"
-                 :border-radius "4px"
-                 :cursor "pointer"
-                 :font-size "13px"}}
-        "← Back"]]
-      [:div.flex.flex-column
-       {:style {:padding "20px"
-                :max-width "900px"
-                :margin "0 auto"}}
-       
-       ;; Page header
-       [:div {:style {:margin-bottom "24px"}}
-        [:h1 {:style {:font-size "24px" 
-                      :font-weight "600"
-                      :margin "0 0 8px 0"}}
-         "All Notes"]
-        [:div {:style {:color "rgba(255,255,255,0.6)"
-                       :font-size "14px"}}
-         (str "Total: " (count all-notes) " notes")]]
-       
-       ;; Notes list
-       (if (empty? all-notes)
-         [:div.flex.flex-column.items-center.justify-center
-          {:style {:height "50vh"}}
-          [:div {:style {:font-size "18px" :margin-bottom "16px"}} 
-           "No notes yet"]
-          [:button.new-note-btn
-           {:on-click #(sidebar/create-new-note! database-name)}
-           [:span.new-note-btn-icon "+"]
-           "Create First Note"]]
-         
-         [:div
-          ;; Note cards
-          (for [[note-id note-title root-nav-id updated-at] paginated-notes]
-            (rum/with-key
-              (note-card note-id note-title updated-at database-name)
-              note-id))
-          
-          ;; Pagination
-          (pagination-controls (count all-notes))])
-       
-       [:div {:style {:height "50px"}}]]]
-     
-     ;; Global note menu
-     (note-menu)]))
+    [:div.night-center-boxBg.night-textColor-2
+     (sidebar/app-top-bar {:title "All Notes"})
+     [:div.page-wrapper
+      ;; Left sidebar
+      (sidebar/left-sidebar db database-name)
+      ;; Main content area
+      [:div.main-content-area
+       {:class (when sidebar-collapsed? "sidebar-collapsed")}
+       [:div.flex.flex-column
+        {:style {:padding "20px"
+                 :max-width "900px"
+                 :margin "0 auto"}}
+
+        ;; Page header
+        [:div {:style {:margin-bottom "24px"}}
+         [:h1 {:style {:font-size "24px"
+                       :font-weight "600"
+                       :margin "0 0 8px 0"}}
+          "All Notes"]
+         [:div {:style {:color "rgba(255,255,255,0.6)"
+                        :font-size "14px"}}
+          (str "Total: " (count all-notes) " notes")]]
+
+        ;; Notes list
+        (if (empty? all-notes)
+          [:div.flex.flex-column.items-center.justify-center
+           {:style {:height "50vh"}}
+           [:div {:style {:font-size "18px" :margin-bottom "16px"}}
+            "No notes yet"]
+           [:button.new-note-btn
+            {:on-click #(sidebar/create-new-note! database-name)}
+            [:span.new-note-btn-icon "+"]
+            "Create First Note"]]
+
+          [:div
+           ;; Note cards
+           (for [[note-id note-title root-nav-id updated-at] paginated-notes]
+             (rum/with-key
+               (note-card note-id note-title updated-at database-name)
+               note-id))
+
+           ;; Pagination
+           (pagination-controls (count all-notes))])
+
+        [:div {:style {:height "50px"}}]]]
+      ;; Global note menu
+      (note-menu)]]))

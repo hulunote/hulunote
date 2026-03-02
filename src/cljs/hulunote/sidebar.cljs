@@ -225,6 +225,41 @@
    [:div.sidebar-item-icon icon]
    [:div.sidebar-item-text text]])
 
+(rum/defc app-top-bar
+  "Global top bar for app pages.
+   The bar itself is draggable in Electron, while controls remain clickable."
+  [{:keys [title]}]
+  [:div.app-topbar
+   {:style {:-webkit-app-region "drag"}}
+   [:div.app-topbar-left
+    {:style {:-webkit-app-region "no-drag"}}
+    [:button.app-topbar-btn
+     {:title "Dock To Right (placeholder)"
+      :on-click toggle-sidebar!}
+     [:span.material-symbols-outlined.app-topbar-icon "dock_to_right"]]
+    [:button.app-topbar-btn
+     {:title "Back"
+      :on-click #(js/history.back)}
+     [:span.material-symbols-outlined.app-topbar-icon "arrow_back"]]
+    [:button.app-topbar-btn
+     {:title "Forward"
+      :on-click #(js/history.forward)}
+     [:span.material-symbols-outlined.app-topbar-icon "arrow_forward"]]]
+   [:div.app-topbar-center
+    {:style {:-webkit-app-region "no-drag"}}
+    [:div.app-topbar-tab.active
+     (or title "Untitled")]]
+   [:div.app-topbar-right
+    {:style {:-webkit-app-region "no-drag"}}
+   [:button.app-topbar-btn
+     {:title "Search (placeholder)"
+      :on-click #()}
+     [:span.material-symbols-outlined.app-topbar-icon "search"]]
+    [:button.app-topbar-btn
+     {:title "Dock To Left (placeholder)"
+      :on-click #()}
+     [:span.material-symbols-outlined.app-topbar-icon "dock_to_left"]]]])
+
 (rum/defc left-sidebar < rum/reactive
   [db database-name]
   (let [collapsed? (rum/react sidebar-collapsed?)
@@ -234,7 +269,7 @@
      ;; Sidebar container
      [:div.left-sidebar
       {:class (when collapsed? "collapsed")}
-      
+
       (when-not collapsed?
         [:<>
          ;; Sidebar header with logo
@@ -244,12 +279,6 @@
                   :width "24px"
                   :style {:border-radius "50%"}}]
            [:span.sidebar-title.ml2 "HULUNOTE"]]]
-         
-         ;; New note button
-         [:button.new-note-btn
-          {:on-click #(create-new-note! database-name)}
-          [:span.new-note-btn-icon "+"]
-          "New Note"]
          
          ;; Today's Daily Note button
          [:button.daily-note-btn
@@ -274,19 +303,19 @@
          ;; Sidebar content
          [:div.sidebar-content
           ;; Menu items
-          (sidebar-item "📅" "Diaries" 
+          (sidebar-item [:span.material-symbols-outlined.sidebar-symbol-icon "calendar_month"] "Diaries"
                         #(router/go-to-diaries! database-name)
                         (= route-name :diaries))
-          
-          (sidebar-item "📝" "All Notes"
+
+          (sidebar-item [:span.material-symbols-outlined.sidebar-symbol-icon "description"] "All Notes"
                         #(router/go-to-all-notes! database-name)
                         (= route-name :all-notes))
 
-          (sidebar-item "🔌" "MCP Settings"
+          (sidebar-item [:span.material-symbols-outlined.sidebar-symbol-icon "tune"] "MCP Settings"
                         #(router/go-to-mcp-settings! database-name)
                         (= route-name :mcp-settings))
 
-          (sidebar-item "💬" "MCP Chat"
+          (sidebar-item [:span.material-symbols-outlined.sidebar-symbol-icon "chat_bubble"] "MCP Chat"
                         #(router/go-to-mcp-chat! database-name)
                         (= route-name :mcp-chat))
 
@@ -299,11 +328,16 @@
               {:key note-id
                :on-click #(router/go-to-note! database-name note-id)
                :title note-title}
-              note-title])]]])]
-     
-     ;; Toggle button - always visible, positioned at edge of sidebar
-     [:div.sidebar-toggle-btn
-      {:class (when collapsed? "collapsed")
-       :on-click toggle-sidebar!
-       :title (if collapsed? "展开侧边栏" "收起侧边栏")}
-      (if collapsed? "☰" "✕")]]))
+              note-title])]]
+
+         ;; Bottom fixed action
+         [:div
+          {:style {:padding "12px 16px"
+                   :border-top "1px solid rgba(255, 255, 255, 0.08)"
+                   :flex-shrink 0}}
+          [:button.new-note-btn
+           {:style {:margin "0"
+                    :width "100%"}
+            :on-click #(create-new-note! database-name)}
+           [:span.new-note-btn-icon "+"]
+           "New Note"]]])]]))
