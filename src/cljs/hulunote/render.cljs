@@ -16,6 +16,8 @@
 ;; State atom for tracking which nav is being edited
 (defonce editing-nav-id (atom nil))
 (defonce editing-content (atom ""))
+;; Pending cursor position for the next editor mount.
+(defonce pending-selection (atom nil))
 
 ;; State for cursor position (used for up/down navigation to maintain column position)
 (defonce target-cursor-column (atom nil))
@@ -50,45 +52,78 @@
    (start-editing! nav-id content nil))
   ([nav-id content cursor-pos]
    (reset! editing-nav-id nav-id)
-   (reset! editing-content (or content ""))
-   ;; Set cursor position after the input is rendered
-   (when cursor-pos
-     (js/setTimeout
-       (fn []
-         (when-let [input (.querySelector js/document ".nav-editor-input")]
-           (let [len (count (or content ""))
-                 pos (min cursor-pos len)]
-             (.setSelectionRange input pos pos))))
-       10))))
+   (let [text (or content "")
+         len (count text)
+         default-pos len
+         pos (if (some? cursor-pos)
+               (max 0 (min cursor-pos len))
+               default-pos)]
+     (reset! editing-content text)
+     (reset! pending-selection {:nav-id nav-id :pos pos}))))
 
 (defn start-editing-at-end!
   "Start editing a nav with cursor at the end"
   [nav-id content]
-  (reset! editing-nav-id nav-id)
-  (reset! editing-content (or content ""))
-  (js/setTimeout
-    (fn []
-      (when-let [input (.querySelector js/document ".nav-editor-input")]
-        (let [len (count (or content ""))]
-          (.setSelectionRange input len len))))
-    10))
+  (let [text (or content "")]
+    (start-editing! nav-id text (count text))))
 
 (defn start-editing-at-start!
   "Start editing a nav with cursor at the beginning"
   [nav-id content]
-  (reset! editing-nav-id nav-id)
-  (reset! editing-content (or content ""))
-  (js/setTimeout
-    (fn []
-      (when-let [input (.querySelector js/document ".nav-editor-input")]
-        (.setSelectionRange input 0 0)))
-    10))
+  (start-editing! nav-id content 0))
+
+(defn dom-caret-offset-in-root
+  "Get text offset within root element from viewport click coordinates."
+  [root x y]
+  (let [doc js/document
+        mk-offset (fn [container offset]
+                    (when (and container (some? offset))
+                      (let [r (.createRange doc)]
+                        (.selectNodeContents r root)
+                        (.setEnd r container offset)
+                        (count (.toString r)))))]
+    (cond
+      (.-caretRangeFromPoint doc)
+      (when-let [clicked-range (.caretRangeFromPoint doc x y)]
+        (mk-offset (.-startContainer clicked-range)
+                   (.-startOffset clicked-range)))
+
+      (.-caretPositionFromPoint doc)
+      (when-let [pos (.caretPositionFromPoint doc x y)]
+        (mk-offset (.-offsetNode pos)
+                   (.-offset pos)))
+
+      :else nil)))
+
+(defn estimate-cursor-pos-from-click
+  "Estimate input cursor position from click X coordinate within rendered nav content."
+  [e content]
+  (let [text (or content "")
+        text-len (count text)
+        target (.-target e)
+        content-el (or (when-let [closest-fn (.-closest target)]
+                         (.closest target ".nav-content"))
+                       (when (and (.-classList target)
+                                  (.contains (.-classList target) "nav-content"))
+                         target))]
+    (when (and content-el (> text-len 0))
+      (let [rect (.getBoundingClientRect content-el)
+            width (.-width rect)
+            exact-offset (dom-caret-offset-in-root content-el (.-clientX e) (.-clientY e))]
+        (if (some? exact-offset)
+          (max 0 (min exact-offset text-len))
+          (when (> width 0)
+            (let [x (- (.-clientX e) (.-left rect))
+                  clamped-x (max 0 (min x width))
+                  ratio (/ clamped-x width)]
+              (int (js/Math.round (* ratio text-len))))))))))
 
 (defn cancel-editing!
   "Cancel editing"
   []
   (reset! editing-nav-id nil)
   (reset! editing-content "")
+  (reset! pending-selection nil)
   (reset! target-cursor-column nil))
 
 (defn save-nav-content!
@@ -648,8 +683,13 @@
     (if is-editing
       [:input.nav-editor-input
        {:type "text"
-        :auto-focus true
         :value (rum/react editing-content)
+        :ref (fn [el]
+               (when-let [{:keys [nav-id pos]} @pending-selection]
+                 (when (and el (= nav-id @editing-nav-id))
+                   (.focus el)
+                   (.setSelectionRange el pos pos)
+                   (reset! pending-selection nil))))
         :style {:border "none"
                 :border-radius "0"
                 :padding "0"
@@ -694,7 +734,8 @@
                         ;; Only start editing if not clicking on bullet
                         (when-not (.. e -target -classList (contains "controls"))
                           (reset! target-cursor-column nil)
-                          (start-editing! id content)))}
+                          (let [cursor-pos (estimate-cursor-pos-from-click e content)]
+                            (start-editing! id content cursor-pos))))}
       (nav-bullet db id is-display note-id database-name content is-editing)
       (nav-content-editor id content note-id database-name)]
      (when is-display
