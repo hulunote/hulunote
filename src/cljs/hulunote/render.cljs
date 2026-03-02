@@ -22,6 +22,11 @@
 ;; State for cursor position (used for up/down navigation to maintain column position)
 (defonce target-cursor-column (atom nil))
 
+;; State for drag-and-drop reorder
+(defonce dragging-nav-id (atom nil))
+(defonce drag-over-nav-id (atom nil))
+(defonce drag-over-mode (atom nil))
+
 ;; State for context menu
 (defonce context-menu-state (atom {:visible false
                                     :x 0
@@ -59,7 +64,10 @@
                (max 0 (min cursor-pos len))
                default-pos)]
      (reset! editing-content text)
-     (reset! pending-selection {:nav-id nav-id :pos pos}))))
+     (reset! pending-selection {:nav-id nav-id
+                                :start pos
+                                :end pos
+                                :focus? true}))))
 
 (defn start-editing-at-end!
   "Start editing a nav with cursor at the end"
@@ -127,9 +135,13 @@
   (reset! target-cursor-column nil))
 
 (defn save-nav-content!
-  "Save the edited content of a nav"
-  [nav-id note-id database-name]
-  (let [new-content @editing-content]
+  "Save the edited content of a nav.
+   By default clears editing state; pass {:clear-editing? false} to keep editing."
+  ([nav-id note-id database-name]
+   (save-nav-content! nav-id note-id database-name {:clear-editing? true}))
+  ([nav-id note-id database-name {:keys [clear-editing? content]
+                                  :or {clear-editing? true}}]
+   (let [new-content (if (some? content) content @editing-content)]
     ;; Update local datascript
     (d/transact! db/dsdb
       [[:db/add [:id nav-id] :content new-content]])
@@ -140,8 +152,10 @@
         :note-id note-id
         :id nav-id
         :content new-content}])
-    ;; Clear editing state
-    (cancel-editing!)))
+    ;; Clear editing state only when requested and still editing this nav.
+    (when (and clear-editing?
+               (= nav-id @editing-nav-id))
+      (cancel-editing!)))))
 
 ;; ==================== Context Menu Functions ====================
 
@@ -281,6 +295,27 @@
     (when (and current-idx (< current-idx (dec (count siblings))))
       (nth siblings (inc current-idx)))))
 
+(defn normalize-sibling-orders!
+  "Normalize sibling order values based on current visual sibling sequence.
+   This avoids unstable insert positions when legacy data has duplicate/nil orders."
+  [siblings note-id database-name]
+  (doseq [[idx sibling] (map-indexed vector siblings)]
+    (let [sid (:id sibling)
+          normalized-order (* idx 100)
+          current-order (:same-deep-order sibling)]
+      (when (or (nil? current-order)
+                (not= current-order normalized-order))
+        ;; Update local datascript
+        (d/transact! db/dsdb
+          [[:db/add [:id sid] :same-deep-order normalized-order]])
+        ;; Sync to backend
+        (re-frame/dispatch-sync
+          [:update-nav
+           {:database-name database-name
+            :note-id note-id
+            :id sid
+            :order normalized-order}])))))
+
 (defn calculate-order-between
   "Calculate order value between two orders using midpoint.
    If prev-order is nil, use (next-order / 2).
@@ -307,6 +342,99 @@
         children (:parid nav)]
     (when (seq children)
       (:same-deep-order (last children)))))
+
+(defn collect-descendant-ids
+  "Collect all descendant ids of nav-id."
+  [nav-id]
+  (let [nav (u/get-nav-sub-navs-sorted @db/dsdb nav-id)]
+    (reduce
+      (fn [acc child]
+        (let [cid (:id child)]
+          (into (conj acc cid) (collect-descendant-ids cid))))
+      #{}
+      (:parid nav))))
+
+(defn valid-drop-target?
+  "Validate drop target for moving drag-nav-id onto target-nav-id."
+  [drag-nav-id target-nav-id]
+  (and drag-nav-id
+       target-nav-id
+       (not= drag-nav-id target-nav-id)
+       (not (contains? (collect-descendant-ids drag-nav-id) target-nav-id))))
+
+(defn move-nav-after!
+  "Move drag-nav-id to be the next sibling of target-nav-id."
+  [drag-nav-id target-nav-id note-id database-name]
+  (when (valid-drop-target? drag-nav-id target-nav-id)
+    (let [drag-nav (u/get-nav-by-id @db/dsdb drag-nav-id)
+          target-nav (u/get-nav-by-id @db/dsdb target-nav-id)
+          old-parid (:origin-parid drag-nav)
+          new-parid (:origin-parid target-nav)
+          target-order (or (:same-deep-order target-nav) 0)
+          next-sibling (find-next-sibling target-nav-id)
+          next-order (when next-sibling (:same-deep-order next-sibling))
+          new-order (calculate-order-between target-order next-order)]
+      ;; Update local datascript
+      (when old-parid
+        (d/transact! db/dsdb
+          [[:db/retract [:id old-parid] :parid [:id drag-nav-id]]]))
+      (d/transact! db/dsdb
+        [[:db/add [:id drag-nav-id] :origin-parid new-parid]
+         [:db/add [:id drag-nav-id] :same-deep-order new-order]
+         [:db/add [:id new-parid] :parid [:id drag-nav-id]]])
+      ;; Sync to backend
+      (re-frame/dispatch-sync
+        [:update-nav
+         {:database-name database-name
+          :note-id note-id
+          :id drag-nav-id
+          :parid new-parid
+          :order new-order}]))))
+
+(defn move-nav-to-child!
+  "Move drag-nav-id to be the last child of target-nav-id."
+  [drag-nav-id target-nav-id note-id database-name]
+  (when (valid-drop-target? drag-nav-id target-nav-id)
+    (let [drag-nav (u/get-nav-by-id @db/dsdb drag-nav-id)
+          old-parid (:origin-parid drag-nav)
+          new-parid target-nav-id
+          last-child-order (get-last-child-order new-parid)
+          new-order (calculate-order-between last-child-order nil)]
+      ;; Update local datascript
+      (when old-parid
+        (d/transact! db/dsdb
+          [[:db/retract [:id old-parid] :parid [:id drag-nav-id]]]))
+      (d/transact! db/dsdb
+        [[:db/add [:id drag-nav-id] :origin-parid new-parid]
+         [:db/add [:id drag-nav-id] :same-deep-order new-order]
+         [:db/add [:id new-parid] :parid [:id drag-nav-id]]
+         [:db/add [:id new-parid] :is-display true]])
+      ;; Sync to backend
+      (re-frame/dispatch-sync
+        [:update-nav
+         {:database-name database-name
+          :note-id note-id
+          :id drag-nav-id
+          :parid new-parid
+          :order new-order}])
+      (re-frame/dispatch-sync
+        [:update-nav
+         {:database-name database-name
+          :note-id note-id
+          :id new-parid
+          :is-display true}]))))
+
+(defn detect-drop-mode
+  "Determine drop mode by cursor X relative to target row text left edge.
+   Right of text left edge => child; left zone between bullet and text => sibling."
+  [e]
+  (let [row-el (.-currentTarget e)
+        content-el (when row-el (.querySelector row-el ".nav-content"))
+        text-left (when content-el (.-left (.getBoundingClientRect content-el)))
+        mouse-x (.-clientX e)]
+    (if (and text-left (>= mouse-x text-left))
+      :child
+      :sibling)))
 
 ;; ==================== Visual Navigation Helpers ====================
 ;; These functions help navigate between visible nodes (respecting collapsed state)
@@ -365,12 +493,19 @@
   "Create a new sibling nav after the current one.
    Uses midpoint order calculation."
   [current-nav-id note-id database-name]
-  (let [current-nav (u/get-nav-by-id @db/dsdb current-nav-id)
+  (let [siblings (vec (get-siblings-sorted current-nav-id))
+        _ (normalize-sibling-orders! siblings note-id database-name)
+        current-idx (->> siblings
+                         (map-indexed (fn [i s] [i (:id s)]))
+                         (filter #(= (second %) current-nav-id))
+                         first
+                         first)
+        current-nav (u/get-nav-by-id @db/dsdb current-nav-id)
         parid (or (:origin-parid current-nav) db/root-id)
-        current-order (or (:same-deep-order current-nav) 0)
-        next-sibling (find-next-sibling current-nav-id)
-        next-order (when next-sibling (:same-deep-order next-sibling))
-        ;; Calculate new order as midpoint between current and next
+        current-order (if (some? current-idx) (* current-idx 100) 0)
+        next-order (when (and current-idx (< current-idx (dec (count siblings))))
+                     (* (inc current-idx) 100))
+        ;; Calculate new order as midpoint between normalized neighbors
         new-order (calculate-order-between current-order next-order)
         new-nav-id (str (d/squuid))]
     ;; Create in local datascript first
@@ -382,6 +517,8 @@
         :is-display true
         :origin-parid parid}
        [:db/add [:id parid] :parid [:id new-nav-id]]])
+    ;; Enter edit mode immediately to avoid idle-state flash on the new node.
+    (start-editing! new-nav-id "")
     ;; Sync to backend
     (re-frame/dispatch-sync
       [:create-nav
@@ -390,9 +527,48 @@
         :id new-nav-id
         :parid parid
         :content ""
-        :order new-order}])
-    ;; Start editing the new nav
-    (start-editing! new-nav-id "")))
+        :order new-order}])))
+
+(defn create-sibling-above!
+  "Create a new sibling nav before the current one."
+  [current-nav-id note-id database-name]
+  (let [siblings (vec (get-siblings-sorted current-nav-id))
+        _ (normalize-sibling-orders! siblings note-id database-name)
+        current-idx (->> siblings
+                         (map-indexed (fn [i s] [i (:id s)]))
+                         (filter #(= (second %) current-nav-id))
+                         first
+                         first)
+        current-nav (u/get-nav-by-id @db/dsdb current-nav-id)
+        parid (or (:origin-parid current-nav) db/root-id)
+        current-order (if (some? current-idx) (* current-idx 100) 0)
+        prev-order (when (and current-idx (> current-idx 0))
+                     (* (dec current-idx) 100))
+        ;; For first sibling, use a stable order before current.
+        new-order (if (some? prev-order)
+                    (calculate-order-between prev-order current-order)
+                    (- current-order 100))
+        new-nav-id (str (d/squuid))]
+    ;; Create in local datascript first
+    (d/transact! db/dsdb
+      [{:id new-nav-id
+        :content ""
+        :hulunote-note note-id
+        :same-deep-order new-order
+        :is-display true
+        :origin-parid parid}
+       [:db/add [:id parid] :parid [:id new-nav-id]]])
+    ;; Enter edit mode immediately to avoid idle-state flash on the new node.
+    (start-editing! new-nav-id "")
+    ;; Sync to backend
+    (re-frame/dispatch-sync
+      [:create-nav
+       {:database-name database-name
+        :note-id note-id
+        :id new-nav-id
+        :parid parid
+        :content ""
+        :order new-order}])))
 
 (defn indent-nav!
   "Indent a nav (make it a child of its previous sibling).
@@ -479,6 +655,32 @@
                  @db/dsdb note-id)]
       (:hulunote-notes/root-nav-id note))))
 
+(defn apply-inline-wrap!
+  "Wrap current selection with marker, or insert paired markers for collapsed caret."
+  [input marker]
+  (let [content @editing-content
+        marker-len (count marker)
+        start (or (.-selectionStart input) 0)
+        end (or (.-selectionEnd input) start)
+        [from to] (if (<= start end) [start end] [end start])
+        selected (subs content from to)
+        new-content (str (subs content 0 from)
+                         marker
+                         selected
+                         marker
+                         (subs content to))
+        collapsed? (= from to)
+        new-start (+ from marker-len)
+        new-end (if collapsed?
+                  new-start
+                  (+ new-start (count selected)))]
+    (reset! editing-content new-content)
+    (js/setTimeout
+      (fn []
+        (.focus input)
+        (.setSelectionRange input new-start new-end))
+      0)))
+
 (defn handle-key-down
   "Handle keyboard events in edit mode.
    - Arrow Up/Down: navigate between visible nodes (like editing a document)
@@ -491,14 +693,39 @@
    - Backspace/Delete: delete node when content is empty"
   [e nav-id note-id database-name]
   (let [key-code (.-keyCode e)
+        key (.-key e)
+        mod? (or (.-metaKey e) (.-ctrlKey e))
         shift? (.-shiftKey e)
         saved-content @editing-content
-        current-content @editing-content
         input (.-target e)
+        current-content (or (.-value input) @editing-content)
         cursor-pos (.-selectionStart input)
         content-length (count current-content)
         root-nav-id (get-root-nav-id note-id)]
+    ;; Prevent global key handlers from stealing focus while editing.
+    (.stopPropagation e)
     (cond
+      ;; Cmd/Ctrl + B/I/Y/H - inline markdown styling
+      (and mod? (#{"b" "B"} key))
+      (do
+        (.preventDefault e)
+        (apply-inline-wrap! input "**"))
+
+      (and mod? (#{"i" "I"} key))
+      (do
+        (.preventDefault e)
+        (apply-inline-wrap! input "__"))
+
+      (and mod? (#{"y" "Y"} key))
+      (do
+        (.preventDefault e)
+        (apply-inline-wrap! input "~~"))
+
+      (and mod? (#{"h" "H"} key))
+      (do
+        (.preventDefault e)
+        (apply-inline-wrap! input "^^"))
+
       ;; Arrow Up (38) - move to previous visible node
       (= key-code 38)
       (when-let [prev-nav (get-prev-visible-nav root-nav-id nav-id)]
@@ -559,8 +786,9 @@
       (or (= key-code 37) (= key-code 39))
       (reset! target-cursor-column nil)
       
-      ;; Backspace key (8) or Delete key (46) - delete node when content is empty
-      (and (or (= key-code 8) (= key-code 46))
+      ;; Backspace key (8) - delete node when content is empty
+      ;; Keep Delete key for text editing to avoid accidental exit from edit mode.
+      (and (= key-code 8)
            (empty? current-content))
       (do
         (.preventDefault e)
@@ -590,20 +818,20 @@
       (and (= key-code 9) (not shift?))
       (do
         (.preventDefault e)
-        (save-nav-content! nav-id note-id database-name)
+        (save-nav-content! nav-id note-id database-name {:clear-editing? false})
         (js/setTimeout
           #(do (indent-nav! nav-id note-id database-name)
-               (start-editing! nav-id saved-content))
+               (start-editing! nav-id saved-content cursor-pos))
           50))
       
       ;; Shift+Tab - outdent (make sibling of parent)
       (and (= key-code 9) shift?)
       (do
         (.preventDefault e)
-        (save-nav-content! nav-id note-id database-name)
+        (save-nav-content! nav-id note-id database-name {:clear-editing? false})
         (js/setTimeout
           #(do (outdent-nav! nav-id note-id database-name)
-               (start-editing! nav-id saved-content))
+               (start-editing! nav-id saved-content cursor-pos))
           50))
       
       ;; Enter key - save and create new sibling
@@ -611,10 +839,15 @@
       (do
         (.preventDefault e)
         (reset! target-cursor-column nil)
-        (save-nav-content! nav-id note-id database-name)
+        ;; Keep editing state during create flow to avoid visual flicker.
+        (save-nav-content! nav-id note-id database-name {:clear-editing? false})
+        ;; Defer create+focus to next tick to avoid blur/keydown timing race.
         (js/setTimeout
-          #(create-sibling-nav! nav-id note-id database-name)
-          50))
+          #(if (and (= cursor-pos 0)
+                    (not (empty? current-content)))
+             (create-sibling-above! nav-id note-id database-name)
+             (create-sibling-nav! nav-id note-id database-name))
+          0)))
       
       ;; Escape key - cancel
       (= key-code 27)
@@ -624,7 +857,17 @@
       :else
       (when (and (not (#{37 38 39 40} key-code)) ; not arrow keys
                  (not (#{16 17 18 91} key-code))) ; not modifier keys
-        (reset! target-cursor-column nil)))))
+        (reset! target-cursor-column nil))))
+
+(defn should-handle-editor-key?
+  "Run custom keyboard handler only for control/navigation/markdown shortcut keys."
+  [e]
+  (let [key-code (.-keyCode e)
+        key (.-key e)
+        mod? (or (.-metaKey e) (.-ctrlKey e))
+        markdown-shortcut? (and mod? (#{"b" "B" "i" "I" "y" "Y" "h" "H"} key))
+        control-key? (contains? #{8 9 13 27 37 38 39 40} key-code)]
+    (or markdown-shortcut? control-key?)))
 
 ;; ==================== UI Components ====================
 
@@ -651,6 +894,22 @@
               :gap "7px"
               :border-radius "8px"
               :height "16px"}
+      :draggable (not is-editing)
+      :on-drag-start (fn [e]
+                       (.stopPropagation e)
+                       (set! (.. e -dataTransfer -effectAllowed) "move")
+                       (.setData (.-dataTransfer e) "text/plain" nav-id)
+                       (reset! dragging-nav-id nav-id)
+                       (reset! drag-over-nav-id nil)
+                       (reset! drag-over-mode nil))
+      :on-drag-end (fn [e]
+                     (.stopPropagation e)
+                     (reset! drag-over-nav-id nil)
+                     (reset! drag-over-mode nil)
+                     (reset! dragging-nav-id nil))
+      :on-click (fn [e]
+                  ;; Bullet area should not trigger row editing click.
+                  (u/stop-click-bubble e))
       :on-context-menu (fn [e]
                          (show-context-menu! e nav-id content note-id database-name))}
      ;; Keep a stable slot before the dot; show triangle only for nodes with children.
@@ -698,10 +957,12 @@
        {:type "text"
         :value (rum/react editing-content)
         :ref (fn [el]
-               (when-let [{:keys [nav-id pos]} @pending-selection]
+               (when-let [{:keys [nav-id start end focus?]} @pending-selection]
                  (when (and el (= nav-id @editing-nav-id))
-                   (.focus el)
-                   (.setSelectionRange el pos pos)
+                   ;; Keep focus in editor across controlled rerenders.
+                   (when (not= (.-activeElement js/document) el)
+                     (.focus el))
+                   (.setSelectionRange el start end)
                    (reset! pending-selection nil))))
         :style {:border "none"
                 :border-radius "0"
@@ -716,16 +977,39 @@
                 :line-height "inherit"
                 :background "transparent"
                 :color "inherit"}
-        :on-change #(reset! editing-content (.. % -target -value))
-        :on-key-down #(handle-key-down % nav-id note-id database-name)
-        :on-blur #(save-nav-content! nav-id note-id database-name)}]
+        :on-change (fn [e]
+                     (let [input (.-target e)
+                           value (.-value input)
+                       start (or (.-selectionStart input) 0)
+                       end (or (.-selectionEnd input) start)]
+                       ;; Keep caret stable across controlled-input rerenders.
+                       (reset! pending-selection {:nav-id nav-id
+                                                  :start start
+                                                  :end end
+                                                  :focus? true})
+                       (reset! editing-content value)))
+        :on-key-down (fn [e]
+                       ;; Always isolate editor key events from global handlers.
+                       (.stopPropagation e)
+                       (let [key-code (.-keyCode e)
+                             input-value (or (.. e -target -value) "")]
+                         (when (or (= key-code 9) ; Tab
+                                   (= key-code 13) ; Enter
+                                   (and (= key-code 8) ; Backspace
+                                        (empty? input-value)))
+                           (handle-key-down e nav-id note-id database-name))))
+        :on-blur (fn [_] nil)}]
       [:span.nav-content
        {:style {:cursor "text"
                 :min-height "20px"
                 :display "inline-block"
-                :min-width "100px"}}
-       (if (empty? content)
-         [:span {:style {:color "#666"}} "Click to edit..."]
+                :min-width "100px"}
+        :on-click (fn [e]
+                    (u/stop-click-bubble e)
+                    (reset! target-cursor-column nil)
+                    (let [cursor-pos (estimate-cursor-pos-from-click e content)]
+                      (start-editing! nav-id content cursor-pos)))}
+       (when-not (empty? content)
          (comps/parse-and-render content {}))])))
 
 (rum/defc nav-input < rum/reactive
@@ -735,20 +1019,48 @@
                 properties same-deep-order updated-at
                 created-at last-user-cursor]}
         (u/get-nav-by-id db id)
-        is-editing (= id (rum/react editing-nav-id))]
+        is-editing (= id (rum/react editing-nav-id))
+        is-drop-target (= id (rum/react drag-over-nav-id))
+        current-drop-mode (rum/react drag-over-mode)]
     [:div.nav-item
      ;; Entire row is clickable to enter edit mode
-     [:div {:class (str "head-dot flex " (when is-editing "is-editing"))
+     [:div {:class (str "head-dot flex "
+                        (when is-editing "is-editing")
+                        (when is-drop-target
+                          (str " "
+                               (if (= current-drop-mode :child)
+                                 "drop-target-child"
+                                 "drop-target-sibling"))))
             :style {:padding-left "13px"
                     :padding-top "5px"
                     :padding-bottom "5px"
                     :cursor "text"}
+            :on-drag-over (fn [e]
+                            (when (valid-drop-target? @dragging-nav-id id)
+                              (.preventDefault e)
+                              (set! (.. e -dataTransfer -dropEffect) "move")
+                              (reset! drag-over-nav-id id)
+                              (reset! drag-over-mode (detect-drop-mode e))))
+            :on-drag-leave (fn [_]
+                             (when (= id @drag-over-nav-id)
+                               (reset! drag-over-nav-id nil)
+                               (reset! drag-over-mode nil)))
+            :on-drop (fn [e]
+                       (.preventDefault e)
+                       (.stopPropagation e)
+                       (let [drag-id (or @dragging-nav-id
+                                         (.getData (.-dataTransfer e) "text/plain"))
+                             mode (or @drag-over-mode (detect-drop-mode e))]
+                         (if (= mode :child)
+                           (move-nav-to-child! drag-id id note-id database-name)
+                           (move-nav-after! drag-id id note-id database-name)))
+                       (reset! drag-over-nav-id nil)
+                       (reset! drag-over-mode nil)
+                       (reset! dragging-nav-id nil))
             :on-click (fn [e]
-                        ;; Only start editing if not clicking on bullet
-                        (when-not (.. e -target -classList (contains "controls"))
-                          (reset! target-cursor-column nil)
-                          (let [cursor-pos (estimate-cursor-pos-from-click e content)]
-                            (start-editing! id content cursor-pos))))}
+                        (reset! target-cursor-column nil)
+                        (let [cursor-pos (estimate-cursor-pos-from-click e content)]
+                          (start-editing! id content cursor-pos)))}
       (nav-bullet db id is-display note-id database-name content is-editing)
       (nav-content-editor id content note-id database-name)]
      (when is-display

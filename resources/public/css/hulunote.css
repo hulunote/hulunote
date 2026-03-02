@@ -31,6 +31,8 @@
     --bullet-size-editing: 8px;
     --note-title-align-left: calc(var(--space-xl) + 4px);
     --app-topbar-height: 56px;
+    --markdown-highlight-bg: rgba(102, 126, 234, 0.3);
+    --markdown-highlight-color: var(--font-color);
 }
 
 body {
@@ -271,6 +273,51 @@ hulu-text-font {
     position: relative;
 }
 
+/* Inline markdown presentation in nav content */
+.markdown-syntax-bold {
+    font-weight: 700;
+}
+
+.markdown-syntax-italics {
+    font-style: italic;
+}
+
+.markdown-syntax-strikethrough {
+    text-decoration: line-through;
+    text-decoration-thickness: 1.5px;
+    opacity: 0.9;
+}
+
+.markdown-syntax-highlight {
+    background: var(--markdown-highlight-bg);
+    color: var(--markdown-highlight-color);
+    border-radius: 3px;
+    padding: 0 2px;
+    box-decoration-break: clone;
+    -webkit-box-decoration-break: clone;
+}
+
+.markdown-heading {
+    display: inline-block;
+    color: var(--font-color);
+    line-height: 1.25;
+}
+
+.markdown-heading-h1 {
+    font-size: 1.5rem;
+    font-weight: 800;
+}
+
+.markdown-heading-h2 {
+    font-size: 1.25rem;
+    font-weight: 700;
+}
+
+.markdown-heading-h3 {
+    font-size: 1.125rem;
+    font-weight: 700;
+}
+
 .expand-icon {
     user-select: none;
     font-size: 8px;
@@ -298,11 +345,13 @@ hulu-text-font {
     cursor: text;
     min-width: 100px;
     display: inline-block;
+    min-height: 20px;
+    line-height: 20px;
+    vertical-align: middle;
 }
 
 .nav-content:hover {
-    background: rgba(100, 100, 100, 0.1);
-    border-radius: 3px;
+    background: transparent;
 }
 
 .nav-editor-input {
@@ -315,22 +364,42 @@ hulu-text-font {
     outline: none !important;
     width: 100% !important;
     min-width: 100px !important;
+    height: 20px !important;
+    min-height: 20px !important;
     font: inherit !important;
     font-weight: inherit !important;
     letter-spacing: inherit !important;
-    line-height: inherit !important;
+    line-height: 20px !important;
     text-indent: 0 !important;
     background: transparent !important;
+    background-color: transparent !important;
+    background-image: none !important;
     color: inherit !important;
     box-shadow: none !important;
     margin: 0 !important;
+    vertical-align: middle !important;
+    box-sizing: border-box !important;
 }
 
+.nav-editor-input:hover,
+.nav-editor-input:active,
 .nav-editor-input:focus {
     border: none !important;
     box-shadow: none !important;
     background: transparent !important;
+    background-color: transparent !important;
+    background-image: none !important;
     color: inherit !important;
+}
+
+.nav-editor-input:-webkit-autofill,
+.nav-editor-input:-webkit-autofill:hover,
+.nav-editor-input:-webkit-autofill:focus,
+.nav-editor-input:-webkit-autofill:active {
+    -webkit-box-shadow: 0 0 0 1000px transparent inset !important;
+    -webkit-text-fill-color: inherit !important;
+    background-color: transparent !important;
+    transition: background-color 9999s ease-out 0s;
 }
 
 .night-textColor-2 .nav-editor-input,
@@ -433,9 +502,10 @@ hulu-text-font {
     transition: background 0.1s ease;
     border-radius: 4px;
     align-items: center;
+    position: relative;
 }
 
-.head-dot:hover {
+.head-dot:not(.is-editing):hover {
     background: rgba(255, 255, 255, 0.03);
 }
 
@@ -446,7 +516,38 @@ hulu-text-font {
 }
 
 .head-dot.is-editing {
-    background: rgba(255, 255, 255, 0.05);
+    background: transparent !important;
+}
+
+.head-dot.is-editing:hover {
+    background: transparent !important;
+}
+
+.head-dot.is-editing:focus-within {
+    background: transparent !important;
+}
+
+.head-dot.drop-target-sibling::after,
+.head-dot.drop-target-child::after {
+    content: "";
+    position: absolute;
+    bottom: 1px;
+    height: 2px;
+    border-radius: 2px;
+    background: var(--theme-accent);
+    pointer-events: none;
+}
+
+/* Same-level drop: underline from bullet zone through text to the row end. */
+.head-dot.drop-target-sibling::after {
+    left: 13px;
+    right: 0;
+}
+
+/* Child drop: underline only from text start to the row end. */
+.head-dot.drop-target-child::after {
+    left: 49px; /* row left padding(13) + bullet slot(26) + gap(10) */
+    right: 0;
 }
 
 /* ==================== Daily Note Button ==================== */
