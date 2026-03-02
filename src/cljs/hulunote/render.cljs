@@ -638,43 +638,56 @@
   "Bullet point component with expand/collapse functionality and context menu"
   [db nav-id is-display note-id database-name content is-editing]
   (let [has-child (has-children? db nav-id)]
-    [:span {:class (str "controls hulu-text-font " 
-                        (when has-child "has-children"))
-            :style {:align-items "center"
-                    :vertical-align "middle"
-                    :width "16px"
-                    :cursor "pointer"
-                    :padding-left "5px"
-                    :justify-content "center"
-                    :display "flex"
-                    :margin-right "3px"
-                    :border-radius "50%"
-                    :height "16px"}
-            :on-click (fn [e]
-                        (u/stop-click-bubble e)
-                        (when has-child
-                          (toggle-nav-display! db nav-id is-display note-id database-name)))
-            :on-context-menu (fn [e]
-                              (show-context-menu! e nav-id content note-id database-name))}
-     (if has-child
-       ;; Show triangle for nodes with children
-       [:span {:class (str "expand-icon " (if is-display "expanded" "collapsed"))
-               :style {:font-size "10px"
-                       :color "#666"
-                       :transition "transform 0.2s ease"
-                       :transform (if is-display "rotate(90deg)" "rotate(0deg)")
-                       :display "inline-block"}}
-        "▶"]
-       ;; Show dot for leaf nodes
-       [:span {:class "controls bg-black-50 customize-dot night-circular"
-               :style {:height (if is-editing "var(--bullet-size-editing)" "var(--bullet-size-idle)")
-                       :width (if is-editing "var(--bullet-size-editing)" "var(--bullet-size-idle)")
-                       :border-radius "50%"
-                       :background-color (if is-editing "var(--theme-accent)" "var(--bullet-idle-color)")
-                       :box-shadow (when is-editing "0 0 0 2px var(--theme-accent-glow)")
-                       :cursor "pointer"
-                       :display "block"
-                       :vertical-align "middle"}}])]))
+    [:span
+     {:class (str "controls hulu-text-font " (when has-child "has-children"))
+      :style {:align-items "center"
+              :vertical-align "middle"
+              :width "26px"
+              :cursor "pointer"
+              :padding-left "0"
+              :justify-content "flex-start"
+              :display "flex"
+              :margin-right "10px"
+              :gap "7px"
+              :border-radius "8px"
+              :height "16px"}
+      :on-context-menu (fn [e]
+                         (show-context-menu! e nav-id content note-id database-name))}
+     ;; Keep a stable slot before the dot; show triangle only for nodes with children.
+     [:span
+      {:style {:width "9px"
+               :display "inline-flex"
+               :justify-content "center"}}
+      (when has-child
+        [:span
+         {:class (str "controls expand-icon " (if is-display "expanded" "collapsed"))
+          :style {:font-size "9px"
+                  :color "#7f8898"
+                  :transition "transform 0.15s ease, color 0.15s ease"
+                  :transform (if is-display "rotate(90deg)" "rotate(0deg)")
+                  :display "inline-block"
+                  :line-height "1"
+                  :width "9px"
+                  :background "transparent"
+                  :text-align "center"}
+          :on-click (fn [e]
+                      (u/stop-click-bubble e)
+                      (toggle-nav-display! db nav-id is-display note-id database-name))}
+         "▶"])]
+     [:span
+      {:class "controls customize-dot night-circular"
+       :style {:height (if is-editing "var(--bullet-size-editing)" "var(--bullet-size-idle)")
+               :width (if is-editing "var(--bullet-size-editing)" "var(--bullet-size-idle)")
+               :margin-left (if is-editing "calc((var(--bullet-size-idle) - var(--bullet-size-editing)) / 2)" "0")
+               :border-radius "50%"
+               :background-color (if is-editing "var(--theme-accent)" "var(--bullet-idle-color)")
+               :box-shadow (cond
+                             is-editing "0 0 0 2px var(--theme-accent-glow)"
+                             (and has-child (not is-display)) "0 0 0 2px var(--bullet-collapsed-glow)"
+                             :else "none")
+               :cursor "pointer"
+               :display "block"
+               :vertical-align "middle"}}]]))
 
 (rum/defc nav-content-editor < rum/reactive
   "Editable content component"
@@ -739,8 +752,8 @@
       (nav-bullet db id is-display note-id database-name content is-editing)
       (nav-content-editor id content note-id database-name)]
      (when is-display
-       [:div.content-box {:style {:margin-left "24px"
-                                  :padding-left "5px"
+       [:div.content-box {:style {:margin-left "22px"
+                                  :padding-left "0"
                                   :position "relative"}}
         [:div.content-box.outline-line.night-outline-line]
         (render-navs db id note-id database-name)])]))
