@@ -601,7 +601,7 @@
 
 (rum/defc nav-bullet < rum/reactive
   "Bullet point component with expand/collapse functionality and context menu"
-  [db nav-id is-display note-id database-name content]
+  [db nav-id is-display note-id database-name content is-editing]
   (let [has-child (has-children? db nav-id)]
     [:span {:class (str "controls hulu-text-font " 
                         (when has-child "has-children"))
@@ -632,10 +632,11 @@
         "▶"]
        ;; Show dot for leaf nodes
        [:span {:class "controls bg-black-50 customize-dot night-circular"
-               :style {:height 5
-                       :width 5
+               :style {:height (if is-editing "var(--bullet-size-editing)" "var(--bullet-size-idle)")
+                       :width (if is-editing "var(--bullet-size-editing)" "var(--bullet-size-idle)")
                        :border-radius "50%"
-                       :background-color "#D8D8D8"
+                       :background-color (if is-editing "var(--theme-accent)" "var(--bullet-idle-color)")
+                       :box-shadow (when is-editing "0 0 0 2px var(--theme-accent-glow)")
                        :cursor "pointer"
                        :display "block"
                        :vertical-align "middle"}}])]))
@@ -649,17 +650,19 @@
        {:type "text"
         :auto-focus true
         :value (rum/react editing-content)
-        :style {:border "1px solid #4a90d9"
-                :border-radius "3px"
-                :padding "2px 6px"
+        :style {:border "none"
+                :border-radius "0"
+                :padding "0"
                 :outline "none"
                 :width "100%"
-                :min-width "200px"
+                :min-width "100px"
                 :font-size "inherit"
                 :font-family "inherit"
-                ;; Fixed: Use dark background with light text for dark theme
-                :background "#2a2f3a"
-                :color "#fdfeffc4"}
+                :font-weight "inherit"
+                :letter-spacing "inherit"
+                :line-height "inherit"
+                :background "transparent"
+                :color "inherit"}
         :on-change #(reset! editing-content (.. % -target -value))
         :on-key-down #(handle-key-down % nav-id note-id database-name)
         :on-blur #(save-nav-content! nav-id note-id database-name)}]
@@ -682,17 +685,17 @@
         is-editing (= id (rum/react editing-nav-id))]
     [:div.nav-item
      ;; Entire row is clickable to enter edit mode
-     [:div.head-dot.flex
-      {:style {:padding-left "13px"
-               :padding-top "5px"
-               :padding-bottom "5px"
-               :cursor "text"}
-       :on-click (fn [e]
-                   ;; Only start editing if not clicking on bullet
-                   (when-not (.. e -target -classList (contains "controls"))
-                     (reset! target-cursor-column nil)
-                     (start-editing! id content)))}
-      (nav-bullet db id is-display note-id database-name content)
+     [:div {:class (str "head-dot flex " (when is-editing "is-editing"))
+            :style {:padding-left "13px"
+                    :padding-top "5px"
+                    :padding-bottom "5px"
+                    :cursor "text"}
+            :on-click (fn [e]
+                        ;; Only start editing if not clicking on bullet
+                        (when-not (.. e -target -classList (contains "controls"))
+                          (reset! target-cursor-column nil)
+                          (start-editing! id content)))}
+      (nav-bullet db id is-display note-id database-name content is-editing)
       (nav-content-editor id content note-id database-name)]
      (when is-display
        [:div.content-box {:style {:margin-left "24px"
