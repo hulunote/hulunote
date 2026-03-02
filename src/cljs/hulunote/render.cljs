@@ -637,7 +637,7 @@
                        :border-radius "50%"
                        :background-color "#D8D8D8"
                        :cursor "pointer"
-                       :display "inline-nav"
+                       :display "block"
                        :vertical-align "middle"}}])]))
 
 (rum/defc nav-content-editor < rum/reactive

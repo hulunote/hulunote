@@ -393,6 +393,7 @@ hulu-text-font {
 .head-dot {
     transition: background 0.1s ease;
     border-radius: 4px;
+    align-items: center;
 }
 
 .head-dot:hover {
