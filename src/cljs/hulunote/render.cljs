@@ -16,6 +16,8 @@
 ;; State atom for tracking which nav is being edited
 (defonce editing-nav-id (atom nil))
 (defonce editing-content (atom ""))
+;; Pending cursor position for the next editor mount.
+(defonce pending-selection (atom nil))
 
 ;; State for cursor position (used for up/down navigation to maintain column position)
 (defonce target-cursor-column (atom nil))
@@ -50,45 +52,78 @@
    (start-editing! nav-id content nil))
   ([nav-id content cursor-pos]
    (reset! editing-nav-id nav-id)
-   (reset! editing-content (or content ""))
-   ;; Set cursor position after the input is rendered
-   (when cursor-pos
-     (js/setTimeout
-       (fn []
-         (when-let [input (.querySelector js/document ".nav-editor-input")]
-           (let [len (count (or content ""))
-                 pos (min cursor-pos len)]
-             (.setSelectionRange input pos pos))))
-       10))))
+   (let [text (or content "")
+         len (count text)
+         default-pos len
+         pos (if (some? cursor-pos)
+               (max 0 (min cursor-pos len))
+               default-pos)]
+     (reset! editing-content text)
+     (reset! pending-selection {:nav-id nav-id :pos pos}))))
 
 (defn start-editing-at-end!
   "Start editing a nav with cursor at the end"
   [nav-id content]
-  (reset! editing-nav-id nav-id)
-  (reset! editing-content (or content ""))
-  (js/setTimeout
-    (fn []
-      (when-let [input (.querySelector js/document ".nav-editor-input")]
-        (let [len (count (or content ""))]
-          (.setSelectionRange input len len))))
-    10))
+  (let [text (or content "")]
+    (start-editing! nav-id text (count text))))
 
 (defn start-editing-at-start!
   "Start editing a nav with cursor at the beginning"
   [nav-id content]
-  (reset! editing-nav-id nav-id)
-  (reset! editing-content (or content ""))
-  (js/setTimeout
-    (fn []
-      (when-let [input (.querySelector js/document ".nav-editor-input")]
-        (.setSelectionRange input 0 0)))
-    10))
+  (start-editing! nav-id content 0))
+
+(defn dom-caret-offset-in-root
+  "Get text offset within root element from viewport click coordinates."
+  [root x y]
+  (let [doc js/document
+        mk-offset (fn [container offset]
+                    (when (and container (some? offset))
+                      (let [r (.createRange doc)]
+                        (.selectNodeContents r root)
+                        (.setEnd r container offset)
+                        (count (.toString r)))))]
+    (cond
+      (.-caretRangeFromPoint doc)
+      (when-let [clicked-range (.caretRangeFromPoint doc x y)]
+        (mk-offset (.-startContainer clicked-range)
+                   (.-startOffset clicked-range)))
+
+      (.-caretPositionFromPoint doc)
+      (when-let [pos (.caretPositionFromPoint doc x y)]
+        (mk-offset (.-offsetNode pos)
+                   (.-offset pos)))
+
+      :else nil)))
+
+(defn estimate-cursor-pos-from-click
+  "Estimate input cursor position from click X coordinate within rendered nav content."
+  [e content]
+  (let [text (or content "")
+        text-len (count text)
+        target (.-target e)
+        content-el (or (when-let [closest-fn (.-closest target)]
+                         (.closest target ".nav-content"))
+                       (when (and (.-classList target)
+                                  (.contains (.-classList target) "nav-content"))
+                         target))]
+    (when (and content-el (> text-len 0))
+      (let [rect (.getBoundingClientRect content-el)
+            width (.-width rect)
+            exact-offset (dom-caret-offset-in-root content-el (.-clientX e) (.-clientY e))]
+        (if (some? exact-offset)
+          (max 0 (min exact-offset text-len))
+          (when (> width 0)
+            (let [x (- (.-clientX e) (.-left rect))
+                  clamped-x (max 0 (min x width))
+                  ratio (/ clamped-x width)]
+              (int (js/Math.round (* ratio text-len))))))))))
 
 (defn cancel-editing!
   "Cancel editing"
   []
   (reset! editing-nav-id nil)
   (reset! editing-content "")
+  (reset! pending-selection nil)
   (reset! target-cursor-column nil))
 
 (defn save-nav-content!
@@ -603,43 +638,56 @@
   "Bullet point component with expand/collapse functionality and context menu"
   [db nav-id is-display note-id database-name content is-editing]
   (let [has-child (has-children? db nav-id)]
-    [:span {:class (str "controls hulu-text-font " 
-                        (when has-child "has-children"))
-            :style {:align-items "center"
-                    :vertical-align "middle"
-                    :width "16px"
-                    :cursor "pointer"
-                    :padding-left "5px"
-                    :justify-content "center"
-                    :display "flex"
-                    :margin-right "3px"
-                    :border-radius "50%"
-                    :height "16px"}
-            :on-click (fn [e]
-                        (u/stop-click-bubble e)
-                        (when has-child
-                          (toggle-nav-display! db nav-id is-display note-id database-name)))
-            :on-context-menu (fn [e]
-                              (show-context-menu! e nav-id content note-id database-name))}
-     (if has-child
-       ;; Show triangle for nodes with children
-       [:span {:class (str "expand-icon " (if is-display "expanded" "collapsed"))
-               :style {:font-size "10px"
-                       :color "#666"
-                       :transition "transform 0.2s ease"
-                       :transform (if is-display "rotate(90deg)" "rotate(0deg)")
-                       :display "inline-block"}}
-        "▶"]
-       ;; Show dot for leaf nodes
-       [:span {:class "controls bg-black-50 customize-dot night-circular"
-               :style {:height (if is-editing "var(--bullet-size-editing)" "var(--bullet-size-idle)")
-                       :width (if is-editing "var(--bullet-size-editing)" "var(--bullet-size-idle)")
-                       :border-radius "50%"
-                       :background-color (if is-editing "var(--theme-accent)" "var(--bullet-idle-color)")
-                       :box-shadow (when is-editing "0 0 0 2px var(--theme-accent-glow)")
-                       :cursor "pointer"
-                       :display "block"
-                       :vertical-align "middle"}}])]))
+    [:span
+     {:class (str "controls hulu-text-font " (when has-child "has-children"))
+      :style {:align-items "center"
+              :vertical-align "middle"
+              :width "26px"
+              :cursor "pointer"
+              :padding-left "0"
+              :justify-content "flex-start"
+              :display "flex"
+              :margin-right "10px"
+              :gap "7px"
+              :border-radius "8px"
+              :height "16px"}
+      :on-context-menu (fn [e]
+                         (show-context-menu! e nav-id content note-id database-name))}
+     ;; Keep a stable slot before the dot; show triangle only for nodes with children.
+     [:span
+      {:style {:width "9px"
+               :display "inline-flex"
+               :justify-content "center"}}
+      (when has-child
+        [:span
+         {:class (str "controls expand-icon " (if is-display "expanded" "collapsed"))
+          :style {:font-size "9px"
+                  :color "#7f8898"
+                  :transition "transform 0.15s ease, color 0.15s ease"
+                  :transform (if is-display "rotate(90deg)" "rotate(0deg)")
+                  :display "inline-block"
+                  :line-height "1"
+                  :width "9px"
+                  :background "transparent"
+                  :text-align "center"}
+          :on-click (fn [e]
+                      (u/stop-click-bubble e)
+                      (toggle-nav-display! db nav-id is-display note-id database-name))}
+         "▶"])]
+     [:span
+      {:class "controls customize-dot night-circular"
+       :style {:height (if is-editing "var(--bullet-size-editing)" "var(--bullet-size-idle)")
+               :width (if is-editing "var(--bullet-size-editing)" "var(--bullet-size-idle)")
+               :margin-left (if is-editing "calc((var(--bullet-size-idle) - var(--bullet-size-editing)) / 2)" "0")
+               :border-radius "50%"
+               :background-color (if is-editing "var(--theme-accent)" "var(--bullet-idle-color)")
+               :box-shadow (cond
+                             is-editing "0 0 0 2px var(--theme-accent-glow)"
+                             (and has-child (not is-display)) "0 0 0 2px var(--bullet-collapsed-glow)"
+                             :else "none")
+               :cursor "pointer"
+               :display "block"
+               :vertical-align "middle"}}]]))
 
 (rum/defc nav-content-editor < rum/reactive
   "Editable content component"
@@ -648,8 +696,13 @@
     (if is-editing
       [:input.nav-editor-input
        {:type "text"
-        :auto-focus true
         :value (rum/react editing-content)
+        :ref (fn [el]
+               (when-let [{:keys [nav-id pos]} @pending-selection]
+                 (when (and el (= nav-id @editing-nav-id))
+                   (.focus el)
+                   (.setSelectionRange el pos pos)
+                   (reset! pending-selection nil))))
         :style {:border "none"
                 :border-radius "0"
                 :padding "0"
@@ -694,12 +747,13 @@
                         ;; Only start editing if not clicking on bullet
                         (when-not (.. e -target -classList (contains "controls"))
                           (reset! target-cursor-column nil)
-                          (start-editing! id content)))}
+                          (let [cursor-pos (estimate-cursor-pos-from-click e content)]
+                            (start-editing! id content cursor-pos))))}
       (nav-bullet db id is-display note-id database-name content is-editing)
       (nav-content-editor id content note-id database-name)]
      (when is-display
-       [:div.content-box {:style {:margin-left "24px"
-                                  :padding-left "5px"
+       [:div.content-box {:style {:margin-left "22px"
+                                  :padding-left "0"
                                   :position "relative"}}
         [:div.content-box.outline-line.night-outline-line]
         (render-navs db id note-id database-name)])]))

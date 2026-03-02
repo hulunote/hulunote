@@ -6,6 +6,7 @@
     --theme-accent: #4a90d9;
     --theme-accent-glow: rgba(74, 144, 217, 0.22);
     --bullet-idle-color: #d8d8d8;
+    --bullet-collapsed-glow: rgba(216, 216, 216, 0.28);
     --bullet-size-idle: 5px;
     --bullet-size-editing: 8px;
 }
@@ -35,14 +36,14 @@ body {
     bottom: 0px;
     transition: all 100ms ease-in 0s;
     top: 0px;
-    width: calc(7px);
+    width: 0;
     cursor: pointer;
     z-index: 10;
     border-top-color: rgb(191, 204, 214);
     border-bottom-color: rgb(191, 204, 214);
     border-left-color: rgb(191, 204, 214);
     position: absolute;
-    left: -5.5px;
+    left: 9px;
 }
 
 div.content-box.outline-line:hover {
@@ -252,7 +253,11 @@ hulu-text-font {
     user-select: none;
     font-size: 8px;
     color: #666;
-    transition: transform 0.15s ease;
+    transition: transform 0.15s ease, opacity 0.12s ease;
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    background: transparent !important;
 }
 
 .expand-icon.expanded {
@@ -264,8 +269,7 @@ hulu-text-font {
 }
 
 .has-children:hover {
-    background: rgba(100, 100, 100, 0.2);
-    border-radius: 50%;
+    background: transparent;
 }
 
 .nav-content {
@@ -285,7 +289,7 @@ hulu-text-font {
     border: none !important;
     border-radius: 0 !important;
     padding: 0 !important;
-    padding-left: 0.5px !important;
+    padding-left: 1px !important;
     outline: none !important;
     width: 100% !important;
     min-width: 100px !important;
@@ -411,6 +415,12 @@ hulu-text-font {
 
 .head-dot:hover {
     background: rgba(255, 255, 255, 0.03);
+}
+
+.head-dot:hover .expand-icon {
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
 }
 
 .head-dot.is-editing {
