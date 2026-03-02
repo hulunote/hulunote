@@ -3,6 +3,11 @@
     --background-theme: #313541;
     --sidebar-width: 250px;
     --sidebar-collapsed-width: 0px;
+    --theme-accent: #4a90d9;
+    --theme-accent-glow: rgba(74, 144, 217, 0.22);
+    --bullet-idle-color: #d8d8d8;
+    --bullet-size-idle: 5px;
+    --bullet-size-editing: 8px;
 }
 
 body {
@@ -275,30 +280,38 @@ hulu-text-font {
 }
 
 .nav-editor-input {
-    border: 1px solid #4a90d9 !important;
-    border-radius: 3px !important;
-    padding: 2px 6px !important;
+    -webkit-appearance: none !important;
+    appearance: none !important;
+    border: none !important;
+    border-radius: 0 !important;
+    padding: 0 !important;
+    padding-left: 0.5px !important;
     outline: none !important;
-    width: calc(100% - 50px) !important;
-    min-width: 200px !important;
-    font-size: inherit !important;
-    font-family: inherit !important;
-    background: #2a2f3a !important;
-    color: #fdfeffc4 !important;
+    width: 100% !important;
+    min-width: 100px !important;
+    font: inherit !important;
+    font-weight: inherit !important;
+    letter-spacing: inherit !important;
+    line-height: inherit !important;
+    text-indent: 0 !important;
+    background: transparent !important;
+    color: inherit !important;
+    box-shadow: none !important;
+    margin: 0 !important;
 }
 
 .nav-editor-input:focus {
-    border-color: #2e7ad1 !important;
-    box-shadow: 0 0 0 2px rgba(74, 144, 217, 0.2) !important;
-    background: #2a2f3a !important;
-    color: #fdfeffc4 !important;
+    border: none !important;
+    box-shadow: none !important;
+    background: transparent !important;
+    color: inherit !important;
 }
 
 .night-textColor-2 .nav-editor-input,
 .night-center-boxBg .nav-editor-input {
-    background: #2a2f3a !important;
-    color: #fdfeffc4 !important;
-    border-color: #4a90d9 !important;
+    background: transparent !important;
+    color: inherit !important;
+    border: none !important;
 }
 
 .outline-line:hover {
@@ -393,10 +406,15 @@ hulu-text-font {
 .head-dot {
     transition: background 0.1s ease;
     border-radius: 4px;
+    align-items: center;
 }
 
 .head-dot:hover {
     background: rgba(255, 255, 255, 0.03);
+}
+
+.head-dot.is-editing {
+    background: rgba(255, 255, 255, 0.05);
 }
 
 /* ==================== Daily Note Button ==================== */
