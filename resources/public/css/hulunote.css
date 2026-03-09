@@ -670,8 +670,9 @@ hulu-text-font {
 }
 
 .sidebar-symbol-icon {
-    font-size: 18px !important;
-    font-variation-settings: "FILL" 0, "wght" 400, "GRAD" 0, "opsz" 20;
+    width: 18px;
+    height: 18px;
+    filter: invert(1) brightness(0.85);
     line-height: 1;
 }
 
@@ -842,7 +843,9 @@ hulu-text-font {
 }
 
 .app-topbar-icon {
-    font-size: 18px !important;
+    width: 18px;
+    height: 18px;
+    filter: invert(1) brightness(0.85);
 }
 
 .app-topbar-btn:hover {

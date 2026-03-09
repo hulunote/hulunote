@@ -234,15 +234,15 @@
     [:button.app-topbar-btn
      {:title "Toggle Sidebar"
       :on-click toggle-sidebar!}
-     [:span.material-symbols-outlined.app-topbar-icon "dock_to_right"]]
+     [:img.app-topbar-icon {:src (u/asset-path "/img/icons/dock_to_right.svg")}]]
     [:button.app-topbar-btn
      {:title "Back"
       :on-click #(js/history.back)}
-     [:span.material-symbols-outlined.app-topbar-icon "arrow_back"]]
+     [:img.app-topbar-icon {:src (u/asset-path "/img/icons/arrow_back.svg")}]]
     [:button.app-topbar-btn
      {:title "Forward"
       :on-click #(js/history.forward)}
-     [:span.material-symbols-outlined.app-topbar-icon "arrow_forward"]]]
+     [:img.app-topbar-icon {:src (u/asset-path "/img/icons/arrow_forward.svg")}]]]
    [:div.app-topbar-center
     [:div.app-topbar-tab.active
      (or title "Untitled")]]
@@ -250,7 +250,7 @@
     [:button.app-topbar-btn
      {:title "Search (placeholder)"
       :on-click #()}
-     [:span.material-symbols-outlined.app-topbar-icon "search"]]]])
+     [:img.app-topbar-icon {:src (u/asset-path "/img/icons/search.svg")}]]]])
 
 (rum/defc left-sidebar < rum/reactive
   [db database-name]
@@ -295,19 +295,19 @@
          ;; Sidebar content
          [:div.sidebar-content
           ;; Menu items
-          (sidebar-item [:span.material-symbols-outlined.sidebar-symbol-icon "calendar_month"] "Diaries"
+          (sidebar-item [:img.sidebar-symbol-icon {:src (u/asset-path "/img/icons/calendar_month.svg")}] "Diaries"
                         #(router/go-to-diaries! database-name)
                         (= route-name :diaries))
 
-          (sidebar-item [:span.material-symbols-outlined.sidebar-symbol-icon "description"] "All Notes"
+          (sidebar-item [:img.sidebar-symbol-icon {:src (u/asset-path "/img/icons/description.svg")}] "All Notes"
                         #(router/go-to-all-notes! database-name)
                         (= route-name :all-notes))
 
-          (sidebar-item [:span.material-symbols-outlined.sidebar-symbol-icon "tune"] "MCP Settings"
+          (sidebar-item [:img.sidebar-symbol-icon {:src (u/asset-path "/img/icons/tune.svg")}] "MCP Settings"
                         #(router/go-to-mcp-settings! database-name)
                         (= route-name :mcp-settings))
 
-          (sidebar-item [:span.material-symbols-outlined.sidebar-symbol-icon "chat_bubble"] "MCP Chat"
+          (sidebar-item [:img.sidebar-symbol-icon {:src (u/asset-path "/img/icons/chat_bubble.svg")}] "MCP Chat"
                         #(router/go-to-mcp-chat! database-name)
                         (= route-name :mcp-chat))
 
