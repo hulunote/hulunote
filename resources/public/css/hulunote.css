@@ -30,7 +30,7 @@
     --bullet-size-idle: 5px;
     --bullet-size-editing: 8px;
     --note-title-align-left: calc(var(--space-xl) + 4px);
-    --app-topbar-height: 56px;
+    --app-topbar-height: 0px;
     --markdown-highlight-bg: rgba(102, 126, 234, 0.3);
     --markdown-highlight-color: var(--font-color);
 }
@@ -769,7 +769,7 @@ hulu-text-font {
     left: 0;
     right: 0;
     z-index: 90;
-    height: var(--app-topbar-height);
+    height: 56px;
     padding: 0 16px 0 16px;
     display: grid;
     grid-template-columns: auto 1fr auto;

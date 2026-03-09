@@ -226,10 +226,12 @@
    [:div.sidebar-item-text text]])
 
 (rum/defc app-top-bar
-  "Global top bar for app pages.
-   Works in both Electron and web browsers."
+  "Global top bar - only visible in Electron client."
   [{:keys [title]}]
-  [:div.app-topbar
+  (when (u/is-electron?)
+    ;; Set topbar height on :root so layout (sidebar, page-wrapper) adapts
+    (.setProperty (.-style (.-documentElement js/document)) "--app-topbar-height" "56px")
+    [:div.app-topbar
    [:div.app-topbar-left
     [:button.app-topbar-btn
      {:title "Toggle Sidebar"
@@ -250,7 +252,7 @@
     [:button.app-topbar-btn
      {:title "Search (placeholder)"
       :on-click #()}
-     [:img.app-topbar-icon {:src (u/asset-path "/img/icons/search.svg")}]]]])
+     [:img.app-topbar-icon {:src (u/asset-path "/img/icons/search.svg")}]]]]))
 
 (rum/defc left-sidebar < rum/reactive
   [db database-name]
