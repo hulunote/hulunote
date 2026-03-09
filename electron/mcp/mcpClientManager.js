@@ -1,7 +1,8 @@
 // MCP Client Manager - 管理 MCP 客户端连接
 // 基于 @modelcontextprotocol/sdk 实现
 
-const { spawn } = require('child_process');
+const { spawn, execFileSync } = require('child_process');
+const fs = require('fs');
 
 class McpClientManager {
   constructor() {
@@ -41,6 +42,45 @@ class McpClientManager {
   }
 
   /**
+   * 智能解析命令：如果 command 包含空格且没有提供 args，自动拆分
+   */
+  parseCommand(serverConfig) {
+    let command = serverConfig.command;
+    let args = serverConfig.args || [];
+
+    if (command.includes(' ') && args.length === 0) {
+      const parts = command.split(/\s+/).filter(p => p.length > 0);
+      command = parts[0];
+      args = parts.slice(1);
+      console.log(`MCP: Auto-split command: "${command}" args: ${JSON.stringify(args)}`);
+    }
+
+    return { command, args };
+  }
+
+  /**
+   * 预检查命令是否可执行
+   */
+  validateCommand(command) {
+    try {
+      // 检查命令文件是否存在（绝对路径时）
+      if (command.startsWith('/') || command.startsWith('.')) {
+        if (!fs.existsSync(command)) {
+          return { valid: false, error: `Command not found: ${command}` };
+        }
+        try {
+          fs.accessSync(command, fs.constants.X_OK);
+        } catch {
+          return { valid: false, error: `Command not executable: ${command}` };
+        }
+      }
+      return { valid: true };
+    } catch (error) {
+      return { valid: false, error: `Command validation failed: ${error.message}` };
+    }
+  }
+
+  /**
    * 创建并连接 MCP 客户端
    * @param {Object} serverConfig - 服务器配置
    * @param {string} serverConfig.name - 服务器名称
@@ -62,6 +102,22 @@ class McpClientManager {
       await this.removeClient(clientId);
     }
 
+    // 智能解析命令
+    const { command, args } = this.parseCommand(serverConfig);
+
+    // 预检查命令
+    const validation = this.validateCommand(command);
+    if (!validation.valid) {
+      throw new Error(validation.error);
+    }
+
+    // 如果有脚本参数，也检查脚本文件是否存在
+    if (args.length > 0 && (args[0].endsWith('.py') || args[0].endsWith('.js') || args[0].endsWith('.ts'))) {
+      if (!fs.existsSync(args[0])) {
+        throw new Error(`Script file not found: ${args[0]}`);
+      }
+    }
+
     try {
       // 创建客户端实例
       const client = new this.Client({
@@ -81,15 +137,45 @@ class McpClientManager {
         ...(serverConfig.env || {})
       };
 
-      // 创建 stdio transport
+      console.log(`MCP: Starting server with command: "${command}" args: ${JSON.stringify(args)}`);
+
+      // 创建 stdio transport，stderr 设为 pipe 以便捕获错误输出
       const transport = new this.StdioClientTransport({
-        command: serverConfig.command,
-        args: serverConfig.args || [],
-        env: env
+        command: command,
+        args: args,
+        env: env,
+        stderr: 'pipe'
       });
 
+      // 收集 stderr 输出用于错误诊断
+      let stderrOutput = '';
+
+      // 包装 transport.start 以捕获 stderr
+      const originalStart = transport.start.bind(transport);
+      transport.start = async function() {
+        const result = await originalStart();
+        // start 完成后 _process 已可用，挂载 stderr 监听
+        if (transport._process && transport._process.stderr) {
+          transport._process.stderr.on('data', (data) => {
+            const text = data.toString();
+            stderrOutput += text;
+            console.error(`MCP Server stderr [${clientId}]:`, text);
+          });
+        }
+        return result;
+      };
+
       // 连接到服务器
-      await client.connect(transport);
+      try {
+        await client.connect(transport);
+      } catch (connectError) {
+        // 连接失败时，提供更详细的错误信息
+        let errorMsg = connectError.message || 'Connection failed';
+        if (stderrOutput.trim()) {
+          errorMsg += `\nServer stderr: ${stderrOutput.trim().substring(0, 500)}`;
+        }
+        throw new Error(errorMsg);
+      }
 
       // 存储客户端和 transport
       this.clients.set(clientId, client);
