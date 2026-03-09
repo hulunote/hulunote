@@ -751,14 +751,16 @@ hulu-text-font {
 .main-content-area {
     flex: 1;
     margin-left: var(--sidebar-width);
-    transition: margin-left 0.3s ease;
+    transition: margin-left 0.3s ease, padding-left 0.3s ease;
     min-height: calc(100vh - var(--app-topbar-height));
     overflow-y: auto;
     padding-top: 0;
+    padding-left: 40px;
 }
 
 .main-content-area.sidebar-collapsed {
     margin-left: 0;
+    padding-left: 40px;
 }
 
 /* ==================== App Top Bar ==================== */

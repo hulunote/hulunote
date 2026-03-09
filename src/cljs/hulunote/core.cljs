@@ -67,11 +67,11 @@
        :all-notes (all-notes/all-notes-page db)
        :single-note (single-note/single-note-page db)
        ;; MCP settings pages
-       :mcp-settings (mcp-ui/mcp-settings-panel (:database params))
-       :mcp-settings-global (mcp-ui/mcp-settings-panel nil)
+       :mcp-settings (mcp-ui/mcp-settings-panel db)
+       :mcp-settings-global (mcp-ui/mcp-settings-panel db)
        ;; MCP chat pages
-       :mcp-chat (chat-ui/chat-page (:database params))
-       :mcp-chat-global (chat-ui/chat-page nil)
+       :mcp-chat (chat-ui/chat-page db)
+       :mcp-chat-global (chat-ui/chat-page db)
        ;; Public pages: login, main, price, download
        :login (login/login-page db)
        :main (home/home-page db)

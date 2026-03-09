@@ -6,6 +6,8 @@
             [hulunote.mcp-state :as mcp-state]
             [hulunote.util :as u]
             [hulunote.router :as router]
+            [hulunote.db :as db]
+            [hulunote.sidebar :as sidebar]
             [cljs.core.async :as a :refer [<! go]]
             [clojure.string :as str]))
 
@@ -137,20 +139,23 @@
                :border-radius (if is-user "16px 16px 4px 16px" "16px 16px 16px 4px")
                :background (cond
                              is-user "linear-gradient(135deg, #667eea 0%, #764ba2 100%)"
-                             is-error "#fff2f0"
-                             is-system "#f0f5ff"
-                             :else "#f5f5f5")
+                             is-error "rgba(255,77,79,0.1)"
+                             is-system "rgba(102,126,234,0.1)"
+                             :else "rgba(255,255,255,0.08)")
                :color (cond
                         is-user "#fff"
-                        is-error "#ff4d4f"
-                        is-system "#1890ff"
-                        :else "#333")
+                        is-error "#ff6b6b"
+                        is-system "#8da4ef"
+                        :else "#fdfeffc4")
                :white-space "pre-wrap"
                :word-break "break-word"
                :font-size (if is-system "12px" "14px")
                :font-family (when is-system "monospace")
                :line-height "1.5"
-               :border (when is-system "1px solid #d6e4ff")}}
+               :border (cond
+                         is-system "1px solid rgba(102,126,234,0.2)"
+                         is-error "1px solid rgba(255,77,79,0.2)"
+                         :else "none")}}
       content]]))
 
 (rum/defc settings-modal < rum/reactive []
@@ -159,24 +164,25 @@
       [:div.modal-overlay
        {:style {:position "fixed"
                 :top 0 :left 0 :right 0 :bottom 0
-                :background "rgba(0,0,0,0.5)"
+                :background "rgba(0,0,0,0.6)"
                 :display "flex"
                 :align-items "center"
                 :justify-content "center"
                 :z-index 10000}
         :on-click #(swap! chat-state assoc :show-settings? false)}
        [:div.modal-content
-        {:style {:background "#fff"
+        {:style {:background "#2a2f3a"
                  :border-radius "16px"
                  :padding "32px"
                  :min-width "450px"
-                 :box-shadow "0 8px 32px rgba(0,0,0,0.2)"}
+                 :border "1px solid rgba(255,255,255,0.1)"
+                 :box-shadow "0 8px 32px rgba(0,0,0,0.4)"}
          :on-click #(.stopPropagation %)}
 
         [:h2 {:style {:margin "0 0 24px 0"
                       :font-size "24px"
                       :font-weight "600"
-                      :color "#1a1a2e"}}
+                      :color "#fdfeffc4"}}
          "Chat Settings"]
 
         ;; API Key
@@ -185,7 +191,7 @@
                           :margin-bottom "8px"
                           :font-size "14px"
                           :font-weight "500"
-                          :color "#666"}}
+                          :color "rgba(255,255,255,0.6)"}}
           "OpenRouter API Key"]
          [:input
           {:type "password"
@@ -194,13 +200,15 @@
            :on-change #(swap! chat-state assoc :api-key (.. % -target -value))
            :style {:width "100%"
                    :padding "12px 16px"
-                   :border "2px solid #e0e0e0"
+                   :border "1px solid rgba(255,255,255,0.15)"
                    :border-radius "8px"
                    :font-size "14px"
                    :outline "none"
-                   :box-sizing "border-box"}}]
+                   :box-sizing "border-box"
+                   :background "#363b48"
+                   :color "#fdfeffc4"}}]
          [:div {:style {:font-size "12px"
-                        :color "#999"
+                        :color "rgba(255,255,255,0.4)"
                         :margin-top "6px"}}
           "Get your API key from "
           [:a {:href "https://openrouter.ai/keys"
@@ -214,19 +222,20 @@
                           :margin-bottom "8px"
                           :font-size "14px"
                           :font-weight "500"
-                          :color "#666"}}
+                          :color "rgba(255,255,255,0.6)"}}
           "Model"]
          [:select
           {:value model
            :on-change #(swap! chat-state assoc :model (.. % -target -value))
            :style {:width "100%"
                    :padding "12px 16px"
-                   :border "2px solid #e0e0e0"
+                   :border "1px solid rgba(255,255,255,0.15)"
                    :border-radius "8px"
                    :font-size "14px"
                    :outline "none"
                    :box-sizing "border-box"
-                   :background "#fff"}}
+                   :background "#363b48"
+                   :color "#fdfeffc4"}}
           [:option {:value "anthropic/claude-3.5-sonnet"} "Claude 3.5 Sonnet"]
           [:option {:value "anthropic/claude-3-opus"} "Claude 3 Opus"]
           [:option {:value "openai/gpt-4-turbo"} "GPT-4 Turbo"]
@@ -241,12 +250,12 @@
          [:button.pointer
           {:on-click #(swap! chat-state assoc :show-settings? false)
            :style {:padding "12px 24px"
-                   :border "2px solid #e0e0e0"
+                   :border "1px solid rgba(255,255,255,0.2)"
                    :border-radius "8px"
-                   :background "#fff"
+                   :background "transparent"
                    :font-size "16px"
                    :font-weight "500"
-                   :color "#666"
+                   :color "rgba(255,255,255,0.7)"
                    :cursor "pointer"}}
           "Cancel"]
          [:button.pointer
@@ -263,6 +272,11 @@
                    :cursor "pointer"}}
           "Save"]]]])))
 
+(defn get-current-database-name
+  [db]
+  (let [{:keys [params]} (db/get-route db)]
+    (:database params)))
+
 (rum/defcs chat-page
   < {:will-mount
      (fn [state]
@@ -271,234 +285,204 @@
          (mcp-state/init!))
        state)}
   rum/reactive
-  [state database-name]
+  [state db]
   (let [{:keys [messages input loading? api-key-set? use-tools? error model]}
         (rum/react chat-state)
         {:keys [servers connected-clients]} (rum/react mcp-state/mcp-state)
-        connected-count (count connected-clients)]
-    [:div.flex.flex-column
-     {:style {:min-height "100vh"
-              :background "#f8f9fa"}}
+        connected-count (count connected-clients)
+        database-name (get-current-database-name db)
+        sidebar-collapsed? (rum/react sidebar/sidebar-collapsed?)]
+    [:div.night-center-boxBg.night-textColor-2
+     (sidebar/app-top-bar {:title "MCP Chat"})
+     [:div.page-wrapper
+      ;; Left sidebar
+      (sidebar/left-sidebar db database-name)
+      ;; Main content area
+      [:div.main-content-area
+       {:class (when sidebar-collapsed? "sidebar-collapsed")}
+       [:div.flex.flex-column
+        {:style {:padding "20px"
+                 :max-width "900px"
+                 :margin "0 auto"
+                 :height "calc(100vh - var(--app-topbar-height, 0px) - 40px)"}}
 
-     ;; Header (with macOS traffic light padding)
-     [:div.td-navbar
-      {:style {:display "flex"
-               :align-items "center"
-               :justify-content "space-between"
-               :padding "0 32px"
-               :padding-top "28px"
-               :height "60px"
-               :background "linear-gradient(135deg, #667eea 0%, #764ba2 100%)"
-               :-webkit-app-region "drag"}}
-      [:div.flex.items-center
-       {:style {:-webkit-app-region "no-drag"}}
-       ;; Back button
-       [:button.pointer
-        {:on-click #(js/history.back)
-         :style {:background "rgba(255,255,255,0.2)"
-                 :border "none"
-                 :padding "6px 12px"
-                 :border-radius "6px"
-                 :color "#fff"
-                 :font-size "18px"
-                 :cursor "pointer"
-                 :margin-right "12px"}}
-        "\u2190"]
-       [:img.pointer
-        {:on-click #(router/switch-router! "/")
-         :width "36px"
-         :style {:border-radius "50%"}
-         :src (u/asset-path "/img/hulunote.webp")}]
-       [:div.pl3.pointer
-        {:on-click #(router/switch-router! "/")
-         :style {:font-size "22px"
-                 :font-weight "700"
-                 :color "#fff"}}
-        "HULUNOTE"]]
-      [:div.flex.items-center {:style {:gap "16px"
-                                       :-webkit-app-region "no-drag"}}
-       ;; MCP status
-       [:div {:style {:color "#fff"
-                      :font-size "13px"
-                      :display "flex"
-                      :align-items "center"
-                      :gap "6px"}}
-        [:span {:style {:width "8px"
-                        :height "8px"
-                        :border-radius "50%"
-                        :background (if (pos? connected-count) "#52c41a" "#ff4d4f")}}]
-        (str connected-count " MCP connected")]
-       ;; Settings button
-       [:button.pointer
-        {:on-click #(swap! chat-state assoc :show-settings? true)
-         :style {:background "rgba(255,255,255,0.2)"
-                 :border "none"
-                 :padding "8px 16px"
-                 :border-radius "8px"
-                 :color "#fff"
-                 :font-size "14px"
-                 :cursor "pointer"}}
-        "Settings"]]]
-
-     ;; Main content
-     [:div.flex.flex-column
-      {:style {:flex 1
-               :max-width "900px"
-               :margin "0 auto"
-               :width "100%"
-               :padding "20px"
-               :margin-top "88px"}}
-
-      ;; API Key warning
-      (when-not api-key-set?
-        [:div {:style {:background "#fff7e6"
-                       :border "1px solid #ffd591"
-                       :border-radius "8px"
-                       :padding "16px 20px"
-                       :margin-bottom "20px"
-                       :display "flex"
+        ;; Header bar with MCP status and settings
+        [:div {:style {:display "flex"
+                       :justify-content "space-between"
                        :align-items "center"
-                       :gap "12px"}}
-         [:span {:style {:font-size "24px"}} "⚠️"]
-         [:div
-          [:div {:style {:font-weight "600"
-                         :color "#d46b08"}}
-           "API Key Required"]
-          [:div {:style {:color "#ad6800"
-                         :font-size "13px"}}
-           "Please configure your OpenRouter API key in Settings to start chatting."]]])
-
-      ;; Messages area
-      [:div.messages-container
-       {:style {:flex 1
-                :background "#fff"
-                :border-radius "16px"
-                :padding "20px"
-                :margin-bottom "20px"
-                :min-height "400px"
-                :max-height "calc(100vh - 350px)"
-                :overflow-y "auto"
-                :box-shadow "0 2px 12px rgba(0,0,0,0.08)"}}
-       (if (empty? messages)
-         [:div {:style {:text-align "center"
-                        :padding "60px 20px"
-                        :color "#999"}}
-          [:div {:style {:font-size "48px"
-                         :margin-bottom "16px"}}
-           "💬"]
-          [:div {:style {:font-size "18px"
-                         :margin-bottom "8px"}}
-           "Start a conversation"]
-          [:div {:style {:font-size "14px"}}
-           (if (pos? connected-count)
-             (str "You have " connected-count " MCP server(s) connected. AI can use their tools.")
-             "Connect MCP servers to enable AI tool use.")]]
-         (for [[idx msg] (map-indexed vector messages)]
-           (rum/with-key (message-bubble msg) idx)))
-
-       ;; Loading indicator
-       (when loading?
-         [:div {:style {:display "flex"
-                        :justify-content "flex-start"
-                        :margin-top "12px"}}
-          [:div {:style {:padding "12px 16px"
-                         :background "#f5f5f5"
-                         :border-radius "16px"
-                         :color "#666"
-                         :font-size "14px"
+                       :margin-bottom "16px"}}
+         [:h1 {:style {:font-size "24px"
+                       :font-weight "600"
+                       :margin 0}}
+          "MCP Chat"]
+         [:div.flex.items-center {:style {:gap "12px"}}
+          ;; MCP status
+          [:div {:style {:font-size "13px"
                          :display "flex"
                          :align-items "center"
-                         :gap "8px"}}
-           [:span {:style {:display "inline-block"
-                           :width "8px"
+                         :gap "6px"
+                         :color "rgba(255,255,255,0.6)"}}
+           [:span {:style {:width "8px"
                            :height "8px"
                            :border-radius "50%"
-                           :background "#667eea"
-                           :animation "pulse 1.5s ease-in-out infinite"}}]
-           "Thinking..."]])]
+                           :background (if (pos? connected-count) "#52c41a" "#ff4d4f")}}]
+           (str connected-count " MCP connected")]
+          ;; Settings button
+          [:button.pointer
+           {:on-click #(swap! chat-state assoc :show-settings? true)
+            :style {:background "rgba(255,255,255,0.1)"
+                    :border "1px solid rgba(255,255,255,0.2)"
+                    :padding "6px 14px"
+                    :border-radius "6px"
+                    :color "rgba(255,255,255,0.7)"
+                    :font-size "13px"
+                    :cursor "pointer"}}
+           "Settings"]]]
 
-      ;; Input area
-      [:div {:style {:display "flex"
-                     :gap "12px"
-                     :align-items "flex-end"}}
-       ;; Use tools toggle
-       [:div {:style {:display "flex"
-                      :flex-direction "column"
-                      :gap "4px"}}
-        [:label {:style {:font-size "11px"
-                         :color "#999"}}
-         "Use MCP"]
-        [:button.pointer
-         {:on-click #(swap! chat-state update :use-tools? not)
-          :style {:padding "10px 12px"
-                  :border (if use-tools? "2px solid #667eea" "2px solid #e0e0e0")
-                  :border-radius "8px"
-                  :background (if use-tools? "#f0f5ff" "#fff")
-                  :color (if use-tools? "#667eea" "#999")
-                  :font-size "16px"
-                  :cursor "pointer"}}
-         "🔧"]]
+        ;; API Key warning
+        (when-not api-key-set?
+          [:div {:style {:background "rgba(250,140,22,0.1)"
+                         :border "1px solid rgba(250,140,22,0.3)"
+                         :border-radius "8px"
+                         :padding "16px 20px"
+                         :margin-bottom "16px"
+                         :display "flex"
+                         :align-items "center"
+                         :gap "12px"}}
+           [:span {:style {:font-size "24px"}} "⚠️"]
+           [:div
+            [:div {:style {:font-weight "600"
+                           :color "#fa8c16"}}
+             "API Key Required"]
+            [:div {:style {:color "rgba(250,140,22,0.8)"
+                           :font-size "13px"}}
+             "Please configure your OpenRouter API key in Settings to start chatting."]]])
 
-       ;; Text input
-       [:input
-        {:type "text"
-         :placeholder (if api-key-set?
-                        "Type your message..."
-                        "Configure API key first...")
-         :value input
-         :disabled (or (not api-key-set?) loading?)
-         :on-change #(swap! chat-state assoc :input (.. % -target -value))
-         :on-key-down #(when (and (= (.-key %) "Enter") (not (.-shiftKey %)))
-                         (.preventDefault %)
-                         (send-message!))
-         :style {:flex 1
-                 :padding "14px 20px"
-                 :border "2px solid #e0e0e0"
-                 :border-radius "12px"
-                 :font-size "16px"
-                 :outline "none"}}]
+        ;; Messages area
+        [:div.messages-container
+         {:style {:flex 1
+                  :background "rgba(255,255,255,0.03)"
+                  :border-radius "12px"
+                  :border "1px solid rgba(255,255,255,0.08)"
+                  :padding "20px"
+                  :margin-bottom "16px"
+                  :min-height "300px"
+                  :overflow-y "auto"}}
+         (if (empty? messages)
+           [:div {:style {:text-align "center"
+                          :padding "60px 20px"
+                          :color "rgba(255,255,255,0.4)"}}
+            [:div {:style {:font-size "48px"
+                           :margin-bottom "16px"}}
+             "💬"]
+            [:div {:style {:font-size "18px"
+                           :margin-bottom "8px"}}
+             "Start a conversation"]
+            [:div {:style {:font-size "14px"}}
+             (if (pos? connected-count)
+               (str "You have " connected-count " MCP server(s) connected. AI can use their tools.")
+               "Connect MCP servers to enable AI tool use.")]]
+           (for [[idx msg] (map-indexed vector messages)]
+             (rum/with-key (message-bubble msg) idx)))
 
-       ;; Send button
-       [:button.pointer
-        {:on-click send-message!
-         :disabled (or (str/blank? input) (not api-key-set?) loading?)
-         :style {:padding "14px 24px"
-                 :border "none"
-                 :border-radius "12px"
-                 :background (if (and (not (str/blank? input)) api-key-set? (not loading?))
-                               "linear-gradient(135deg, #667eea 0%, #764ba2 100%)"
-                               "#e0e0e0")
-                 :color "#fff"
-                 :font-size "16px"
-                 :font-weight "600"
-                 :cursor (if (and (not (str/blank? input)) api-key-set? (not loading?))
-                           "pointer"
-                           "not-allowed")}}
-        "Send"]]
+         ;; Loading indicator
+         (when loading?
+           [:div {:style {:display "flex"
+                          :justify-content "flex-start"
+                          :margin-top "12px"}}
+            [:div {:style {:padding "12px 16px"
+                           :background "rgba(255,255,255,0.05)"
+                           :border-radius "16px"
+                           :color "rgba(255,255,255,0.6)"
+                           :font-size "14px"
+                           :display "flex"
+                           :align-items "center"
+                           :gap "8px"}}
+             [:span {:style {:display "inline-block"
+                             :width "8px"
+                             :height "8px"
+                             :border-radius "50%"
+                             :background "#667eea"
+                             :animation "pulse 1.5s ease-in-out infinite"}}]
+             "Thinking..."]])]
 
-      ;; Clear button
-      (when (seq messages)
-        [:div {:style {:text-align "center"
-                       :margin-top "12px"}}
+        ;; Input area
+        [:div {:style {:display "flex"
+                       :gap "12px"
+                       :align-items "flex-end"}}
+         ;; Use tools toggle
+         [:div {:style {:display "flex"
+                        :flex-direction "column"
+                        :gap "4px"}}
+          [:label {:style {:font-size "11px"
+                           :color "rgba(255,255,255,0.4)"}}
+           "Use MCP"]
+          [:button.pointer
+           {:on-click #(swap! chat-state update :use-tools? not)
+            :style {:padding "10px 12px"
+                    :border (if use-tools?
+                              "1px solid rgba(102,126,234,0.5)"
+                              "1px solid rgba(255,255,255,0.15)")
+                    :border-radius "8px"
+                    :background (if use-tools? "rgba(102,126,234,0.15)" "transparent")
+                    :color (if use-tools? "#667eea" "rgba(255,255,255,0.4)")
+                    :font-size "16px"
+                    :cursor "pointer"}}
+           "🔧"]]
+
+         ;; Text input
+         [:input
+          {:type "text"
+           :placeholder (if api-key-set?
+                          "Type your message..."
+                          "Configure API key first...")
+           :value input
+           :disabled (or (not api-key-set?) loading?)
+           :on-change #(swap! chat-state assoc :input (.. % -target -value))
+           :on-key-down #(when (and (= (.-key %) "Enter") (not (.-shiftKey %)))
+                           (.preventDefault %)
+                           (send-message!))
+           :style {:flex 1
+                   :padding "14px 20px"
+                   :border "1px solid rgba(255,255,255,0.15)"
+                   :border-radius "12px"
+                   :font-size "16px"
+                   :outline "none"
+                   :background "#363b48"
+                   :color "#fdfeffc4"}}]
+
+         ;; Send button
          [:button.pointer
-          {:on-click clear-messages!
-           :style {:padding "8px 16px"
-                   :border "1px solid #e0e0e0"
-                   :border-radius "8px"
-                   :background "#fff"
-                   :color "#999"
-                   :font-size "13px"
-                   :cursor "pointer"}}
-          "Clear conversation"]])]
+          {:on-click send-message!
+           :disabled (or (str/blank? input) (not api-key-set?) loading?)
+           :style {:padding "14px 24px"
+                   :border "none"
+                   :border-radius "12px"
+                   :background (if (and (not (str/blank? input)) api-key-set? (not loading?))
+                                 "linear-gradient(135deg, #667eea 0%, #764ba2 100%)"
+                                 "rgba(255,255,255,0.1)")
+                   :color "#fff"
+                   :font-size "16px"
+                   :font-weight "600"
+                   :cursor (if (and (not (str/blank? input)) api-key-set? (not loading?))
+                             "pointer"
+                             "not-allowed")}}
+          "Send"]]
+
+        ;; Clear button
+        (when (seq messages)
+          [:div {:style {:text-align "center"
+                         :margin-top "12px"}}
+           [:button.pointer
+            {:on-click clear-messages!
+             :style {:padding "8px 16px"
+                     :border "1px solid rgba(255,255,255,0.15)"
+                     :border-radius "8px"
+                     :background "transparent"
+                     :color "rgba(255,255,255,0.4)"
+                     :font-size "13px"
+                     :cursor "pointer"}}
+            "Clear conversation"]])]]]
 
      ;; Settings modal
-     (settings-modal)
-
-     ;; Footer
-     [:div
-      {:style {:background "#1a1a2e"
-               :padding "24px 20px"
-               :text-align "center"}}
-      [:div {:style {:color "rgba(255,255,255,0.5)"
-                     :font-size "14px"}}
-       "© 2026  Hulunote - MIT License"]]]))
+     (settings-modal)]))
