@@ -10,6 +10,7 @@ Thanks for contributing to Hulunote. Small improvements are welcome—docs, bug 
 
 - **Steve Chan** (Founder) — GitHub: [@xlisp](https://github.com/xlisp)
 - **Mark Yan** — GitHub: [@ypyf](https://github.com/ypyf) · X: [@ypyf](https://x.com/ypyf)
+- **Geek Mai** — GitHub: [@GeekMai90](https://github.com/GeekMai90)
 
 ## How to Contribute
 

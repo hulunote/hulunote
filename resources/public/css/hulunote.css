@@ -3,6 +3,36 @@
     --background-theme: #313541;
     --sidebar-width: 250px;
     --sidebar-collapsed-width: 0px;
+    /* UI design system tokens */
+    --color-primary: #667eea;
+    --color-primary-glow: rgba(102, 126, 234, 0.3);
+    --text-primary: #1a1a2e;
+    --text-secondary: #666666;
+    --text-muted: #999999;
+    --border-color: #e0e0e0;
+    --space-xs: 8px;
+    --space-sm: 12px;
+    --space-md: 16px;
+    --space-lg: 24px;
+    --space-xl: 32px;
+    --space-2xl: 40px;
+    --space-3xl: 48px;
+    --space-4xl: 80px;
+    --theme-accent: var(--color-primary);
+    --theme-accent-glow: var(--color-primary-glow);
+    --theme-accent-15: rgba(102, 126, 234, 0.15);
+    --theme-accent-20: rgba(102, 126, 234, 0.2);
+    --theme-accent-30: rgba(102, 126, 234, 0.3);
+    --theme-accent-hover: #6f88f0;
+    --theme-accent-strong: #5570e2;
+    --bullet-idle-color: #d8d8d8;
+    --bullet-collapsed-glow: rgba(216, 216, 216, 0.28);
+    --bullet-size-idle: 5px;
+    --bullet-size-editing: 8px;
+    --note-title-align-left: calc(var(--space-xl) + 4px);
+    --app-topbar-height: 56px;
+    --markdown-highlight-bg: rgba(102, 126, 234, 0.3);
+    --markdown-highlight-color: var(--font-color);
 }
 
 body {
@@ -30,14 +60,14 @@ body {
     bottom: 0px;
     transition: all 100ms ease-in 0s;
     top: 0px;
-    width: calc(7px);
+    width: 0;
     cursor: pointer;
     z-index: 10;
     border-top-color: rgb(191, 204, 214);
     border-bottom-color: rgb(191, 204, 214);
     border-left-color: rgb(191, 204, 214);
     position: absolute;
-    left: -5.5px;
+    left: calc(var(--space-xs) + 1px);
 }
 
 div.content-box.outline-line:hover {
@@ -243,11 +273,60 @@ hulu-text-font {
     position: relative;
 }
 
+/* Inline markdown presentation in nav content */
+.markdown-syntax-bold {
+    font-weight: 700;
+}
+
+.markdown-syntax-italics {
+    font-style: italic;
+}
+
+.markdown-syntax-strikethrough {
+    text-decoration: line-through;
+    text-decoration-thickness: 1.5px;
+    opacity: 0.9;
+}
+
+.markdown-syntax-highlight {
+    background: var(--markdown-highlight-bg);
+    color: var(--markdown-highlight-color);
+    border-radius: 3px;
+    padding: 0 2px;
+    box-decoration-break: clone;
+    -webkit-box-decoration-break: clone;
+}
+
+.markdown-heading {
+    display: inline-block;
+    color: var(--font-color);
+    line-height: 1.25;
+}
+
+.markdown-heading-h1 {
+    font-size: 1.5rem;
+    font-weight: 800;
+}
+
+.markdown-heading-h2 {
+    font-size: 1.25rem;
+    font-weight: 700;
+}
+
+.markdown-heading-h3 {
+    font-size: 1.125rem;
+    font-weight: 700;
+}
+
 .expand-icon {
     user-select: none;
     font-size: 8px;
     color: #666;
-    transition: transform 0.15s ease;
+    transition: transform 0.15s ease, opacity 0.12s ease;
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    background: transparent !important;
 }
 
 .expand-icon.expanded {
@@ -259,50 +338,79 @@ hulu-text-font {
 }
 
 .has-children:hover {
-    background: rgba(100, 100, 100, 0.2);
-    border-radius: 50%;
+    background: transparent;
 }
 
 .nav-content {
     cursor: text;
     min-width: 100px;
     display: inline-block;
+    min-height: 20px;
+    line-height: 20px;
+    vertical-align: middle;
 }
 
 .nav-content:hover {
-    background: rgba(100, 100, 100, 0.1);
-    border-radius: 3px;
+    background: transparent;
 }
 
 .nav-editor-input {
-    border: 1px solid #4a90d9 !important;
-    border-radius: 3px !important;
-    padding: 2px 6px !important;
+    -webkit-appearance: none !important;
+    appearance: none !important;
+    border: none !important;
+    border-radius: 0 !important;
+    padding: 0 !important;
+    padding-left: calc(var(--space-xs) / 8) !important;
     outline: none !important;
-    width: calc(100% - 50px) !important;
-    min-width: 200px !important;
-    font-size: inherit !important;
-    font-family: inherit !important;
-    background: #2a2f3a !important;
-    color: #fdfeffc4 !important;
+    width: 100% !important;
+    min-width: 100px !important;
+    height: 20px !important;
+    min-height: 20px !important;
+    font: inherit !important;
+    font-weight: inherit !important;
+    letter-spacing: inherit !important;
+    line-height: 20px !important;
+    text-indent: 0 !important;
+    background: transparent !important;
+    background-color: transparent !important;
+    background-image: none !important;
+    color: inherit !important;
+    box-shadow: none !important;
+    margin: 0 !important;
+    vertical-align: middle !important;
+    box-sizing: border-box !important;
 }
 
+.nav-editor-input:hover,
+.nav-editor-input:active,
 .nav-editor-input:focus {
-    border-color: #2e7ad1 !important;
-    box-shadow: 0 0 0 2px rgba(74, 144, 217, 0.2) !important;
-    background: #2a2f3a !important;
-    color: #fdfeffc4 !important;
+    border: none !important;
+    box-shadow: none !important;
+    background: transparent !important;
+    background-color: transparent !important;
+    background-image: none !important;
+    color: inherit !important;
+}
+
+.nav-editor-input:-webkit-autofill,
+.nav-editor-input:-webkit-autofill:hover,
+.nav-editor-input:-webkit-autofill:focus,
+.nav-editor-input:-webkit-autofill:active {
+    -webkit-box-shadow: 0 0 0 1000px transparent inset !important;
+    -webkit-text-fill-color: inherit !important;
+    background-color: transparent !important;
+    transition: background-color 9999s ease-out 0s;
 }
 
 .night-textColor-2 .nav-editor-input,
 .night-center-boxBg .nav-editor-input {
-    background: #2a2f3a !important;
-    color: #fdfeffc4 !important;
-    border-color: #4a90d9 !important;
+    background: transparent !important;
+    color: inherit !important;
+    border: none !important;
 }
 
 .outline-line:hover {
-    border-right: 2px solid #4a90d9 !important;
+    border-right: 2px solid var(--theme-accent) !important;
 }
 
 .content-box {
@@ -393,10 +501,53 @@ hulu-text-font {
 .head-dot {
     transition: background 0.1s ease;
     border-radius: 4px;
+    align-items: center;
+    position: relative;
 }
 
-.head-dot:hover {
+.head-dot:not(.is-editing):hover {
     background: rgba(255, 255, 255, 0.03);
+}
+
+.head-dot:hover .expand-icon {
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+}
+
+.head-dot.is-editing {
+    background: transparent !important;
+}
+
+.head-dot.is-editing:hover {
+    background: transparent !important;
+}
+
+.head-dot.is-editing:focus-within {
+    background: transparent !important;
+}
+
+.head-dot.drop-target-sibling::after,
+.head-dot.drop-target-child::after {
+    content: "";
+    position: absolute;
+    bottom: 1px;
+    height: 2px;
+    border-radius: 2px;
+    background: var(--theme-accent);
+    pointer-events: none;
+}
+
+/* Same-level drop: underline from bullet zone through text to the row end. */
+.head-dot.drop-target-sibling::after {
+    left: 13px;
+    right: 0;
+}
+
+/* Child drop: underline only from text start to the row end. */
+.head-dot.drop-target-child::after {
+    left: 49px;
+    right: 0;
 }
 
 /* ==================== Daily Note Button ==================== */
@@ -414,8 +565,9 @@ hulu-text-font {
 
 .page-wrapper {
     display: flex;
-    min-height: 100vh;
+    min-height: calc(100vh - var(--app-topbar-height));
     position: relative;
+    padding-top: var(--app-topbar-height);
 }
 
 /* ==================== Sidebar Styles ==================== */
@@ -423,8 +575,8 @@ hulu-text-font {
 .left-sidebar {
     position: fixed;
     left: 0;
-    top: 0;
-    height: 100vh;
+    top: var(--app-topbar-height);
+    height: calc(100vh - var(--app-topbar-height));
     width: var(--sidebar-width);
     background: #2e3340;
     border-right: 1px solid rgba(255, 255, 255, 0.1);
@@ -433,7 +585,7 @@ hulu-text-font {
     display: flex;
     flex-direction: column;
     overflow: hidden;
-    padding-top: 28px; /* macOS traffic light buttons spacing */
+    padding-top: 0;
 }
 
 .left-sidebar.collapsed {
@@ -443,7 +595,7 @@ hulu-text-font {
 .sidebar-toggle-btn {
     position: fixed;
     left: var(--sidebar-width);
-    top: 36px; /* 28px macOS spacing + 8px */
+    top: calc(var(--app-topbar-height) + 8px);
     width: 32px;
     height: 32px;
     background: #3d4455;
@@ -504,8 +656,8 @@ hulu-text-font {
 }
 
 .sidebar-item.active {
-    background: rgba(74, 144, 217, 0.2);
-    border-left: 3px solid #4a90d9;
+    background: var(--theme-accent-20);
+    box-shadow: inset 3px 0 0 var(--theme-accent);
 }
 
 .sidebar-item-icon {
@@ -515,6 +667,12 @@ hulu-text-font {
     display: flex;
     align-items: center;
     justify-content: center;
+}
+
+.sidebar-symbol-icon {
+    font-size: 18px !important;
+    font-variation-settings: "FILL" 0, "wght" 400, "GRAD" 0, "opsz" 20;
+    line-height: 1;
 }
 
 .sidebar-item-text {
@@ -527,7 +685,7 @@ hulu-text-font {
 .new-note-btn {
     margin: 12px 16px;
     padding: 10px 16px;
-    background: #4a90d9;
+    background: var(--theme-accent);
     color: #fff;
     border: none;
     border-radius: 6px;
@@ -542,7 +700,7 @@ hulu-text-font {
 }
 
 .new-note-btn:hover {
-    background: #3d7ec7;
+    background: var(--theme-accent-strong);
 }
 
 .new-note-btn-icon {
@@ -574,7 +732,7 @@ hulu-text-font {
 }
 
 .note-list-item.active {
-    background: rgba(74, 144, 217, 0.15);
+    background: var(--theme-accent-15);
     opacity: 1;
 }
 
@@ -593,13 +751,104 @@ hulu-text-font {
     flex: 1;
     margin-left: var(--sidebar-width);
     transition: margin-left 0.3s ease;
-    min-height: 100vh;
+    min-height: calc(100vh - var(--app-topbar-height));
     overflow-y: auto;
-    padding-top: 28px; /* macOS traffic light buttons spacing */
+    padding-top: 0;
 }
 
 .main-content-area.sidebar-collapsed {
     margin-left: 0;
+}
+
+/* ==================== App Top Bar ==================== */
+
+.app-topbar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 90;
+    height: var(--app-topbar-height);
+    padding: 0 16px 0 16px;
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    align-items: center;
+    gap: 12px;
+    background: rgba(46, 51, 64, 0.94);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    backdrop-filter: blur(8px);
+}
+
+.app-topbar-left,
+.app-topbar-right {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.app-topbar-left {
+    padding-left: 8px;
+}
+
+/* When running inside Electron on macOS, add extra padding for traffic lights */
+.app-topbar-left.electron-mac {
+    padding-left: 74px;
+}
+
+.app-topbar-center {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 0;
+}
+
+.app-topbar-tab {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    max-width: 100%;
+    height: 30px;
+    padding: 0;
+    font-size: 13px;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.9);
+    background: transparent;
+    border: none;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.app-topbar-tab.active {
+    background: transparent;
+    border: none;
+}
+
+.app-topbar-btn {
+    width: 28px;
+    height: 28px;
+    border-radius: 6px;
+    border: 1px solid transparent;
+    background: transparent;
+    color: rgba(255, 255, 255, 0.82);
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 15px;
+    line-height: 1;
+    padding: 0;
+    transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+
+.app-topbar-icon {
+    font-size: 18px !important;
+}
+
+.app-topbar-btn:hover {
+    background: rgba(255, 255, 255, 0.1);
+    border-color: rgba(255, 255, 255, 0.12);
+    color: #fff;
 }
 
 /* ==================== Note Title Editor ==================== */
@@ -607,7 +856,7 @@ hulu-text-font {
 .note-title-wrapper {
     display: flex;
     align-items: center;
-    padding: 8px 0;
+    padding: 8px 0 8px var(--note-title-align-left);
     margin-bottom: 8px;
 }
 
@@ -615,13 +864,13 @@ hulu-text-font {
     font-size: 1.5rem;
     font-weight: bold;
     cursor: pointer;
-    padding: 4px 8px;
+    padding: 4px 0;
     border-radius: 4px;
     transition: background 0.2s ease;
 }
 
 .note-title:hover {
-    background: rgba(255, 255, 255, 0.1);
+    background: transparent;
 }
 
 .note-title-input {
@@ -629,17 +878,17 @@ hulu-text-font {
     font-weight: bold;
     background: #2a2f3a !important;
     color: #fdfeffc4 !important;
-    border: 1px solid #4a90d9 !important;
+    border: 1px solid var(--theme-accent) !important;
     border-radius: 4px;
-    padding: 4px 8px;
+    padding: 4px 0;
     outline: none;
     width: 100%;
     max-width: 600px;
 }
 
 .note-title-input:focus {
-    border-color: #2e7ad1 !important;
-    box-shadow: 0 0 0 2px rgba(74, 144, 217, 0.2);
+    border-color: var(--theme-accent) !important;
+    box-shadow: 0 0 0 2px var(--theme-accent-glow);
 }
 
 /* ==================== All Notes Page ==================== */
@@ -656,7 +905,7 @@ hulu-text-font {
 
 .note-card:hover {
     background: rgba(255,255,255,0.1);
-    border-color: rgba(74, 144, 217, 0.3);
+    border-color: var(--theme-accent-30);
     transform: translateY(-1px);
 }
 
@@ -682,7 +931,7 @@ hulu-text-font {
 
 .pagination-btn {
     padding: 8px 16px;
-    background: #4a90d9;
+    background: var(--theme-accent);
     color: #fff;
     border: none;
     border-radius: 4px;
@@ -691,7 +940,7 @@ hulu-text-font {
 }
 
 .pagination-btn:hover:not(:disabled) {
-    background: #3d7ec7;
+    background: var(--theme-accent-strong);
 }
 
 .pagination-btn:disabled {
@@ -715,43 +964,62 @@ hulu-text-font {
 }
 
 .pagination-num.active {
-    background: #4a90d9;
-    border-color: #4a90d9;
+    background: var(--theme-accent);
+    border-color: var(--theme-accent);
 }
 
 /* ==================== Mobile Responsive ==================== */
 
 @media only screen and (max-width: 768px) {
+    :root {
+        --app-topbar-height: 44px;
+    }
+
     .left-sidebar {
         width: 100%;
     }
-    
+
     .sidebar-toggle-btn {
         left: 0;
-        top: 16px;
+        top: calc(var(--app-topbar-height) + 8px);
         border-radius: 0 6px 6px 0;
     }
-    
+
     .sidebar-toggle-btn:not(.collapsed) {
         left: calc(100% - 48px);
     }
-    
+
     .main-content-area {
         margin-left: 0;
     }
-    
+
+    .app-topbar {
+        height: var(--app-topbar-height);
+        padding: 0 8px;
+        gap: 8px;
+    }
+
+    .app-topbar-left {
+        padding-left: 0;
+    }
+
+    .app-topbar-tab {
+        font-size: 12px;
+        height: 28px;
+    }
+
     .left-sidebar:not(.collapsed) ~ .main-content-area {
         display: none;
     }
-    
+
     .note-card {
         padding: 12px 16px;
     }
-    
+
     .pagination {
         flex-wrap: wrap;
     }
-    
+
     .nav-context-menu {
         max-width: 90vw;
     }
@@ -775,7 +1043,7 @@ hulu-text-font {
 }
 
 .link-title-style {
-    color: #4a90d9 !important;
+    color: var(--theme-accent) !important;
     text-decoration: underline;
     text-decoration-style: dotted;
     text-underline-offset: 2px;
@@ -783,7 +1051,7 @@ hulu-text-font {
 }
 
 .link-title-style:hover {
-    color: #6ab0ff !important;
+    color: var(--theme-accent-hover) !important;
     text-decoration-style: solid;
 }
 
@@ -794,7 +1062,7 @@ hulu-text-font {
 
 /* Page link hover effect - highlight the brackets */
 .hulunote-note-link:hover .link-style.blue {
-    color: #4a90d9 !important;
+    color: var(--theme-accent) !important;
 }
 
 /* Hashtag specific styles */

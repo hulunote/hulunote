@@ -58,7 +58,7 @@
         end (+ start page-size)]
     (if (empty? all-notes)
       []
-      (subvec all-notes 
+      (subvec all-notes
               (min start (count all-notes))
               (min end (count all-notes))))))
 
@@ -147,7 +147,7 @@
                      (.stopPropagation e)
                      (router/go-to-note! database-name note-id)
                      (hide-note-menu!))}
-        "📄 Open Note"]
+        "Open Note"]
        ;; Delete note option
        [:div.context-menu-item
         {:style {:padding "8px 12px"
@@ -161,7 +161,7 @@
                      (when (js/confirm (str "Are you sure you want to delete \"" note-title "\"?"))
                        (delete-note! note-id))
                      (hide-note-menu!))}
-        "🗑️ Delete Note"]])))
+        "Delete Note"]])))
 
 (rum/defc pagination-controls < rum/reactive
   [total-count]
@@ -174,20 +174,20 @@
                 :align-items "center"
                 :gap "8px"
                 :padding "20px 0"}}
-       
+
        ;; Previous button
        [:button.pagination-btn
         {:disabled (= page 1)
          :on-click #(go-to-page! (dec page))
          :style {:padding "8px 16px"
-                 :background (if (= page 1) "#3d4455" "#4a90d9")
+                 :background (if (= page 1) "#3d4455" "var(--theme-accent)")
                  :color "#fff"
                  :border "none"
                  :border-radius "4px"
                  :cursor (if (= page 1) "not-allowed" "pointer")
                  :opacity (if (= page 1) 0.5 1)}}
-        "← Prev"]
-       
+        "Prev"]
+
        ;; Page numbers
        [:div {:style {:display "flex" :gap "4px"}}
         (for [p (range 1 (inc pages))]
@@ -195,25 +195,25 @@
            {:key p
             :on-click #(go-to-page! p)
             :style {:padding "8px 12px"
-                    :background (if (= p page) "#4a90d9" "transparent")
+                    :background (if (= p page) "var(--theme-accent)" "transparent")
                     :color "#fff"
                     :border (if (= p page) "none" "1px solid rgba(255,255,255,0.2)")
                     :border-radius "4px"
                     :cursor "pointer"}}
            p])]
-       
+
        ;; Next button
        [:button.pagination-btn
         {:disabled (= page pages)
          :on-click #(go-to-page! (inc page))
          :style {:padding "8px 16px"
-                 :background (if (= page pages) "#3d4455" "#4a90d9")
+                 :background (if (= page pages) "#3d4455" "var(--theme-accent)")
                  :color "#fff"
                  :border "none"
                  :border-radius "4px"
                  :cursor (if (= page pages) "not-allowed" "pointer")
                  :opacity (if (= page pages) 0.5 1)}}
-        "Next →"]])))
+        "Next"]])))
 
 (rum/defc note-card
   [note-id note-title updated-at database-name]
@@ -230,13 +230,13 @@
             :justify-content "space-between"
             :align-items "center"}}
    [:div {:style {:flex 1}}
-    [:div {:style {:font-size "16px" 
+    [:div {:style {:font-size "16px"
                    :font-weight "500"
                    :margin-bottom "8px"}}
      note-title]
     [:div {:style {:font-size "12px"
                    :color "rgba(255,255,255,0.5)"}}
-     (str "Updated: " (if (and updated-at (seq updated-at)) 
+     (str "Updated: " (if (and updated-at (seq updated-at))
                         (subs updated-at 0 (min 19 (count updated-at)))
                         "Unknown"))]]
    ;; More options button (...)
@@ -254,7 +254,7 @@
              :transition "all 0.2s ease"}
      :on-mouse-over #(set! (-> % .-currentTarget .-style .-background) "rgba(255,255,255,0.1)")
      :on-mouse-out #(set! (-> % .-currentTarget .-style .-background) "transparent")}
-    "⋯"]])
+    "..."]])
 
 (rum/defc all-notes-page < rum/reactive
   [db]
@@ -263,63 +263,50 @@
         page (rum/react current-page)
         paginated-notes (get-paginated-notes all-notes page)
         sidebar-collapsed? (rum/react sidebar/sidebar-collapsed?)]
-    [:div.page-wrapper.night-center-boxBg.night-textColor-2
-     
-     ;; Left sidebar
-     (sidebar/left-sidebar db database-name)
-     
-     ;; Main content area
-     [:div.main-content-area
-      {:class (when sidebar-collapsed? "sidebar-collapsed")}
-      ;; Back button
-      [:div {:style {:padding "8px 16px"}}
-       [:button
-        {:on-click #(js/history.back)
-         :style {:background "transparent"
-                 :border "1px solid rgba(255,255,255,0.2)"
-                 :color "#fff"
-                 :padding "6px 12px"
-                 :border-radius "4px"
-                 :cursor "pointer"
-                 :font-size "13px"}}
-        "← Back"]]
-      [:div.flex.flex-column
-       {:style {:padding "20px"
-                :max-width "900px"
-                :margin "0 auto"}}
-       
-       ;; Page header
-       [:div {:style {:margin-bottom "24px"}}
-        [:h1 {:style {:font-size "24px" 
-                      :font-weight "600"
-                      :margin "0 0 8px 0"}}
-         "All Notes"]
-        [:div {:style {:color "rgba(255,255,255,0.6)"
-                       :font-size "14px"}}
-         (str "Total: " (count all-notes) " notes")]]
-       
-       ;; Notes list
-       (if (empty? all-notes)
-         [:div.flex.flex-column.items-center.justify-center
-          {:style {:height "50vh"}}
-          [:div {:style {:font-size "18px" :margin-bottom "16px"}} 
-           "No notes yet"]
-          [:button.new-note-btn
-           {:on-click #(sidebar/create-new-note! database-name)}
-           [:span.new-note-btn-icon "+"]
-           "Create First Note"]]
-         
-         [:div
-          ;; Note cards
-          (for [[note-id note-title root-nav-id updated-at] paginated-notes]
-            (rum/with-key
-              (note-card note-id note-title updated-at database-name)
-              note-id))
-          
-          ;; Pagination
-          (pagination-controls (count all-notes))])
-       
-       [:div {:style {:height "50px"}}]]]
-     
-     ;; Global note menu
-     (note-menu)]))
+    [:div.night-center-boxBg.night-textColor-2
+     (sidebar/app-top-bar {:title "All Notes"})
+     [:div.page-wrapper
+      ;; Left sidebar
+      (sidebar/left-sidebar db database-name)
+      ;; Main content area
+      [:div.main-content-area
+       {:class (when sidebar-collapsed? "sidebar-collapsed")}
+       [:div.flex.flex-column
+        {:style {:padding "20px"
+                 :max-width "900px"
+                 :margin "0 auto"}}
+
+        ;; Page header
+        [:div {:style {:margin-bottom "24px"}}
+         [:h1 {:style {:font-size "24px"
+                       :font-weight "600"
+                       :margin "0 0 8px 0"}}
+          "All Notes"]
+         [:div {:style {:color "rgba(255,255,255,0.6)"
+                        :font-size "14px"}}
+          (str "Total: " (count all-notes) " notes")]]
+
+        ;; Notes list
+        (if (empty? all-notes)
+          [:div.flex.flex-column.items-center.justify-center
+           {:style {:height "50vh"}}
+           [:div {:style {:font-size "18px" :margin-bottom "16px"}}
+            "No notes yet"]
+           [:button.new-note-btn
+            {:on-click #(sidebar/create-new-note! database-name)}
+            [:span.new-note-btn-icon "+"]
+            "Create First Note"]]
+
+          [:div
+           ;; Note cards
+           (for [[note-id note-title root-nav-id updated-at] paginated-notes]
+             (rum/with-key
+               (note-card note-id note-title updated-at database-name)
+               note-id))
+
+           ;; Pagination
+           (pagination-controls (count all-notes))])
+
+        [:div {:style {:height "50px"}}]]]
+      ;; Global note menu
+      (note-menu)]]))

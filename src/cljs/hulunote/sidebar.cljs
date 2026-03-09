@@ -225,6 +225,33 @@
    [:div.sidebar-item-icon icon]
    [:div.sidebar-item-text text]])
 
+(rum/defc app-top-bar
+  "Global top bar for app pages.
+   Works in both Electron and web browsers."
+  [{:keys [title]}]
+  [:div.app-topbar
+   [:div.app-topbar-left
+    [:button.app-topbar-btn
+     {:title "Toggle Sidebar"
+      :on-click toggle-sidebar!}
+     [:span.material-symbols-outlined.app-topbar-icon "dock_to_right"]]
+    [:button.app-topbar-btn
+     {:title "Back"
+      :on-click #(js/history.back)}
+     [:span.material-symbols-outlined.app-topbar-icon "arrow_back"]]
+    [:button.app-topbar-btn
+     {:title "Forward"
+      :on-click #(js/history.forward)}
+     [:span.material-symbols-outlined.app-topbar-icon "arrow_forward"]]]
+   [:div.app-topbar-center
+    [:div.app-topbar-tab.active
+     (or title "Untitled")]]
+   [:div.app-topbar-right
+    [:button.app-topbar-btn
+     {:title "Search (placeholder)"
+      :on-click #()}
+     [:span.material-symbols-outlined.app-topbar-icon "search"]]]])
+
 (rum/defc left-sidebar < rum/reactive
   [db database-name]
   (let [collapsed? (rum/react sidebar-collapsed?)
@@ -234,7 +261,7 @@
      ;; Sidebar container
      [:div.left-sidebar
       {:class (when collapsed? "collapsed")}
-      
+
       (when-not collapsed?
         [:<>
          ;; Sidebar header with logo
@@ -244,13 +271,7 @@
                   :width "24px"
                   :style {:border-radius "50%"}}]
            [:span.sidebar-title.ml2 "HULUNOTE"]]]
-         
-         ;; New note button
-         [:button.new-note-btn
-          {:on-click #(create-new-note! database-name)}
-          [:span.new-note-btn-icon "+"]
-          "New Note"]
-         
+
          ;; Today's Daily Note button
          [:button.daily-note-btn
           {:style {:width "100%"
@@ -270,40 +291,52 @@
            :on-click #(ensure-daily-note! database-name {:navigate? true})}
           [:span {:style {:margin-right "8px"}} "📅"]
           (str "Today: " (get-today-title))]
-         
+
          ;; Sidebar content
          [:div.sidebar-content
           ;; Menu items
-          (sidebar-item "📅" "Diaries" 
+          (sidebar-item [:span.material-symbols-outlined.sidebar-symbol-icon "calendar_month"] "Diaries"
                         #(router/go-to-diaries! database-name)
                         (= route-name :diaries))
-          
-          (sidebar-item "📝" "All Notes"
+
+          (sidebar-item [:span.material-symbols-outlined.sidebar-symbol-icon "description"] "All Notes"
                         #(router/go-to-all-notes! database-name)
                         (= route-name :all-notes))
 
-          (sidebar-item "🔌" "MCP Settings"
+          (sidebar-item [:span.material-symbols-outlined.sidebar-symbol-icon "tune"] "MCP Settings"
                         #(router/go-to-mcp-settings! database-name)
                         (= route-name :mcp-settings))
 
-          (sidebar-item "💬" "MCP Chat"
+          (sidebar-item [:span.material-symbols-outlined.sidebar-symbol-icon "chat_bubble"] "MCP Chat"
                         #(router/go-to-mcp-chat! database-name)
                         (= route-name :mcp-chat))
 
           ;; Note list section
           [:div.sidebar-section-title "Recent Notes"]
-          
+
           [:div.note-list
            (for [[note-title note-id root-nav-id] (take 15 daily-list)]
              [:div.note-list-item
               {:key note-id
                :on-click #(router/go-to-note! database-name note-id)
                :title note-title}
-              note-title])]]])]
-     
+              note-title])]]
+
+         ;; Bottom fixed action - New Note button
+         [:div
+          {:style {:padding "12px 16px"
+                   :border-top "1px solid rgba(255, 255, 255, 0.08)"
+                   :flex-shrink 0}}
+          [:button.new-note-btn
+           {:style {:margin "0"
+                    :width "100%"}
+            :on-click #(create-new-note! database-name)}
+           [:span.new-note-btn-icon "+"]
+           "New Note"]]])]
+
      ;; Toggle button - always visible, positioned at edge of sidebar
      [:div.sidebar-toggle-btn
       {:class (when collapsed? "collapsed")
        :on-click toggle-sidebar!
-       :title (if collapsed? "展开侧边栏" "收起侧边栏")}
+       :title (if collapsed? "Show Sidebar" "Hide Sidebar")}
       (if collapsed? "☰" "✕")]]))
