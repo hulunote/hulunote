@@ -4,7 +4,7 @@
 
 Hulunote is an open-source outliner note-taking application with bidirectional linking. Inspired by Roam Research, designed for networked thought. Like the hippocampus organizes memories in the brain, Hulunote organizes your knowledge — and now AI helps you build, connect, and retrieve it.
 
-![](./images/demo.png)
+![](./images/demo1.png)
 ![](./images/graph-sidebar.png)
 ![](./images/ios-demo-all.png)
 
