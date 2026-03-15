@@ -181,8 +181,8 @@
      [:p {:style {:font-size "16px"
                   :color "rgba(255,255,255,0.5)"
                   :margin "0 0 48px 0"
-                  :max-width "500px"}}
-      "Open-source outliner with bidirectional linking — your second brain, powered by AI"]
+                  :max-width "560px"}}
+      "Open-source outliner with bidirectional linking, knowledge graph visualization, and Mermaid diagrams — your second brain, powered by AI"]
 
      [:div.flex.flex-row.justify-center
       {:style {:gap "16px"}}
@@ -263,6 +263,12 @@
       (feature-card "🔗" "Bidirectional Links"
                     "[[Wiki-style links]] with automatic backlinks — every idea is a node in your knowledge graph"
                     {:glow-color "118, 75, 162"})
+      (feature-card "🌐" "Knowledge Graph"
+                    "Interactive force-directed graph visualization — see your entire knowledge network, zoom, pan, click to navigate"
+                    {:glow-color "79, 209, 197"})
+      (feature-card "📊" "Mermaid Diagrams"
+                    "Draw flowcharts, sequence diagrams, mind maps with Mermaid syntax — AI-powered visual thinking"
+                    {:glow-color "255, 167, 38"})
       (feature-card "📅" "Daily Notes"
                     "Automatic date-based journals — capture fleeting thoughts, build lasting habits"
                     {:glow-color "102, 126, 234"})
@@ -357,7 +363,8 @@
       (pipeline-step "💬" "You speak" false)
       (pipeline-step "🤖" "AI understands" false)
       (pipeline-step "📝" "Notes are created" false)
-      (pipeline-step "🧠" "Knowledge connects" true)]
+      (pipeline-step "🧠" "Knowledge connects" false)
+      (pipeline-step "🌐" "Graph visualizes" true)]
 
      ;; AI Feature cards - 2x2 grid
      [:div {:style {:display "grid"
@@ -409,6 +416,268 @@
                 :text-decoration "none"
                 :letter-spacing "0.5px"}}
        "Get OpenClaw Plugin →"]]]]
+
+   ;; ==================== Visual AI Brain Section ====================
+   [:div
+    {:style {:background "linear-gradient(180deg, #0d0d1a 0%, #0a0a16 50%, #0d0d1a 100%)"
+             :padding "120px 20px"
+             :position "relative"
+             :overflow "hidden"}}
+    ;; Subtle radial glow
+    [:div {:style {:position "absolute"
+                   :top "50%" :left "50%"
+                   :transform "translate(-50%, -50%)"
+                   :width "1000px" :height "600px"
+                   :background "radial-gradient(ellipse, rgba(79,209,197,0.06) 0%, rgba(102,126,234,0.04) 40%, transparent 70%)"
+                   :pointer-events "none"}}]
+    ;; Top divider
+    [:div {:style {:position "absolute"
+                   :top "0" :left "10%" :right "10%"
+                   :height "1px"
+                   :background "linear-gradient(90deg, transparent, rgba(79,209,197,0.3), transparent)"}}]
+    [:div.flex.flex-column.items-center
+     {:style {:max-width "1100px"
+              :margin "0 auto"
+              :position "relative"
+              :z-index "1"
+              :text-align "center"}}
+
+     [:div {:style {:font-size "13px"
+                    :font-weight "600"
+                    :color "#4fd1c5"
+                    :letter-spacing "4px"
+                    :text-transform "uppercase"
+                    :margin-bottom "20px"}}
+      "Visualize Your AI Brain"]
+     [:h2 {:style {:font-size "48px"
+                   :font-weight "800"
+                   :color "#fff"
+                   :margin "0 0 24px 0"
+                   :line-height "1.15"
+                   :letter-spacing "-0.5px"}}
+      "Knowledge Graph" [:br]
+      [:span {:style {:background "linear-gradient(135deg, #4fd1c5, #667eea)"
+                      :background-clip "text"
+                      :-webkit-background-clip "text"
+                      :-webkit-text-fill-color "transparent"}}
+       " + Mermaid Diagrams"]]
+     [:p {:style {:font-size "18px"
+                  :color "rgba(255,255,255,0.5)"
+                  :line-height "1.8"
+                  :margin "0 0 60px 0"
+                  :max-width "700px"}}
+      "See your entire knowledge universe as an interactive graph. AI can operate on the graph — create, connect, and visualize ideas. Draw flowcharts, mind maps, and diagrams with simple text."]
+
+     ;; Two-column showcase
+     [:div {:style {:display "grid"
+                    :grid-template-columns "repeat(auto-fit, minmax(440px, 1fr))"
+                    :gap "24px"
+                    :width "100%"
+                    :margin-bottom "56px"}}
+
+      ;; Knowledge Graph Preview
+      [:div {:style {:background "linear-gradient(145deg, #1e1e30 0%, #16162a 100%)"
+                     :border-radius "16px"
+                     :border "1px solid rgba(79, 209, 197, 0.2)"
+                     :overflow "hidden"
+                     :box-shadow "0 4px 30px rgba(0,0,0,0.3), inset 0 1px 0 rgba(79,209,197,0.1)"}}
+       ;; Title bar
+       [:div {:style {:padding "12px 20px"
+                      :border-bottom "1px solid rgba(79,209,197,0.15)"
+                      :display "flex"
+                      :align-items "center"
+                      :gap "10px"}}
+        [:div {:style {:width "20px" :height "20px"
+                       :border-radius "6px"
+                       :background "linear-gradient(135deg, #4fd1c5, #667eea)"
+                       :display "flex" :align-items "center" :justify-content "center"
+                       :font-size "11px"}}
+         "🌐"]
+        [:span {:style {:font-size "14px" :font-weight "600" :color "#fff"}} "Knowledge Graph"]
+        [:span {:style {:font-size "12px" :color "rgba(255,255,255,0.4)" :margin-left "auto"}} "Interactive"]]
+       ;; Graph SVG mock
+       [:div {:style {:padding "24px"
+                      :min-height "280px"
+                      :position "relative"
+                      :background "#0d0d1a"}}
+        [:svg {:width "100%" :height "280" :viewBox "0 0 460 280"
+               :style {:overflow "visible"}}
+         ;; Connection lines
+         [:line {:x1 "230" :y1 "90" :x2 "120" :y2 "170" :stroke "rgba(102,126,234,0.3)" :stroke-width "1"}]
+         [:line {:x1 "230" :y1 "90" :x2 "340" :y2 "140" :stroke "rgba(102,126,234,0.3)" :stroke-width "1"}]
+         [:line {:x1 "230" :y1 "90" :x2 "180" :y2 "40" :stroke "rgba(102,126,234,0.3)" :stroke-width "1"}]
+         [:line {:x1 "230" :y1 "90" :x2 "310" :y2 "50" :stroke "rgba(102,126,234,0.3)" :stroke-width "1"}]
+         [:line {:x1 "120" :y1 "170" :x2 "60" :y2 "230" :stroke "rgba(118,75,162,0.3)" :stroke-width "1"}]
+         [:line {:x1 "120" :y1 "170" :x2 "180" :y2 "240" :stroke "rgba(118,75,162,0.3)" :stroke-width "1"}]
+         [:line {:x1 "340" :y1 "140" :x2 "400" :y2 "210" :stroke "rgba(118,75,162,0.3)" :stroke-width "1"}]
+         [:line {:x1 "340" :y1 "140" :x2 "300" :y2 "220" :stroke "rgba(118,75,162,0.3)" :stroke-width "1"}]
+         [:line {:x1 "180" :y1 "40" :x2 "310" :y2 "50" :stroke "rgba(102,126,234,0.2)" :stroke-width "1"}]
+         [:line {:x1 "60" :y1 "230" :x2 "180" :y2 "240" :stroke "rgba(118,75,162,0.2)" :stroke-width "1"}]
+         [:line {:x1 "300" :y1 "220" :x2 "400" :y2 "210" :stroke "rgba(118,75,162,0.2)" :stroke-width "1"}]
+         ;; Hub node (center)
+         [:circle {:cx "230" :cy "90" :r "14" :fill "#667eea" :stroke "rgba(102,126,234,0.6)" :stroke-width "2"
+                   :filter "url(#home-glow)"}]
+         [:text {:x "230" :y "120" :text-anchor "middle" :fill "rgba(255,255,255,0.7)" :font-size "10"} "AI Project"]
+         ;; Connected nodes
+         [:circle {:cx "120" :cy "170" :r "10" :fill "#764ba2" :stroke "rgba(118,75,162,0.5)" :stroke-width "1.5"}]
+         [:text {:x "120" :y "195" :text-anchor "middle" :fill "rgba(255,255,255,0.6)" :font-size "9"} "ML Notes"]
+         [:circle {:cx "340" :cy "140" :r "10" :fill "#764ba2" :stroke "rgba(118,75,162,0.5)" :stroke-width "1.5"}]
+         [:text {:x "340" :y "165" :text-anchor "middle" :fill "rgba(255,255,255,0.6)" :font-size "9"} "Research"]
+         [:circle {:cx "180" :cy "40" :r "8" :fill "#5a6b8a" :stroke "rgba(90,107,138,0.5)" :stroke-width "1.5"}]
+         [:text {:x "180" :y "28" :text-anchor "middle" :fill "rgba(255,255,255,0.5)" :font-size "9"} "Ideas"]
+         [:circle {:cx "310" :cy "50" :r "8" :fill "#5a6b8a" :stroke "rgba(90,107,138,0.5)" :stroke-width "1.5"}]
+         [:text {:x "310" :y "38" :text-anchor "middle" :fill "rgba(255,255,255,0.5)" :font-size "9"} "Design"]
+         ;; Leaf nodes
+         [:circle {:cx "60" :cy "230" :r "5" :fill "#3d4455" :stroke "rgba(61,68,85,0.5)" :stroke-width "1"}]
+         [:text {:x "60" :y "250" :text-anchor "middle" :fill "rgba(255,255,255,0.4)" :font-size "8"} "Draft"]
+         [:circle {:cx "180" :cy "240" :r "5" :fill "#3d4455" :stroke "rgba(61,68,85,0.5)" :stroke-width "1"}]
+         [:text {:x "180" :y "260" :text-anchor "middle" :fill "rgba(255,255,255,0.4)" :font-size "8"} "TODO"]
+         [:circle {:cx "400" :cy "210" :r "6" :fill "#3d4455" :stroke "rgba(61,68,85,0.5)" :stroke-width "1"}]
+         [:text {:x "400" :y "230" :text-anchor "middle" :fill "rgba(255,255,255,0.4)" :font-size "8"} "Paper"]
+         [:circle {:cx "300" :cy "220" :r "5" :fill "#3d4455" :stroke "rgba(61,68,85,0.5)" :stroke-width "1"}]
+         [:text {:x "300" :y "240" :text-anchor "middle" :fill "rgba(255,255,255,0.4)" :font-size "8"} "Code"]
+         ;; Glow filter
+         [:defs
+          [:filter {:id "home-glow"}
+           [:feGaussianBlur {:stdDeviation "4" :result "coloredBlur"}]
+           [:feMerge
+            [:feMergeNode {:in "coloredBlur"}]
+            [:feMergeNode {:in "SourceGraphic"}]]]]]
+       ;; Floating stats
+       [:div {:style {:position "absolute"
+                      :bottom "8px" :right "8px"
+                      :font-size "11px"
+                      :color "rgba(79,209,197,0.6)"}}
+        "9 notes · 11 connections"]]]
+
+      ;; Mermaid Diagram Preview
+      [:div {:style {:background "linear-gradient(145deg, #1e1e30 0%, #16162a 100%)"
+                     :border-radius "16px"
+                     :border "1px solid rgba(255, 167, 38, 0.2)"
+                     :overflow "hidden"
+                     :box-shadow "0 4px 30px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,167,38,0.1)"}}
+       ;; Title bar
+       [:div {:style {:padding "12px 20px"
+                      :border-bottom "1px solid rgba(255,167,38,0.15)"
+                      :display "flex"
+                      :align-items "center"
+                      :gap "10px"}}
+        [:div {:style {:width "20px" :height "20px"
+                       :border-radius "6px"
+                       :background "linear-gradient(135deg, #ffa726, #ff7043)"
+                       :display "flex" :align-items "center" :justify-content "center"
+                       :font-size "11px"}}
+         "📊"]
+        [:span {:style {:font-size "14px" :font-weight "600" :color "#fff"}} "Mermaid Diagrams"]
+        [:span {:style {:font-size "12px" :color "rgba(255,255,255,0.4)" :margin-left "auto"}} "```mermaid"]]
+       ;; Mermaid demo area
+       [:div {:style {:display "flex" :min-height "280px"}}
+        ;; Code side
+        [:div {:style {:flex "1"
+                       :padding "16px"
+                       :background "#0d0d1a"
+                       :border-right "1px solid rgba(255,255,255,0.06)"
+                       :font-family "'SF Mono', 'Fira Code', monospace"
+                       :font-size "12px"
+                       :line-height "1.8"
+                       :color "rgba(255,255,255,0.6)"
+                       :overflow "hidden"}}
+         [:div {:style {:color "#c792ea"}} "graph TD"]
+         [:div {:style {:padding-left "12px"}}
+          [:span {:style {:color "#82aaff"}} "  A"]
+          [:span {:style {:color "#89ddff"}} "[🧠 AI Brain]"]
+          [:span {:style {:color "#89ddff"}} " --> "]
+          [:span {:style {:color "#82aaff"}} "B"]
+          [:span {:style {:color "#89ddff"}} "[📝 Notes]"]]
+         [:div {:style {:padding-left "12px"}}
+          [:span {:style {:color "#82aaff"}} "  A"]
+          [:span {:style {:color "#89ddff"}} " --> "]
+          [:span {:style {:color "#82aaff"}} "C"]
+          [:span {:style {:color "#89ddff"}} "[🌐 Graph]"]]
+         [:div {:style {:padding-left "12px"}}
+          [:span {:style {:color "#82aaff"}} "  B"]
+          [:span {:style {:color "#89ddff"}} " --> "]
+          [:span {:style {:color "#82aaff"}} "D"]
+          [:span {:style {:color "#89ddff"}} "[✨ Insights]"]]
+         [:div {:style {:padding-left "12px"}}
+          [:span {:style {:color "#82aaff"}} "  C"]
+          [:span {:style {:color "#89ddff"}} " --> "]
+          [:span {:style {:color "#82aaff"}} "D"]]
+         [:div {:style {:padding-left "12px"}}
+          [:span {:style {:color "#82aaff"}} "  D"]
+          [:span {:style {:color "#89ddff"}} " --> "]
+          [:span {:style {:color "#82aaff"}} "E"]
+          [:span {:style {:color "#89ddff"}} "[🚀 Action]"]]]
+        ;; Rendered side
+        [:div {:style {:flex "1"
+                       :padding "20px"
+                       :display "flex"
+                       :align-items "center"
+                       :justify-content "center"
+                       :background "#12122a"}}
+         [:svg {:width "180" :height "250" :viewBox "0 0 180 250"}
+          ;; Flowchart boxes
+          ;; A - AI Brain
+          [:rect {:x "50" :y "5" :width "80" :height "32" :rx "6" :fill "rgba(102,126,234,0.2)" :stroke "#667eea" :stroke-width "1.5"}]
+          [:text {:x "90" :y "25" :text-anchor "middle" :fill "#e0e0e0" :font-size "10" :font-weight "600"} "🧠 AI Brain"]
+          ;; Arrows from A
+          [:line {:x1 "70" :y1 "37" :x2 "50" :y2 "65" :stroke "#7c8bab" :stroke-width "1" :marker-end "url(#arrowhead)"}]
+          [:line {:x1 "110" :y1 "37" :x2 "130" :y2 "65" :stroke "#7c8bab" :stroke-width "1" :marker-end "url(#arrowhead)"}]
+          ;; B - Notes
+          [:rect {:x "10" :y "65" :width "72" :height "32" :rx "6" :fill "rgba(118,75,162,0.2)" :stroke "#764ba2" :stroke-width "1.5"}]
+          [:text {:x "46" :y "85" :text-anchor "middle" :fill "#e0e0e0" :font-size "10"} "📝 Notes"]
+          ;; C - Graph
+          [:rect {:x "98" :y "65" :width "72" :height "32" :rx "6" :fill "rgba(79,209,197,0.2)" :stroke "#4fd1c5" :stroke-width "1.5"}]
+          [:text {:x "134" :y "85" :text-anchor "middle" :fill "#e0e0e0" :font-size "10"} "🌐 Graph"]
+          ;; Arrows to D
+          [:line {:x1 "50" :y1 "97" :x2 "70" :y2 "135" :stroke "#7c8bab" :stroke-width "1" :marker-end "url(#arrowhead)"}]
+          [:line {:x1 "130" :y1 "97" :x2 "110" :y2 "135" :stroke "#7c8bab" :stroke-width "1" :marker-end "url(#arrowhead)"}]
+          ;; D - Insights
+          [:rect {:x "45" :y "135" :width "90" :height "32" :rx "6" :fill "rgba(255,167,38,0.2)" :stroke "#ffa726" :stroke-width "1.5"}]
+          [:text {:x "90" :y "155" :text-anchor "middle" :fill "#e0e0e0" :font-size "10" :font-weight "600"} "✨ Insights"]
+          ;; Arrow to E
+          [:line {:x1 "90" :y1 "167" :x2 "90" :y2 "195" :stroke "#7c8bab" :stroke-width "1" :marker-end "url(#arrowhead)"}]
+          ;; E - Action
+          [:rect {:x "45" :y "195" :width "90" :height "32" :rx "6" :fill "rgba(102,126,234,0.15)" :stroke "#667eea" :stroke-width "1.5"}]
+          [:text {:x "90" :y "215" :text-anchor "middle" :fill "#e0e0e0" :font-size "10"} "🚀 Action"]
+          ;; Arrow marker
+          [:defs
+           [:marker {:id "arrowhead" :markerWidth "8" :markerHeight "6" :refX "8" :refY "3" :orient "auto"}
+            [:polygon {:points "0 0, 8 3, 0 6" :fill "#7c8bab"}]]]]]]]]
+
+     ;; Feature highlight pills
+     [:div {:style {:display "flex"
+                    :flex-wrap "wrap"
+                    :justify-content "center"
+                    :gap "12px"
+                    :margin-bottom "40px"}}
+      (for [[icon text] [["🔍" "Zoom & Pan"]
+                         ["🖱️" "Click to Navigate"]
+                         ["🤏" "Drag Nodes"]
+                         ["📐" "Flowcharts"]
+                         ["🔄" "Sequence Diagrams"]
+                         ["🧠" "Mind Maps"]
+                         ["📊" "Gantt Charts"]
+                         ["🤖" "AI Creates Diagrams"]]]
+        [:div {:key text
+               :style {:background "linear-gradient(135deg, rgba(79,209,197,0.1), rgba(102,126,234,0.1))"
+                       :border "1px solid rgba(79,209,197,0.2)"
+                       :padding "8px 16px"
+                       :border-radius "20px"
+                       :font-size "13px"
+                       :color "rgba(255,255,255,0.7)"
+                       :display "flex"
+                       :align-items "center"
+                       :gap "6px"}}
+         [:span {:style {:font-size "14px"}} icon]
+         text])]
+
+     ;; Bottom tagline
+     [:p {:style {:font-size "16px"
+                  :color "rgba(255,255,255,0.4)"
+                  :margin "0"
+                  :max-width "600px"}}
+      "More imagination space — visualize your AI note brain. Let AI operate on graphs and create diagrams for you."]]]
 
    ;; Tech Stack Section
    [:div
