@@ -216,9 +216,14 @@
         "Next"]])))
 
 (rum/defc note-card
-  [note-id note-title updated-at database-name]
+  [note-id note-title root-nav-id updated-at database-name]
   [:div.note-card
-   {:on-click #(router/go-to-note! database-name note-id)
+   {:on-click (fn [e]
+                (if (.-shiftKey e)
+                  (do
+                    (.stopPropagation e)
+                    (db/open-note-in-right-sidebar! note-id note-title root-nav-id database-name))
+                  (router/go-to-note! database-name note-id)))
     :style {:padding "16px 20px"
             :margin-bottom "12px"
             :background "rgba(255,255,255,0.05)"
@@ -262,7 +267,8 @@
         all-notes (get-all-notes-sorted db)
         page (rum/react current-page)
         paginated-notes (get-paginated-notes all-notes page)
-        sidebar-collapsed? (rum/react sidebar/sidebar-collapsed?)]
+        sidebar-collapsed? (rum/react sidebar/sidebar-collapsed?)
+        right-sidebar-open? (rum/react db/right-sidebar-open?)]
     [:div.night-center-boxBg.night-textColor-2
      (sidebar/app-top-bar {:title "All Notes"})
      [:div.page-wrapper
@@ -270,7 +276,8 @@
       (sidebar/left-sidebar db database-name)
       ;; Main content area
       [:div.main-content-area
-       {:class (when sidebar-collapsed? "sidebar-collapsed")}
+       {:class (str (when sidebar-collapsed? "sidebar-collapsed")
+                    (when right-sidebar-open? " right-sidebar-open"))}
        [:div.flex.flex-column
         {:style {:padding "20px"
                  :max-width "900px"
@@ -301,7 +308,7 @@
            ;; Note cards
            (for [[note-id note-title root-nav-id updated-at] paginated-notes]
              (rum/with-key
-               (note-card note-id note-title updated-at database-name)
+               (note-card note-id note-title root-nav-id updated-at database-name)
                note-id))
 
            ;; Pagination

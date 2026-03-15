@@ -222,7 +222,8 @@
         "Delete Note"]])))
 
 (rum/defc note-title-editor < rum/reactive
-  "Editable note title component with right-click context menu"
+  "Editable note title component with right-click context menu.
+   Shift+click opens the note in the right sidebar."
   [note-id note-title root-nav-id database-name]
   (let [is-editing (= note-id (rum/react editing-note-id))]
     (if is-editing
@@ -234,7 +235,12 @@
         :on-key-down #(handle-title-key-down % note-id)
         :on-blur #(save-note-title! note-id)}]
       [:div.note-title
-       {:on-click #(start-editing-title! note-id note-title)
+       {:on-click (fn [e]
+                    (if (.-shiftKey e)
+                      (do
+                        (u/stop-click-bubble e)
+                        (db/open-note-in-right-sidebar! note-id note-title root-nav-id database-name))
+                      (start-editing-title! note-id note-title)))
         :on-context-menu (fn [e]
                            (show-title-menu! e note-id note-title root-nav-id database-name))
         :style {:cursor "pointer"}}
@@ -282,7 +288,7 @@
                       :display "inline-block"
                       :transform (if collapsed? "rotate(0deg)" "rotate(90deg)")}}
        "\u25B6"]
-      ;; Note title link
+      ;; Note title link (shift+click opens in right sidebar)
       [:span {:style {:color "var(--theme-accent, #5c7cfa)"
                       :font-weight "500"
                       :font-size "14px"
@@ -290,7 +296,15 @@
                       :text-decoration-style "dotted"}
               :on-click (fn [e]
                           (u/stop-click-bubble e)
-                          (router/go-to-note! database-name source-note-id))}
+                          (if (.-shiftKey e)
+                            (let [root-nav-id (d/q '[:find ?rnid .
+                                                     :in $ ?nid
+                                                     :where
+                                                     [?e :hulunote-notes/id ?nid]
+                                                     [?e :hulunote-notes/root-nav-id ?rnid]]
+                                                @db/dsdb source-note-id)]
+                              (db/open-note-in-right-sidebar! source-note-id source-title root-nav-id database-name))
+                            (router/go-to-note! database-name source-note-id)))}
        source-title]
       ;; Count badge
       [:span {:style {:font-size "11px"
@@ -344,7 +358,8 @@
   [db]
   (let [{:keys [database note-id]} (get-route-params db)
         note-info (when note-id (get-note-by-id db note-id))
-        sidebar-collapsed? (rum/react sidebar/sidebar-collapsed?)]
+        sidebar-collapsed? (rum/react sidebar/sidebar-collapsed?)
+        right-sidebar-open? (rum/react db/right-sidebar-open?)]
     [:div.night-center-boxBg.night-textColor-2
      (sidebar/app-top-bar {:title (if note-info (first note-info) "Note")})
      [:div.page-wrapper
@@ -352,7 +367,8 @@
       (sidebar/left-sidebar db database)
       ;; Main content area
       [:div.main-content-area
-       {:class (when sidebar-collapsed? "sidebar-collapsed")}
+       {:class (str (when sidebar-collapsed? "sidebar-collapsed")
+                    (when right-sidebar-open? " right-sidebar-open"))}
        [:div.flex.flex-column.overflow-scroll-new
         {:style {:padding "20px"
                  :max-width "900px"

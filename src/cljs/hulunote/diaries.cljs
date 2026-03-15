@@ -99,7 +99,8 @@
   [db]
   (let [daily-list (db/sort-daily-list (db/get-daily-list db))
         database-name (get-current-database-name db)
-        sidebar-collapsed? (rum/react sidebar/sidebar-collapsed?)]
+        sidebar-collapsed? (rum/react sidebar/sidebar-collapsed?)
+        right-sidebar-open? (rum/react db/right-sidebar-open?)]
     [:div.night-center-boxBg.night-textColor-2
      (sidebar/app-top-bar {:title "Diaries"})
      [:div.page-wrapper
@@ -107,7 +108,8 @@
       (sidebar/left-sidebar db database-name)
       ;; Main content area
       [:div.main-content-area
-       {:class (when sidebar-collapsed? "sidebar-collapsed")}
+       {:class (str (when sidebar-collapsed? "sidebar-collapsed")
+                    (when right-sidebar-open? " right-sidebar-open"))}
        [:div.flex.flex-column.overflow-scroll-new
         {:style {:padding "20px"
                  :max-width "900px"

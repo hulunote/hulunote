@@ -200,6 +200,34 @@
     {}
     backlinks))
 
+;; ==================== Right Sidebar State ====================
+
+(defonce right-sidebar-open? (atom false))
+(defonce right-sidebar-notes (atom []))
+
+(defn open-note-in-right-sidebar!
+  "Open a note in the right sidebar"
+  [note-id note-title root-nav-id database-name]
+  (when-not (some #(= (:note-id %) note-id) @right-sidebar-notes)
+    (swap! right-sidebar-notes conj
+      {:note-id note-id
+       :note-title note-title
+       :root-nav-id root-nav-id
+       :database-name database-name}))
+  (reset! right-sidebar-open? true))
+
+(defn close-note-in-right-sidebar!
+  "Remove a note from the right sidebar"
+  [note-id]
+  (swap! right-sidebar-notes
+    (fn [notes] (vec (remove #(= (:note-id %) note-id) notes))))
+  (when (empty? @right-sidebar-notes)
+    (reset! right-sidebar-open? false)))
+
+(defn close-right-sidebar! []
+  (reset! right-sidebar-open? false)
+  (reset! right-sidebar-notes []))
+
 (comment
   (defn get-note-list
     [conn]

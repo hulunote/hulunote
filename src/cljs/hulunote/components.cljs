@@ -183,8 +183,23 @@
    [:div.flex.justify-center.pa3 "© 2023 Hulunote"]])
 
 
+(defn open-note-title-in-sidebar!
+  "Open a note by title in the right sidebar (for shift+click)"
+  [title-str]
+  (let [note-id (find-note-by-title @db/dsdb title-str)]
+    (when note-id
+      (let [root-nav-id (d/q '[:find ?root-nav-id .
+                                :in $ ?note-id
+                                :where
+                                [?e :hulunote-notes/id ?note-id]
+                                [?e :hulunote-notes/root-nav-id ?root-nav-id]]
+                          @db/dsdb note-id)
+            database-name (get-current-database-name)]
+        (db/open-note-in-right-sidebar! note-id title-str root-nav-id database-name)))))
+
 (defn render-recursion-page-link
-  "Render a clickable page link [[title]] that navigates to the note"
+  "Render a clickable page link [[title]] that navigates to the note.
+   Shift+click opens in right sidebar."
   [title]
   (let [title-str (if (sequential? title)
                     (apply str (flatten title))
@@ -193,7 +208,9 @@
      {:style {:cursor "pointer"}
       :on-click (fn [e]
                   (u/stop-click-bubble e)
-                  (navigate-to-note-by-title! title-str))}
+                  (if (.-shiftKey e)
+                    (open-note-title-in-sidebar! title-str)
+                    (navigate-to-note-by-title! title-str)))}
      [:span.link-style.blue "[["]
      [:span.link-title-style
       {:style {:color "var(--theme-accent)"
@@ -203,7 +220,8 @@
      [:span.link-style.blue "]]"]]))
 
 (defn render-recursion-page-tag
-  "Render a clickable page tag #title that navigates to the note"
+  "Render a clickable page tag #title that navigates to the note.
+   Shift+click opens in right sidebar."
   [title]
   (let [title-str (if (sequential? title)
                     (apply str (flatten title))
@@ -212,7 +230,9 @@
      {:style {:cursor "pointer"}
       :on-click (fn [e]
                   (u/stop-click-bubble e)
-                  (navigate-to-note-by-title! title-str))}
+                  (if (.-shiftKey e)
+                    (open-note-title-in-sidebar! title-str)
+                    (navigate-to-note-by-title! title-str)))}
      [:span.link-style.blue "#"]
      [:span.link-title-style
       {:style {:color "var(--theme-accent)"

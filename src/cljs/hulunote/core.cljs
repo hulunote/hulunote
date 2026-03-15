@@ -24,7 +24,8 @@
    [hulunote.login :as login]
    [hulunote.components :as comps]
    [hulunote.mcp-ui :as mcp-ui]
-   [hulunote.chat-ui :as chat-ui])
+   [hulunote.chat-ui :as chat-ui]
+   [hulunote.right-sidebar :as right-sidebar])
   (:require-macros
    [hulunote.share :refer [profile]])
   (:import goog.History))
@@ -49,9 +50,11 @@
 (rum/defc app < rum/reactive
   [conn]
   (let [db (rum/react conn)
-        {:keys [route-name params]} (db/get-route db)]
+        {:keys [route-name params]} (db/get-route db)
+        right-sidebar-open? (rum/react db/right-sidebar-open?)]
     [:div
-     {:on-click (fn [e]
+     {:class (when right-sidebar-open? "right-sidebar-active")
+      :on-click (fn [e]
                   ;; Close context menu when clicking outside
                   (render/hide-context-menu!))}
      (case route-name
@@ -78,6 +81,8 @@
        :price (price-page db)
        :download (download-page db)
        (not-found-component))
+     ;; Right sidebar for multi-note editing
+     (right-sidebar/right-sidebar db)
      ;; Global context menu - rendered at app level
      (render/global-context-menu)
      (comps/toast db)]))

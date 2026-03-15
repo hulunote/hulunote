@@ -320,8 +320,13 @@
            (for [[note-title note-id root-nav-id] (take 15 daily-list)]
              [:div.note-list-item
               {:key note-id
-               :on-click #(router/go-to-note! database-name note-id)
-               :title note-title}
+               :on-click (fn [e]
+                           (if (.-shiftKey e)
+                             (do
+                               (.stopPropagation e)
+                               (db/open-note-in-right-sidebar! note-id note-title root-nav-id database-name))
+                             (router/go-to-note! database-name note-id)))
+               :title (str note-title " (Shift+click to open in sidebar)")}
               note-title])]]
 
          ;; Bottom fixed action - New Note button
