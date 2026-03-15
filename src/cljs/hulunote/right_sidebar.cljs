@@ -43,6 +43,7 @@
   [db]
   (let [open? (rum/react db/right-sidebar-open?)
         notes (rum/react db/right-sidebar-notes)]
+    (prn "[right-sidebar render] open?:" open? "notes:" (count notes))
     (when (and open? (seq notes))
       [:div.right-sidebar
        ;; Header
