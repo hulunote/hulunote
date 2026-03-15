@@ -305,12 +305,7 @@
                         #(router/go-to-all-notes! database-name)
                         (= route-name :all-notes))
 
-          (sidebar-item [:span.sidebar-symbol-icon {:style {:font-size "16px"
-                                                            :display "flex"
-                                                            :align-items "center"
-                                                            :justify-content "center"
-                                                            :filter "none"}}
-                          "\uD83C\uDF10"] "Graph"
+          (sidebar-item [:img.sidebar-symbol-icon {:src (u/asset-path "/img/icons/graph.svg")}] "Graph"
                         #(router/go-to-graph! database-name)
                         (= route-name :graph))
 
