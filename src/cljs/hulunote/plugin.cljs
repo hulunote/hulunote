@@ -1,22 +1,31 @@
 (ns hulunote.plugin
   "Hulunote Plugin System
-   Provides a JS-interop API for registering external plugins that can:
-   - Add custom block renderers (e.g., {{table}}, {{kanban}})
-   - Inject custom CSS styles
-   - Execute custom initialization logic
+
+   Plugins are managed through two special notes in the outline:
+     - hulunote/javascript — each child block is a JS URL or inline script
+     - hulunote/css        — each child block is a CSS URL or inline style
+
+   Example:  Create a note titled 'hulunote/javascript', add child blocks:
+     /plugins/hulunote-kanban-table-plugin.js
+     https://cdn.example.com/my-plugin.js
 
    Block content matching pattern: {{renderer-name}}
    When a block's content matches, the plugin renderer takes over
    the entire subtree (block + children) rendering."
   (:require [datascript.core :as d]
             [hulunote.db :as db]
-            [hulunote.util :as u]))
+            [hulunote.util :as u]
+            [clojure.string :as str]))
 
 ;; ==================== Plugin Registry ====================
 
 (defonce ^:private plugins (atom {}))
 (defonce ^:private renderers (atom {}))
 (defonce ^:private injected-styles (atom {}))
+
+;; Track what we've already loaded to avoid duplicates on hot-reload
+(defonce ^:private loaded-scripts (atom #{}))
+(defonce ^:private loaded-css (atom #{}))
 
 ;; ==================== Style Injection ====================
 
@@ -26,10 +35,8 @@
   (when (and css-text (seq css-text))
     (let [style-id (str "hulunote-plugin-style-" plugin-name)
           existing (.getElementById js/document style-id)]
-      ;; Remove existing style tag if present
       (when existing
         (.remove existing))
-      ;; Create and inject new style tag
       (let [style-el (.createElement js/document "style")]
         (set! (.-id style-el) style-id)
         (set! (.-type style-el) "text/css")
@@ -48,8 +55,7 @@
 ;; ==================== Block Data Helpers ====================
 
 (defn get-block-tree
-  "Get a block and its full subtree as a ClojureScript map.
-   Returns {:id, :content, :children [{:id, :content, :children [...]}]}"
+  "Get a block and its full subtree as a ClojureScript map."
   [block-id]
   (let [ds @db/dsdb
         nav (u/get-nav-sub-navs-sorted ds block-id)]
@@ -78,7 +84,7 @@
    Returns {:renderer-name string, :params string} or nil."
   [content]
   (when (string? content)
-    (when-let [match (re-matches plugin-pattern (clojure.string/trim content))]
+    (when-let [match (re-matches plugin-pattern (str/trim content))]
       (let [renderer-name (nth match 1)
             params (nth match 2 nil)]
         (when (contains? @renderers renderer-name)
@@ -96,53 +102,46 @@
    - init: function(api)
    - destroy: function()"
   [plugin-def]
-  (let [p (js->clj plugin-def :keywordize-keys true)
-        plugin-name (:name p)]
+  (let [plugin-name (.-name plugin-def)
+        version (.-version plugin-def)
+        styles-css (.-styles plugin-def)
+        renderers-obj (.-renderers plugin-def)]
     (when-not plugin-name
       (throw (js/Error. "Plugin must have a 'name' property")))
 
-    ;; Store plugin definition
-    (swap! plugins assoc plugin-name p)
+    (swap! plugins assoc plugin-name plugin-def)
 
-    ;; Register renderers
-    (doseq [[renderer-key renderer-fn] (:renderers p)]
-      (let [renderer-name (name renderer-key)]
-        (swap! renderers assoc renderer-name
-          {:plugin plugin-name
-           :render (get (js->clj (:renderers plugin-def) :keywordize-keys false)
-                    renderer-name
-                    (get (:renderers plugin-def) renderer-name))})))
+    (when renderers-obj
+      (doseq [renderer-name (js/Object.keys renderers-obj)]
+        (let [render-fn (unchecked-get renderers-obj renderer-name)]
+          (when (fn? render-fn)
+            (swap! renderers assoc renderer-name
+              {:plugin plugin-name
+               :render render-fn})))))
 
-    ;; Inject styles
-    (when (:styles p)
-      (inject-style! plugin-name (:styles p)))
+    (when styles-css
+      (inject-style! plugin-name styles-css))
 
-    ;; Call init
     (when-let [init-fn (.-init plugin-def)]
       (init-fn (build-api)))
 
-    (js/console.log (str "[Hulunote Plugin] Registered: " plugin-name " v" (:version p)))
+    (js/console.log (str "[Hulunote Plugin] Registered: " plugin-name " v" version))
     true))
 
 (defn unregister-plugin!
   "Unregister a plugin by name"
   [plugin-name]
   (when-let [p (get @plugins plugin-name)]
-    ;; Call destroy
-    (when-let [destroy-fn (:destroy p)]
+    (when-let [destroy-fn (.-destroy p)]
       (destroy-fn))
 
-    ;; Remove renderers
     (let [renderer-names (->> @renderers
                            (filter #(= plugin-name (:plugin (val %))))
                            (map key))]
       (doseq [rn renderer-names]
         (swap! renderers dissoc rn)))
 
-    ;; Remove styles
     (remove-style! plugin-name)
-
-    ;; Remove plugin
     (swap! plugins dissoc plugin-name)
 
     (js/console.log (str "[Hulunote Plugin] Unregistered: " plugin-name))
@@ -151,9 +150,7 @@
 ;; ==================== Plugin Rendering ====================
 
 (defn render-plugin-block!
-  "Render a plugin block into a container element.
-   Called from render.cljs when a block matches a plugin pattern.
-   Returns true if rendered, false if no matching renderer."
+  "Render a plugin block into a container element."
   [container block-id content]
   (when-let [{:keys [renderer-name params]} (match-plugin-renderer content)]
     (when-let [{:keys [render]} (get @renderers renderer-name)]
@@ -164,7 +161,6 @@
                      :children (block-tree->js (:children tree))
                      :container container
                      :api (build-api)}]
-        ;; Clear container and let plugin render
         (set! (.-innerHTML container) "")
         (render ctx)
         true))))
@@ -174,13 +170,117 @@
 (defn build-api
   "Build the API object exposed to plugins"
   []
-  #js {:register   register-plugin!
-       :unregister unregister-plugin!
-       :getPlugins (fn [] (clj->js (keys @plugins)))
+  #js {:register     register-plugin!
+       :unregister   unregister-plugin!
+       :getPlugins   (fn [] (clj->js (keys @plugins)))
        :getBlockTree (fn [block-id] (block-tree->js (get-block-tree block-id)))
        :getBlockChildren (fn [block-id]
                            (let [tree (get-block-tree block-id)]
                              (clj->js (:children tree))))})
+
+;; ==================== Dynamic Loading from Special Notes ====================
+
+(defn- url?
+  "Check if content looks like a URL (http://, https://, or path starting with /)"
+  [content]
+  (let [s (str/trim content)]
+    (or (str/starts-with? s "http://")
+        (str/starts-with? s "https://")
+        (str/starts-with? s "/"))))
+
+(defn- find-note-root-nav-id
+  "Find the root-nav-id for a note with the given title"
+  [title]
+  (d/q '[:find ?root-nav-id .
+          :in $ ?title
+          :where
+          [?e :hulunote-notes/title ?title]
+          [?e :hulunote-notes/root-nav-id ?root-nav-id]]
+    @db/dsdb title))
+
+(defn- get-child-contents
+  "Get the content of all direct children of a nav, sorted by order"
+  [root-nav-id]
+  (let [nav (u/get-nav-sub-navs-sorted @db/dsdb root-nav-id)]
+    (->> (:parid nav)
+      (sort-by :same-deep-order)
+      (map :content)
+      (remove str/blank?))))
+
+(defn- load-js-url!
+  "Load a JavaScript file by URL via <script> tag"
+  [url]
+  (when-not (contains? @loaded-scripts url)
+    (swap! loaded-scripts conj url)
+    (let [script (.createElement js/document "script")]
+      (set! (.-src script) url)
+      (set! (.-type script) "text/javascript")
+      (set! (.-async script) true)
+      (.appendChild (.-body js/document) script)
+      (js/console.log (str "[Hulunote Plugin] Loading JS: " url)))))
+
+(defn- load-js-inline!
+  "Execute inline JavaScript code"
+  [code]
+  (let [hash (str (hash code))]
+    (when-not (contains? @loaded-scripts hash)
+      (swap! loaded-scripts conj hash)
+      (let [script (.createElement js/document "script")]
+        (set! (.-type script) "text/javascript")
+        (set! (.-textContent script) code)
+        (.appendChild (.-body js/document) script)
+        (js/console.log "[Hulunote Plugin] Loading inline JS")))))
+
+(defn- load-css-url!
+  "Load a CSS file by URL via <link> tag"
+  [url]
+  (when-not (contains? @loaded-css url)
+    (swap! loaded-css conj url)
+    (let [link (.createElement js/document "link")]
+      (set! (.-rel link) "stylesheet")
+      (set! (.-type link) "text/css")
+      (set! (.-href link) url)
+      (.appendChild (.-head js/document) link)
+      (js/console.log (str "[Hulunote Plugin] Loading CSS: " url)))))
+
+(defn- load-css-inline!
+  "Inject inline CSS into <head>"
+  [code]
+  (let [hash (str (hash code))]
+    (when-not (contains? @loaded-css hash)
+      (swap! loaded-css conj hash)
+      (let [style (.createElement js/document "style")]
+        (set! (.-type style) "text/css")
+        (set! (.-textContent style) code)
+        (.appendChild (.-head js/document) style)
+        (js/console.log "[Hulunote Plugin] Loading inline CSS")))))
+
+(defn load-plugins-from-notes!
+  "Scan for special notes 'hulunote/javascript' and 'hulunote/css'.
+   Each child block is either a URL or inline code.
+   Called after database data is loaded into DataScript."
+  []
+  ;; Load hulunote/javascript
+  (when-let [root-id (find-note-root-nav-id "hulunote/javascript")]
+    (let [entries (get-child-contents root-id)]
+      (js/console.log (str "[Hulunote Plugin] Found hulunote/javascript with " (count entries) " entries"))
+      (doseq [entry entries]
+        (let [s (str/trim entry)]
+          (if (url? s)
+            (load-js-url! s)
+            (load-js-inline! s))))))
+
+  ;; Load hulunote/css
+  (when-let [root-id (find-note-root-nav-id "hulunote/css")]
+    (let [entries (get-child-contents root-id)]
+      (js/console.log (str "[Hulunote Plugin] Found hulunote/css with " (count entries) " entries"))
+      (doseq [entry entries]
+        (let [s (str/trim entry)]
+          (if (url? s)
+            (load-css-url! s)
+            (load-css-inline! s)))))))
+
+;; ==================== Initialization ====================
 
 (defn init-plugin-system!
   "Initialize the plugin system. Expose global API on window."

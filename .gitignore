@@ -77,3 +77,4 @@ shadow-cljs-electron.edn
 mcp-server.js
 shadow-cljs-dev.edn
 resources/public/html/hulunote.html.eletron
+resources/public/plugins/

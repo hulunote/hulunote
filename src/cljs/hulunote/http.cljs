@@ -8,7 +8,8 @@
             [hulunote.storage :as storage]
             ;; 临时的 => 需要删除！TODO
             [re-frame.core :as re-frame]
-            [hulunote.util :as u]))
+            [hulunote.util :as u]
+            [hulunote.plugin :as plugin]))
 
 (goog-define API_BASE_URL "https://www.hulunote.top")
 ;;(goog-define API_BASE_URL "http://127.0.0.1:6689")
@@ -302,7 +303,10 @@
                               :page 1
                               :size 1000
                               :op-fn (fn [{:keys [nav-list] :as data}]
-                                       (transact-all-nav data 0 #(prn "OK load") ))}])))
+                                       (transact-all-nav data 0
+                                         (fn []
+                                           (prn "OK load")
+                                           (plugin/load-plugins-from-notes!))))}])))
 
 (re-frame/reg-event-fx
   :web-login
