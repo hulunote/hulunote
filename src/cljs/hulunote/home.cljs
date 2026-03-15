@@ -118,12 +118,12 @@
                  :color "rgba(255,255,255,0.9)"
                  :margin "0 0 16px 0"
                  :max-width "600px"}}
-     "Open-Source Outliner with Bidirectional Linking"]
+     "AI + Note Hippocampus"]
     [:p {:style {:font-size "16px"
                  :color "rgba(255,255,255,0.8)"
                  :margin "0 0 40px 0"
                  :max-width "500px"}}
-     "Inspired by Roam Research, designed for networked thought"]
+     "Open-source outliner with bidirectional linking — your second brain, powered by AI"]
 
     [:div.flex.flex-row
      {:style {:gap "16px"}}
@@ -184,7 +184,7 @@
       (feature-card "📚" "Multiple Databases"
                     "Separate workspaces for different projects with isolated data for focused work")]]]
 
-   ;; AI Section - Future Vision
+   ;; AI + Note Hippocampus Section
    [:div
     {:style {:background "linear-gradient(135deg, #1a1a2e 0%, #2d2d44 100%)"
              :padding "80px 20px"}}
@@ -194,46 +194,80 @@
               :text-align "center"}}
      [:div {:style {:font-size "48px"
                     :margin-bottom "20px"}}
-      "🤖"]
+      "🧠"]
      [:h2 {:style {:font-size "36px"
                    :font-weight "700"
                    :color "#fff"
                    :margin "0 0 20px 0"}}
-      "Embracing AI, Building the Future"]
+      "AI + Note Hippocampus"]
      [:p {:style {:font-size "18px"
                   :color "rgba(255,255,255,0.8)"
                   :line-height "1.8"
                   :margin "0 0 32px 0"}}
-      "Hulunote is committed to deeply integrating AI capabilities into your note-taking workflow. We plan to implement MCP (Model Context Protocol) client integration, enabling seamless collaboration between your notes and various AI models for intelligent writing assistance, knowledge summarization, and interactive Q&A."]
+      "Like the hippocampus organizes memories in the brain, Hulunote organizes your knowledge — and now AI helps you build, connect, and retrieve it. Use MCP Server or OpenClaw Plugin to let AI agents read, write, and manage your notes through natural language."]
      [:div
       {:style {:display "flex"
                :flex-wrap "wrap"
                :gap "12px"
-               :justify-content "center"}}
+               :justify-content "center"
+               :margin-bottom "32px"}}
       [:span {:style {:background "rgba(102, 126, 234, 0.3)"
                       :color "#a5b4fc"
                       :padding "8px 16px"
                       :border-radius "20px"
                       :font-size "14px"}}
-       "🔌 MCP Client Integration"]
+       "🔌 MCP Server for Claude Desktop"]
       [:span {:style {:background "rgba(102, 126, 234, 0.3)"
                       :color "#a5b4fc"
                       :padding "8px 16px"
                       :border-radius "20px"
                       :font-size "14px"}}
-       "✨ Smart Writing Assistant"]
+       "🦞 OpenClaw AI Agent Plugin"]
       [:span {:style {:background "rgba(102, 126, 234, 0.3)"
                       :color "#a5b4fc"
                       :padding "8px 16px"
                       :border-radius "20px"
                       :font-size "14px"}}
-       "🧠 Knowledge Graph Enhancement"]
+       "✨ AI Note Generation & Organization"]
       [:span {:style {:background "rgba(102, 126, 234, 0.3)"
                       :color "#a5b4fc"
                       :padding "8px 16px"
                       :border-radius "20px"
                       :font-size "14px"}}
-       "💬 AI-Powered Q&A"]]]]
+       "🧠 Smart Knowledge Graph"]
+      [:span {:style {:background "rgba(102, 126, 234, 0.3)"
+                      :color "#a5b4fc"
+                      :padding "8px 16px"
+                      :border-radius "20px"
+                      :font-size "14px"}}
+       "💬 Cross-Database AI Search"]]
+     [:div.flex.flex-row.justify-center
+      {:style {:gap "16px"
+               :flex-wrap "wrap"}}
+      [:a
+       {:href "https://github.com/hulunote/hulunote-mcp-server"
+        :target "_blank"
+        :style {:background "rgba(102, 126, 234, 0.6)"
+                :color "#fff"
+                :border "none"
+                :padding "12px 24px"
+                :border-radius "30px"
+                :font-size "14px"
+                :font-weight "600"
+                :text-decoration "none"}}
+       "MCP Server"]
+      [:a
+       {:href "https://github.com/hulunote/openclaw-hulunote-assistant"
+        :target "_blank"
+        :style {:background "rgba(118, 75, 162, 0.6)"
+                :color "#fff"
+                :border "none"
+                :padding "12px 24px"
+                :border-radius "30px"
+                :font-size "14px"
+                :font-weight "600"
+                :text-decoration "none"}}
+       "OpenClaw Plugin"]]]]
 
    ;; Tech Stack Section
    [:div
@@ -362,7 +396,31 @@
                :font-size "16px"
                :font-weight "600"
                :text-decoration "none"}}
-      "Backend Repo"]]]
+      "Backend Repo"]
+     [:a
+      {:href "https://github.com/hulunote/hulunote-mcp-server"
+       :target "_blank"
+       :style {:background "transparent"
+               :color "#fff"
+               :border "2px solid #fff"
+               :padding "12px 28px"
+               :border-radius "30px"
+               :font-size "16px"
+               :font-weight "600"
+               :text-decoration "none"}}
+      "MCP Server"]
+     [:a
+      {:href "https://github.com/hulunote/openclaw-hulunote-assistant"
+       :target "_blank"
+       :style {:background "transparent"
+               :color "#fff"
+               :border "2px solid #fff"
+               :padding "12px 28px"
+               :border-radius "30px"
+               :font-size "16px"
+               :font-weight "600"
+               :text-decoration "none"}}
+      "OpenClaw Plugin"]]]
 
    ;; Footer
    [:div
