@@ -7,6 +7,7 @@
             [hulunote.components :as comps]
             [hulunote.plugin :as plugin]
             [hulunote.codemirror :as cm]
+            [hulunote.mermaid :as mermaid]
             [re-frame.core :as re-frame]))
 
 (declare render-navs)
@@ -1032,6 +1033,17 @@
       :style {:width "100%"}
       :on-click (fn [e] (.stopPropagation e))}]))
 
+(rum/defc mermaid-block-editor
+  "Renders a mermaid diagram block. Clicking enters edit mode via CodeMirror."
+  [nav-id content note-id database-name]
+  (let [diagram-text (mermaid/parse-mermaid-block content)]
+    [:div.hulunote-mermaid-block
+     {:ref (fn [el]
+             (when (and el (zero? (.-childElementCount el)))
+               (mermaid/render-mermaid! el diagram-text)))
+      :style {:width "100%"}
+      :on-click (fn [e] (.stopPropagation e))}]))
+
 (rum/defc nav-input < rum/reactive
   [db id note-id database-name]
   (let [{:keys [last-account-id parid is-display
@@ -1042,9 +1054,11 @@
         is-editing (= id (rum/react editing-nav-id))
         is-drop-target (= id (rum/react drag-over-nav-id))
         current-drop-mode (rum/react drag-over-mode)
-        is-code-block (cm/code-block? content)
+        is-mermaid-block (mermaid/mermaid-block? content)
+        is-code-block (and (not is-mermaid-block) (cm/code-block? content))
+        is-special-block (or is-code-block is-mermaid-block)
         plugin-match (and (not is-editing)
-                          (not is-code-block)
+                          (not is-special-block)
                           (plugin/match-plugin-renderer content))]
     [:div.nav-item
      ;; Entire row is clickable to enter edit mode
@@ -1058,7 +1072,7 @@
             :style {:padding-left "13px"
                     :padding-top "5px"
                     :padding-bottom "5px"
-                    :cursor (if is-code-block "default" "text")}
+                    :cursor (if is-special-block "default" "text")}
             :on-drag-over (fn [e]
                             (when (valid-drop-target? @dragging-nav-id id)
                               (.preventDefault e)
@@ -1082,12 +1096,16 @@
                        (reset! drag-over-mode nil)
                        (reset! dragging-nav-id nil))
             :on-click (fn [e]
-                        (when-not is-code-block
+                        (when-not is-special-block
                           (reset! target-cursor-column nil)
                           (let [cursor-pos (estimate-cursor-pos-from-click e content)]
                             (start-editing! id content cursor-pos))))}
       (nav-bullet db id is-display note-id database-name content is-editing)
       (cond
+        ;; Mermaid block: render diagram
+        is-mermaid-block
+        (mermaid-block-editor id content note-id database-name)
+
         ;; Code block: always render CodeMirror (handles its own editing)
         is-code-block
         (code-block-editor id content note-id database-name)

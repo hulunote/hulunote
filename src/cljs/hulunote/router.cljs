@@ -45,6 +45,11 @@
   [database-name]
   (switch-router! (str "/app/" database-name "/notes")))
 
+(defn go-to-graph!
+  "Navigate to knowledge graph page"
+  [database-name]
+  (switch-router! (str "/app/" database-name "/graph")))
+
 (defn go-to-diaries!
   "Navigate to diaries page"
   [database-name]
