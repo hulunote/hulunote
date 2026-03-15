@@ -6,6 +6,7 @@
             [hulunote.http :as http]
             [hulunote.components :as comps]
             [hulunote.plugin :as plugin]
+            [hulunote.codemirror :as cm]
             [re-frame.core :as re-frame]))
 
 (declare render-navs)
@@ -1010,6 +1011,27 @@
     :style {:width "100%"
             :min-height "40px"}}])
 
+(rum/defc code-block-editor
+  "Renders a code block with CodeMirror. Always interactive —
+   the editor handles its own focus, editing, and saving."
+  [nav-id content note-id database-name]
+  (let [{:keys [lang code]} (cm/parse-code-block content)]
+    [:div.hulunote-code-block
+     {:ref (fn [el]
+             (when (and el (zero? (.-childElementCount el)))
+               (cm/create-editor! el
+                 {:code      code
+                  :lang      lang
+                  :on-blur   (fn [new-code]
+                               (let [new-content (cm/wrap-code new-code lang)]
+                                 (save-nav-content! nav-id note-id database-name
+                                   {:clear-editing? true
+                                    :content new-content})))
+                  :on-escape (fn []
+                               (cancel-editing!))})))
+      :style {:width "100%"}
+      :on-click (fn [e] (.stopPropagation e))}]))
+
 (rum/defc nav-input < rum/reactive
   [db id note-id database-name]
   (let [{:keys [last-account-id parid is-display
@@ -1020,7 +1042,10 @@
         is-editing (= id (rum/react editing-nav-id))
         is-drop-target (= id (rum/react drag-over-nav-id))
         current-drop-mode (rum/react drag-over-mode)
-        plugin-match (and (not is-editing) (plugin/match-plugin-renderer content))]
+        is-code-block (cm/code-block? content)
+        plugin-match (and (not is-editing)
+                          (not is-code-block)
+                          (plugin/match-plugin-renderer content))]
     [:div.nav-item
      ;; Entire row is clickable to enter edit mode
      [:div {:class (str "head-dot flex "
@@ -1033,7 +1058,7 @@
             :style {:padding-left "13px"
                     :padding-top "5px"
                     :padding-bottom "5px"
-                    :cursor "text"}
+                    :cursor (if is-code-block "default" "text")}
             :on-drag-over (fn [e]
                             (when (valid-drop-target? @dragging-nav-id id)
                               (.preventDefault e)
@@ -1057,14 +1082,22 @@
                        (reset! drag-over-mode nil)
                        (reset! dragging-nav-id nil))
             :on-click (fn [e]
-                        (reset! target-cursor-column nil)
-                        (let [cursor-pos (estimate-cursor-pos-from-click e content)]
-                          (start-editing! id content cursor-pos)))}
+                        (when-not is-code-block
+                          (reset! target-cursor-column nil)
+                          (let [cursor-pos (estimate-cursor-pos-from-click e content)]
+                            (start-editing! id content cursor-pos))))}
       (nav-bullet db id is-display note-id database-name content is-editing)
-      (if plugin-match
-        ;; Plugin block: render using plugin renderer (click to edit still works via parent on-click)
+      (cond
+        ;; Code block: always render CodeMirror (handles its own editing)
+        is-code-block
+        (code-block-editor id content note-id database-name)
+
+        ;; Plugin block: render using plugin renderer
+        plugin-match
         (plugin-block-renderer id content)
+
         ;; Normal block: render content editor
+        :else
         (nav-content-editor id content note-id database-name))]
      ;; Plugin blocks handle their own children display; normal blocks use recursive rendering
      (when (and is-display (not plugin-match))

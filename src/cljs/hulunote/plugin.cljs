@@ -15,6 +15,7 @@
   (:require [datascript.core :as d]
             [hulunote.db :as db]
             [hulunote.util :as u]
+            [hulunote.codemirror :as cm]
             [clojure.string :as str]))
 
 ;; ==================== Plugin Registry ====================
@@ -255,9 +256,14 @@
         (.appendChild (.-head js/document) style)
         (js/console.log "[Hulunote Plugin] Loading inline CSS")))))
 
+(defn- strip-code-fences
+  "If content is wrapped in ``` fences, extract the code. Otherwise return as-is."
+  [content]
+  (cm/unwrap-code content))
+
 (defn load-plugins-from-notes!
   "Scan for special notes 'hulunote/javascript' and 'hulunote/css'.
-   Each child block is either a URL or inline code.
+   Each child block is either a URL, inline code, or ``` fenced code.
    Called after database data is loaded into DataScript."
   []
   ;; Load hulunote/javascript
@@ -265,7 +271,7 @@
     (let [entries (get-child-contents root-id)]
       (js/console.log (str "[Hulunote Plugin] Found hulunote/javascript with " (count entries) " entries"))
       (doseq [entry entries]
-        (let [s (str/trim entry)]
+        (let [s (str/trim (strip-code-fences entry))]
           (if (url? s)
             (load-js-url! s)
             (load-js-inline! s))))))
@@ -275,7 +281,7 @@
     (let [entries (get-child-contents root-id)]
       (js/console.log (str "[Hulunote Plugin] Found hulunote/css with " (count entries) " entries"))
       (doseq [entry entries]
-        (let [s (str/trim entry)]
+        (let [s (str/trim (strip-code-fences entry))]
           (if (url? s)
             (load-css-url! s)
             (load-css-inline! s)))))))

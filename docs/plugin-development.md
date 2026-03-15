@@ -5,6 +5,7 @@ Hulunote provides a plugin system that lets you extend the outliner with custom 
 ## Table of Contents
 
 - [How Plugins Are Loaded](#how-plugins-are-loaded)
+- [Code Blocks with CodeMirror](#code-blocks-with-codemirror)
 - [Plugin API Reference](#plugin-api-reference)
 - [Writing a Custom Renderer](#writing-a-custom-renderer)
 - [RenderContext](#rendercontext)
@@ -20,35 +21,109 @@ Plugins are loaded through two **special notes** in your database:
 
 ### `hulunote/javascript`
 
-Create a note with the title `hulunote/javascript`. Each **child block** is one JavaScript entry:
+Create a note with the title `hulunote/javascript`. Each **child block** is one JavaScript entry.
+
+Three formats are supported:
+
+**1. URL (loaded as `<script src="...">`)**
 
 ```
-hulunote/javascript
-  /plugins/hulunote-kanban-table-plugin.js
-  https://cdn.example.com/another-plugin.js
-  console.log("inline JS also works")
+/plugins/hulunote-kanban-table-plugin.js
 ```
 
-- Starts with `/`, `http://`, or `https://` → loaded as `<script src="...">`
-- Otherwise → executed as inline `<script>` code
+**2. Inline code (executed directly)**
+
+```
+console.log("hello from inline JS")
+```
+
+**3. Fenced code block with CodeMirror editor (recommended for inline code)**
+
+    ```js
+    window.HulunotePlugin.register({
+      name: 'my-plugin',
+      version: '1.0.0',
+      renderers: {
+        greeting: function(ctx) {
+          ctx.container.innerHTML = '<div>Hello!</div>';
+        }
+      }
+    });
+    ```
+
+When a block uses ``` fences, the code is displayed in a full **CodeMirror editor** with syntax highlighting, line numbers, and editable in place. The ``` fences are automatically stripped before execution.
 
 ### `hulunote/css`
 
-Create a note with the title `hulunote/css`. Each **child block** is one CSS entry:
+Create a note with the title `hulunote/css`. Each **child block** is one CSS entry. Same three formats:
 
-```
-hulunote/css
-  /plugins/my-theme.css
-  https://cdn.example.com/style.css
-  .my-class { color: red; font-weight: bold; }
-```
-
-- Starts with `/`, `http://`, or `https://` → loaded as `<link rel="stylesheet" href="...">`
-- Otherwise → injected as inline `<style>` code
+    ```css
+    .my-custom-class {
+      color: #6c8dfa;
+      font-weight: bold;
+    }
+    ```
 
 ### Loading Timing
 
 Plugins are loaded automatically after the database finishes syncing (all notes and blocks are in memory). Each URL or inline snippet is loaded only once — duplicates are ignored on hot-reload.
+
+---
+
+## Code Blocks with CodeMirror
+
+Any block in the outliner whose content is wrapped in ``` fences will render as an **editable CodeMirror editor** instead of the normal text input.
+
+### Syntax
+
+    ```language
+    your code here
+    ```
+
+The language tag is optional. Supported languages:
+
+| Tag | Language |
+|-----|----------|
+| `js`, `javascript`, `ts`, `typescript`, `json` | JavaScript |
+| `css` | CSS |
+| `clj`, `cljs`, `clojure` | Clojure |
+| `html` | HTML |
+| `xml` | XML |
+| `md`, `markdown` | Markdown |
+
+### Features
+
+- Syntax highlighting with a dark theme
+- Line numbers
+- Auto-indentation
+- Tab inserts spaces (2-space indent)
+- Line wrapping
+- Press **Escape** to exit the editor
+- Changes are saved automatically on blur (clicking outside)
+
+### How It Works in Plugin Notes
+
+In `hulunote/javascript` and `hulunote/css` notes, fenced code blocks serve double duty:
+
+1. **Display** — The code is shown in a syntax-highlighted CodeMirror editor, making it easy to read and edit plugin code directly in the outliner
+2. **Execution** — When the plugin system loads entries from these notes, it automatically strips the ``` fences and executes the inner code
+
+This means you can write, edit, and manage plugin code entirely within Hulunote:
+
+```
+hulunote/javascript                    ← note title
+  /plugins/kanban-table-plugin.js      ← child block: URL
+  ```js                                ← child block: inline code in CodeMirror
+  window.HulunotePlugin.register({
+    name: 'quick-plugin',
+    renderers: {
+      hello: function(ctx) {
+        ctx.container.innerHTML = '<b>Hello!</b>';
+      }
+    }
+  });
+  ```
+```
 
 ---
 
@@ -197,40 +272,41 @@ destroy() {
 
 ## Full Example: Minimal Plugin
 
-A plugin that renders `{{hello}}` blocks with a greeting:
+A plugin that renders `{{hello}}` blocks with a greeting. Written as a fenced code block in the `hulunote/javascript` note:
 
-```js
-// hello-plugin.js
-(function() {
-  window.HulunotePlugin.register({
-    name: 'hello-plugin',
-    version: '0.1.0',
+    ```js
+    (function() {
+      window.HulunotePlugin.register({
+        name: 'hello-plugin',
+        version: '0.1.0',
 
-    styles: `
-      .hello-box {
-        padding: 16px;
-        border-radius: 8px;
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        color: white;
-        font-size: 18px;
-      }
-    `,
+        styles: `
+          .hello-box {
+            padding: 16px;
+            border-radius: 8px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            font-size: 18px;
+          }
+        `,
 
-    renderers: {
-      hello: function(ctx) {
-        const names = (ctx.children || []).map(c => c.content);
-        ctx.container.innerHTML = '<div class="hello-box">'
-          + (names.length > 0
-              ? 'Hello, ' + names.join(', ') + '!'
-              : 'Hello, World!')
-          + '</div>';
-      }
-    }
-  });
-})();
-```
+        renderers: {
+          hello: function(ctx) {
+            const names = (ctx.children || []).map(c => c.content);
+            ctx.container.innerHTML = '<div class="hello-box">'
+              + (names.length > 0
+                  ? 'Hello, ' + names.join(', ') + '!'
+                  : 'Hello, World!')
+              + '</div>';
+          }
+        }
+      });
+    })();
+    ```
 
-Usage in the outliner:
+This code block renders in Hulunote as a **CodeMirror editor** with JavaScript syntax highlighting. The plugin system strips the ``` fences and executes the code automatically.
+
+Usage in any note:
 
 ```
 {{hello}}
@@ -240,7 +316,11 @@ Usage in the outliner:
 
 Result: renders a styled box saying "Hello, Alice, Bob!"
 
-To install, put the file in `resources/public/plugins/hello-plugin.js`, then add `/plugins/hello-plugin.js` as a child block of the `hulunote/javascript` note.
+Alternatively, save the code as a `.js` file and reference it by URL:
+
+```
+/plugins/hello-plugin.js
+```
 
 ---
 

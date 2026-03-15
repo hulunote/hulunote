@@ -1,12 +1,12 @@
 {
     "dependencies": {
-        "@modelcontextprotocol/sdk": "^1.12.1",
-        "zod": "^3.24.0",
         "@material-ui/core": "^4.12.3",
         "@material-ui/icons": "^4.11.2",
         "@material-ui/lab": "^4.0.0-alpha.61",
+        "@modelcontextprotocol/sdk": "^1.12.1",
         "animate.css": "^3.7.2",
         "clipboard": "^2.0.6",
+        "codemirror": "^5.65.21",
         "create-react-class": "15.6.3",
         "file-saver": "^2.0.5",
         "localforage": "^1.10.0",
@@ -16,7 +16,8 @@
         "react-dom": "^16.12.0",
         "react-markdown": "^8.0.3",
         "remark-gfm": "^3.0.1",
-        "tachyons": "^4.11.1"
+        "tachyons": "^4.11.1",
+        "zod": "^3.24.0"
     },
     "devDependencies": {
         "css-loader": "^3.4.2",
