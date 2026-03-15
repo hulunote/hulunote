@@ -148,6 +148,26 @@
                      (router/go-to-note! database-name note-id)
                      (hide-note-menu!))}
         "Open Note"]
+       ;; Open in sidebar option
+       [:div.context-menu-item
+        {:style {:padding "8px 12px"
+                 :cursor "pointer"
+                 :color "#fff"
+                 :font-size "13px"}
+         :on-mouse-over #(set! (-> % .-target .-style .-background) "#3a4555")
+         :on-mouse-out #(set! (-> % .-target .-style .-background) "transparent")
+         :on-click (fn [e]
+                     (.stopPropagation e)
+                     (let [root-nav-id (d/q '[:find ?rnid .
+                                              :in $ ?nid
+                                              :where
+                                              [?e :hulunote-notes/id ?nid]
+                                              [?e :hulunote-notes/root-nav-id ?rnid]]
+                                         @db/dsdb note-id)]
+                       (when root-nav-id
+                         (db/open-note-in-right-sidebar! note-id note-title root-nav-id database-name)))
+                     (hide-note-menu!))}
+        "Open in Sidebar"]
        ;; Delete note option
        [:div.context-menu-item
         {:style {:padding "8px 12px"

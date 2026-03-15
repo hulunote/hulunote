@@ -193,6 +193,19 @@
                      (start-editing-title! note-id note-title)
                      (hide-title-menu!))}
         "Edit Title"]
+       ;; Open in sidebar option
+       [:div.context-menu-item
+        {:style {:padding "8px 12px"
+                 :cursor "pointer"
+                 :color "#fff"
+                 :font-size "13px"}
+         :on-mouse-over #(set! (-> % .-target .-style .-background) "#3a4555")
+         :on-mouse-out #(set! (-> % .-target .-style .-background) "transparent")
+         :on-click (fn [e]
+                     (.stopPropagation e)
+                     (db/open-note-in-right-sidebar! note-id note-title root-nav-id database-name)
+                     (hide-title-menu!))}
+        "Open in Sidebar"]
        ;; Copy as markdown option
        [:div.context-menu-item
         {:style {:padding "8px 12px"

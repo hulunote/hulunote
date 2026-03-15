@@ -186,8 +186,10 @@
 (defn open-note-title-in-sidebar!
   "Open a note by title in the right sidebar (for shift+click)"
   [title-str]
+  (prn "[right-sidebar] open-note-title-in-sidebar! called with title:" title-str)
   (let [note-id (find-note-by-title @db/dsdb title-str)]
-    (when note-id
+    (prn "[right-sidebar] found note-id:" note-id)
+    (if note-id
       (let [root-nav-id (d/q '[:find ?root-nav-id .
                                 :in $ ?note-id
                                 :where
@@ -195,7 +197,9 @@
                                 [?e :hulunote-notes/root-nav-id ?root-nav-id]]
                           @db/dsdb note-id)
             database-name (get-current-database-name)]
-        (db/open-note-in-right-sidebar! note-id title-str root-nav-id database-name)))))
+        (prn "[right-sidebar] root-nav-id:" root-nav-id "database-name:" database-name)
+        (db/open-note-in-right-sidebar! note-id title-str root-nav-id database-name))
+      (prn "[right-sidebar] note not found, cannot open in sidebar"))))
 
 (defn render-recursion-page-link
   "Render a clickable page link [[title]] that navigates to the note.
@@ -207,6 +211,7 @@
     [:span.hulunote-note-link
      {:style {:cursor "pointer"}
       :on-click (fn [e]
+                  (prn "[page-link] click event, shiftKey:" (.-shiftKey e) "title:" title-str)
                   (u/stop-click-bubble e)
                   (if (.-shiftKey e)
                     (open-note-title-in-sidebar! title-str)

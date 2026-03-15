@@ -208,13 +208,17 @@
 (defn open-note-in-right-sidebar!
   "Open a note in the right sidebar"
   [note-id note-title root-nav-id database-name]
+  (prn "[right-sidebar] open-note-in-right-sidebar! note-id:" note-id
+       "title:" note-title "root-nav-id:" root-nav-id "db:" database-name)
   (when-not (some #(= (:note-id %) note-id) @right-sidebar-notes)
     (swap! right-sidebar-notes conj
       {:note-id note-id
        :note-title note-title
        :root-nav-id root-nav-id
        :database-name database-name}))
-  (reset! right-sidebar-open? true))
+  (reset! right-sidebar-open? true)
+  (prn "[right-sidebar] state after open - open?:" @right-sidebar-open?
+       "notes count:" (count @right-sidebar-notes)))
 
 (defn close-note-in-right-sidebar!
   "Remove a note from the right sidebar"

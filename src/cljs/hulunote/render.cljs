@@ -229,13 +229,49 @@
                 :min-width "150px"
                 :padding "4px 0"}
         :on-mouse-leave hide-context-menu!}
-       ;; Show current position info
+       ;; Show note title and node info
        [:div.context-menu-header
         {:style {:padding "8px 12px"
                  :color "#888"
                  :font-size "11px"
-                 :border-bottom "1px solid #444"}}
-        (str "Node ID: " (subs (or nav-id "") 0 8) "...")]
+                 :border-bottom "1px solid #444"
+                 :max-width "220px"
+                 :overflow "hidden"
+                 :text-overflow "ellipsis"
+                 :white-space "nowrap"}}
+        (let [note-title (when note-id
+                           (d/q '[:find ?title .
+                                  :in $ ?nid
+                                  :where
+                                  [?e :hulunote-notes/id ?nid]
+                                  [?e :hulunote-notes/title ?title]]
+                             @db/dsdb note-id))]
+          (if note-title
+            (str note-title " > " (subs (or content "") 0 (min 20 (count (or content "")))))
+            (str "Node: " (subs (or nav-id "") 0 8) "...")))]
+       ;; Open in Sidebar option
+       [:div.context-menu-item
+        {:style {:padding "8px 12px"
+                 :cursor "pointer"
+                 :color "#fff"
+                 :font-size "13px"}
+         :on-mouse-over #(set! (-> % .-target .-style .-background) "#3a4555")
+         :on-mouse-out #(set! (-> % .-target .-style .-background) "transparent")
+         :on-click (fn [e]
+                     (.stopPropagation e)
+                     (when note-id
+                       (let [note-info (d/q '[:find ?title ?root-nav-id
+                                              :in $ ?nid
+                                              :where
+                                              [?e :hulunote-notes/id ?nid]
+                                              [?e :hulunote-notes/title ?title]
+                                              [?e :hulunote-notes/root-nav-id ?root-nav-id]]
+                                         @db/dsdb note-id)
+                             [note-title root-nav-id] (first note-info)]
+                         (when (and note-title root-nav-id)
+                           (db/open-note-in-right-sidebar! note-id note-title root-nav-id database-name))))
+                     (hide-context-menu!))}
+        "Open in Sidebar"]
        ;; Copy content option
        [:div.context-menu-item
         {:style {:padding "8px 12px"
