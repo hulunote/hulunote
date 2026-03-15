@@ -127,7 +127,7 @@
 
 (def ^:private code-fence-pattern
   "Matches ```lang\\ncode\\n``` — multiline with dotall"
-  #"(?s)^```(\w*)\n(.*?)```\s*$")
+  #"^```(\w*)\n([\s\S]*?)```\s*$")
 
 (defn parse-code-block
   "Parse a ``` fenced code block. Returns {:lang :code} or nil."
