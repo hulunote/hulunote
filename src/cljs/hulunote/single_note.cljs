@@ -6,6 +6,7 @@
             [hulunote.db :as db]
             [hulunote.sidebar :as sidebar]
             [hulunote.router :as router]
+            [hulunote.components :as comps]
             [re-frame.core :as re-frame]))
 
 ;; State for editing note title
@@ -239,6 +240,106 @@
         :style {:cursor "pointer"}}
        note-title])))
 
+;; ==================== Backlinks (Linked References) ====================
+
+(defonce backlinks-collapsed? (atom {}))
+
+(rum/defc backlink-nav-item
+  "Render a single backlinked nav block with its parsed content"
+  [nav]
+  [:div.backlink-nav-item
+   {:style {:padding "6px 12px"
+            :margin "4px 0"
+            :background "rgba(255,255,255,0.03)"
+            :border-radius "4px"
+            :border-left "3px solid var(--theme-accent, #5c7cfa)"
+            :font-size "14px"
+            :line-height "1.6"}}
+   (comps/parse-and-render (:content nav) {})])
+
+(rum/defc backlink-note-group < rum/reactive
+  "Render a group of backlinks from a single source note"
+  [database-name source-note-id source-title navs]
+  (let [collapsed-map (rum/react backlinks-collapsed?)
+        collapsed? (get collapsed-map source-note-id false)]
+    [:div.backlink-note-group
+     {:style {:margin-bottom "12px"}}
+     ;; Source note title (clickable)
+     [:div.backlink-note-title
+      {:style {:display "flex"
+               :align-items "center"
+               :gap "6px"
+               :cursor "pointer"
+               :padding "6px 8px"
+               :border-radius "4px"}
+       :on-click (fn [e]
+                   (u/stop-click-bubble e)
+                   (swap! backlinks-collapsed? update source-note-id not))}
+      ;; Collapse/expand indicator
+      [:span {:style {:font-size "10px"
+                      :color "rgba(255,255,255,0.4)"
+                      :transition "transform 0.15s"
+                      :display "inline-block"
+                      :transform (if collapsed? "rotate(0deg)" "rotate(90deg)")}}
+       "\u25B6"]
+      ;; Note title link
+      [:span {:style {:color "var(--theme-accent, #5c7cfa)"
+                      :font-weight "500"
+                      :font-size "14px"
+                      :text-decoration "underline"
+                      :text-decoration-style "dotted"}
+              :on-click (fn [e]
+                          (u/stop-click-bubble e)
+                          (router/go-to-note! database-name source-note-id))}
+       source-title]
+      ;; Count badge
+      [:span {:style {:font-size "11px"
+                      :color "rgba(255,255,255,0.4)"
+                      :margin-left "4px"}}
+       (str (count navs))]]
+     ;; Nav content blocks
+     (when-not collapsed?
+       [:div.backlink-navs
+        {:style {:padding-left "20px"}}
+        (for [nav navs]
+          (rum/with-key (backlink-nav-item nav) (:id nav)))])]))
+
+(rum/defc linked-references < rum/reactive
+  "Linked References panel - shows all notes that reference the current note"
+  [db note-title note-id database-name]
+  (let [backlinks (db/find-backlinks db note-title)
+        ;; Filter out self-references
+        backlinks (remove (fn [[_ _ source-id _]] (= source-id note-id)) backlinks)
+        grouped (db/group-backlinks-by-note backlinks)
+        total-count (count backlinks)]
+    (when (pos? total-count)
+      [:div.linked-references
+       {:style {:margin-top "40px"
+                :padding-top "20px"
+                :border-top "1px solid rgba(255,255,255,0.1)"}}
+       ;; Section header
+       [:div.linked-references-header
+        {:style {:display "flex"
+                 :align-items "center"
+                 :gap "8px"
+                 :margin-bottom "16px"}}
+        [:span {:style {:font-size "15px"
+                        :font-weight "600"
+                        :color "rgba(255,255,255,0.7)"}}
+         "Linked References"]
+        [:span {:style {:font-size "12px"
+                        :color "rgba(255,255,255,0.4)"
+                        :background "rgba(255,255,255,0.08)"
+                        :padding "2px 8px"
+                        :border-radius "10px"}}
+         (str total-count)]]
+       ;; Grouped backlinks
+       [:div.linked-references-body
+        (for [[source-note-id {:keys [title note-id navs]}] grouped]
+          (rum/with-key
+            (backlink-note-group database-name source-note-id title navs)
+            source-note-id))]])))
+
 (rum/defc single-note-page < rum/reactive
   [db]
   (let [{:keys [database note-id]} (get-route-params db)
@@ -268,7 +369,10 @@
 
              ;; Nav outline
              [:div {:style {:padding-left "12px"}}
-              (render/render-navs db root-nav-id note-id database)]])
+              (render/render-navs db root-nav-id note-id database)]
+
+             ;; Linked References (Backlinks)
+             (linked-references db note-title note-id database)])
 
           ;; Note not found
           [:div.flex.flex-column.items-center.justify-center

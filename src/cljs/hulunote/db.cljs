@@ -164,6 +164,42 @@
     >
     daily-list))
 
+(defn find-backlinks
+  "Find all navs that reference the given note title via [[title]] or #title or #[[title]].
+   Returns a set of [nav-content nav-id source-note-id source-title]."
+  [conn title]
+  (when (and title (not (empty? title)))
+    (d/q '[:find ?nav-content ?nav-id ?source-note-id ?source-title
+           :in $ ?title ?match-fn
+           :where
+           [?nav :content ?nav-content]
+           [?nav :id ?nav-id]
+           [?nav :hulunote-note ?source-note-id]
+           [?source :hulunote-notes/id ?source-note-id]
+           [?source :hulunote-notes/title ?source-title]
+           [(?match-fn ?nav-content ?title)]]
+      conn title
+      (fn [content title]
+        (when (and (string? content) (not= content "ROOT"))
+          (or (clojure.string/includes? content (str "[[" title "]]"))
+              (clojure.string/includes? content (str "#[[" title "]]"))
+              (clojure.string/includes? content (str "#" title))))))))
+
+(defn group-backlinks-by-note
+  "Group backlink results by source note. Returns a map of
+   {source-note-id {:title source-title :navs [{:content ... :id ...}]}}"
+  [backlinks]
+  (reduce
+    (fn [acc [nav-content nav-id source-note-id source-title]]
+      (update acc source-note-id
+        (fn [existing]
+          {:title source-title
+           :note-id source-note-id
+           :navs (conj (or (:navs existing) [])
+                   {:content nav-content :id nav-id})})))
+    {}
+    backlinks))
+
 (comment
   (defn get-note-list
     [conn]
