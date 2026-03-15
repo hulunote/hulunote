@@ -5,6 +5,7 @@
             [hulunote.db :as db]
             [hulunote.http :as http]
             [hulunote.components :as comps]
+            [hulunote.plugin :as plugin]
             [re-frame.core :as re-frame]))
 
 (declare render-navs)
@@ -998,6 +999,17 @@
          [:span {:style {:color "#666"}} "Click to edit..."]
          (comps/parse-and-render content {}))])))
 
+(rum/defc plugin-block-renderer
+  "Renders a plugin block. Uses a ref callback to invoke plugin rendering
+   into the container DOM element after mount."
+  [block-id content]
+  [:div.hulunote-plugin-block
+   {:ref (fn [el]
+           (when el
+             (plugin/render-plugin-block! el block-id content)))
+    :style {:width "100%"
+            :min-height "40px"}}])
+
 (rum/defc nav-input < rum/reactive
   [db id note-id database-name]
   (let [{:keys [last-account-id parid is-display
@@ -1007,7 +1019,8 @@
         (u/get-nav-by-id db id)
         is-editing (= id (rum/react editing-nav-id))
         is-drop-target (= id (rum/react drag-over-nav-id))
-        current-drop-mode (rum/react drag-over-mode)]
+        current-drop-mode (rum/react drag-over-mode)
+        plugin-match (and (not is-editing) (plugin/match-plugin-renderer content))]
     [:div.nav-item
      ;; Entire row is clickable to enter edit mode
      [:div {:class (str "head-dot flex "
@@ -1048,8 +1061,13 @@
                         (let [cursor-pos (estimate-cursor-pos-from-click e content)]
                           (start-editing! id content cursor-pos)))}
       (nav-bullet db id is-display note-id database-name content is-editing)
-      (nav-content-editor id content note-id database-name)]
-     (when is-display
+      (if plugin-match
+        ;; Plugin block: render using plugin renderer (click to edit still works via parent on-click)
+        (plugin-block-renderer id content)
+        ;; Normal block: render content editor
+        (nav-content-editor id content note-id database-name))]
+     ;; Plugin blocks handle their own children display; normal blocks use recursive rendering
+     (when (and is-display (not plugin-match))
        [:div.content-box {:style {:margin-left "22px"
                                   :padding-left "0"
                                   :position "relative"}}

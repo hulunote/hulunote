@@ -25,7 +25,8 @@
    [hulunote.components :as comps]
    [hulunote.mcp-ui :as mcp-ui]
    [hulunote.chat-ui :as chat-ui]
-   [hulunote.right-sidebar :as right-sidebar])
+   [hulunote.right-sidebar :as right-sidebar]
+   [hulunote.plugin :as plugin])
   (:require-macros
    [hulunote.share :refer [profile]])
   (:import goog.History))
@@ -107,6 +108,7 @@
 
 (defn init! []
   (db/init-db)
+  (plugin/init-plugin-system!)
   ;; http://127.0.0.1:6689/#/app/JackyWong-5721/diaries
   (if (re-find
         #"#/app/(.*)"
