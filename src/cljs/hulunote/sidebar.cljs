@@ -10,12 +10,40 @@
 
 ;; State for sidebar collapse
 (defonce sidebar-collapsed? (atom false))
+(defonce sidebar-peek-open? (atom false))
+(defonce sidebar-peek-timeout (atom nil))
 
 ;; State to track if we've already created today's note this session
 (defonce daily-note-created? (atom #{}))
 
+(defn clear-sidebar-peek-timeout! []
+  (when-let [timeout-id @sidebar-peek-timeout]
+    (js/clearTimeout timeout-id)
+    (reset! sidebar-peek-timeout nil)))
+
+(defn open-sidebar-peek! []
+  (when @sidebar-collapsed?
+    (clear-sidebar-peek-timeout!)
+    (reset! sidebar-peek-open? true)))
+
+(defn close-sidebar-peek! []
+  (clear-sidebar-peek-timeout!)
+  (reset! sidebar-peek-open? false))
+
+(defn schedule-sidebar-peek-close! []
+  (when @sidebar-collapsed?
+    (clear-sidebar-peek-timeout!)
+    (reset! sidebar-peek-timeout
+      (js/setTimeout
+        (fn []
+          (reset! sidebar-peek-open? false)
+          (reset! sidebar-peek-timeout nil))
+        140))))
+
 (defn toggle-sidebar! []
-  (swap! sidebar-collapsed? not))
+  (clear-sidebar-peek-timeout!)
+  (swap! sidebar-collapsed? not)
+  (reset! sidebar-peek-open? false))
 
 (defn generate-note-title
   "Generate a unique note title with date and time"
@@ -225,17 +253,28 @@
    [:div.sidebar-item-icon icon]
    [:div.sidebar-item-text text]])
 
-(rum/defc app-top-bar
-  "Global top bar - only visible in Electron client."
-  [{:keys [title]}]
-  (when (u/is-electron?)
+(rum/defc app-top-bar < rum/reactive
+  "Global top bar for app pages."
+   [_]
+  (let [collapsed? (rum/react sidebar-collapsed?)]
     ;; Set topbar height on :root so layout (sidebar, page-wrapper) adapts
-    (.setProperty (.-style (.-documentElement js/document)) "--app-topbar-height" "56px")
+    (.setProperty (.-style (.-documentElement js/document)) "--app-topbar-height" "48px")
     [:div.app-topbar
-   [:div.app-topbar-left
+     {:class (when-not collapsed? "with-sidebar")}
+     (when-not collapsed?
+       [:div.app-topbar-brand
+        [:div.app-topbar-brand-main
+         [:img {:src (u/asset-path "/img/hulunote.webp")
+                :width "28px"
+                :height "28px"
+                :style {:border-radius "50%"}}]
+         [:span.app-topbar-brand-text "HULUNOTE"]]])
+     [:div.app-topbar-left
     [:button.app-topbar-btn
-     {:title "Toggle Sidebar"
-      :on-click toggle-sidebar!}
+     {:title (if collapsed? "Show Sidebar" "Hide Sidebar")
+      :on-click toggle-sidebar!
+      :on-mouse-enter open-sidebar-peek!
+      :on-mouse-leave schedule-sidebar-peek-close!}
      [:img.app-topbar-icon {:src (u/asset-path "/img/icons/dock_to_right.svg")}]]
     [:button.app-topbar-btn
      {:title "Back"
@@ -245,9 +284,7 @@
      {:title "Forward"
       :on-click #(js/history.forward)}
      [:img.app-topbar-icon {:src (u/asset-path "/img/icons/arrow_forward.svg")}]]]
-   [:div.app-topbar-center
-    [:div.app-topbar-tab.active
-     (or title "Untitled")]]
+   [:div.app-topbar-center]
    [:div.app-topbar-right
     [:button.app-topbar-btn
      {:title "Search (placeholder)"
@@ -257,22 +294,29 @@
 (rum/defc left-sidebar < rum/reactive
   [db database-name]
   (let [collapsed? (rum/react sidebar-collapsed?)
+        peek-open? (rum/react sidebar-peek-open?)
+        visible? (or (not collapsed?) peek-open?)
         daily-list (db/sort-daily-list (db/get-daily-list db))
         {:keys [route-name]} (db/get-route db)]
-    [:<>
-     ;; Sidebar container
-     [:div.left-sidebar
-      {:class (when collapsed? "collapsed")}
+    [:div.left-sidebar
+     {:class (str
+               (when collapsed? " collapsed")
+               (when peek-open? " peek-open"))
+      :on-mouse-enter #(when collapsed?
+                         (open-sidebar-peek!))
+      :on-mouse-leave #(when collapsed?
+                         (close-sidebar-peek!))}
 
-      (when-not collapsed?
+     (when visible?
         [:<>
-         ;; Sidebar header with logo
-         [:div.sidebar-header
-          [:div.flex.items-center
-           [:img {:src (u/asset-path "/img/hulunote.webp")
-                  :width "24px"
-                  :style {:border-radius "50%"}}]
-           [:span.sidebar-title.ml2 "HULUNOTE"]]]
+         ;; Sidebar header with logo only in temporary peek mode
+         (when collapsed?
+           [:div.sidebar-header
+            [:div.flex.items-center
+             [:img {:src (u/asset-path "/img/hulunote.webp")
+                    :width "24px"
+                    :style {:border-radius "50%"}}]
+             [:span.sidebar-title.ml2 "HULUNOTE"]]])
 
          ;; Today's Daily Note button
          [:button.daily-note-btn
@@ -338,16 +382,9 @@
           {:style {:padding "12px 16px"
                    :border-top "1px solid rgba(255, 255, 255, 0.08)"
                    :flex-shrink 0}}
-          [:button.new-note-btn
+         [:button.new-note-btn
            {:style {:margin "0"
                     :width "100%"}
             :on-click #(create-new-note! database-name)}
            [:span.new-note-btn-icon "+"]
-           "New Note"]]])]
-
-     ;; Toggle button - always visible, positioned at edge of sidebar
-     [:div.sidebar-toggle-btn
-      {:class (when collapsed? "collapsed")
-       :on-click toggle-sidebar!
-       :title (if collapsed? "Show Sidebar" "Hide Sidebar")}
-      (if collapsed? "☰" "✕")]]))
+           "New Note"]]])]))
