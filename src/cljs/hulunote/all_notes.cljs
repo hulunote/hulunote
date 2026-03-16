@@ -145,9 +145,7 @@
                            (every? selected note-ids))
         selected-count (count selected)]
     [:div
-     {:style {:position "sticky"
-              :top "0"
-              :z-index 20
+     {:style {:flex-shrink 0
               :margin-bottom "8px"}}
      [:div
       {:style {:display "grid"
@@ -391,9 +389,15 @@
       ;; Main content area
       [:div.main-content-area
        {:class (str (when sidebar-collapsed? "sidebar-collapsed")
-                    (when right-sidebar-open? " right-sidebar-open"))}
+                    (when right-sidebar-open? " right-sidebar-open"))
+        :style {:overflow "hidden"
+                :height "calc(100vh - var(--app-topbar-height))"
+                :min-height 0}}
        [:div.flex.flex-column
         {:style {:padding "10px 20px 20px"
+                 :height "100%"
+                 :box-sizing "border-box"
+                 :min-height 0
                  :max-width "900px"
                  :margin "0 auto"}}
 
@@ -409,14 +413,23 @@
             "Create First Note"]]
 
           [:div
+           {:style {:display "flex"
+                    :flex-direction "column"
+                    :min-height 0
+                    :flex 1}}
            (all-notes-sticky-header selected-note-ids paginated-notes)
-           ;; Note cards
-           (for [note paginated-notes]
-             (rum/with-key
-               (note-row selected-note-ids note database-name)
-               (:note-id note)))
+           [:div
+            {:style {:flex 1
+                     :min-height 0
+                     :overflow-y "auto"
+                     :padding-bottom "20px"}}
+            ;; Note cards
+            (for [note paginated-notes]
+              (rum/with-key
+                (note-row selected-note-ids note database-name)
+                (:note-id note)))
 
-           ;; Pagination
-           (pagination-controls (count all-notes))])
+            ;; Pagination
+            (pagination-controls (count all-notes))]])
 
         [:div {:style {:height "50px"}}]]]]]))
