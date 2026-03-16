@@ -592,6 +592,12 @@ hulu-text-font {
     transform: translateX(-100%);
 }
 
+.left-sidebar.collapsed.peek-open {
+    transform: translateX(0);
+    box-shadow: 12px 0 32px rgba(0, 0, 0, 0.28);
+    z-index: 140;
+}
+
 .sidebar-toggle-btn {
     position: fixed;
     left: var(--sidebar-width);
@@ -638,6 +644,10 @@ hulu-text-font {
     flex: 1;
     overflow-y: auto;
     padding: 8px 0;
+}
+
+.left-sidebar:not(.collapsed) .sidebar-content {
+    padding-top: 16px;
 }
 
 .sidebar-item {
@@ -760,7 +770,7 @@ hulu-text-font {
 
 .main-content-area.sidebar-collapsed {
     margin-left: 0;
-    padding-left: 40px;
+    padding-left: 24px;
 }
 
 /* ==================== App Top Bar ==================== */
@@ -771,8 +781,8 @@ hulu-text-font {
     left: 0;
     right: 0;
     z-index: 90;
-    height: 56px;
-    padding: 0 16px 0 16px;
+    height: 48px;
+    padding: 0 14px;
     display: grid;
     grid-template-columns: auto 1fr auto;
     align-items: center;
@@ -780,6 +790,36 @@ hulu-text-font {
     background: rgba(46, 51, 64, 0.94);
     border-bottom: 1px solid rgba(255, 255, 255, 0.08);
     backdrop-filter: blur(8px);
+}
+
+.app-topbar.with-sidebar {
+    grid-template-columns: var(--sidebar-width) auto 1fr auto;
+    padding-left: 0;
+    gap: 4px;
+}
+
+.app-topbar-brand {
+    height: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 16px;
+    box-sizing: border-box;
+}
+
+.app-topbar-brand-main {
+    display: inline-flex;
+    align-items: center;
+    gap: 12px;
+    min-width: 0;
+}
+
+.app-topbar-brand-text {
+    font-size: 16px;
+    font-weight: 700;
+    color: #fff;
+    letter-spacing: 0.4px;
+    white-space: nowrap;
 }
 
 .app-topbar-left,
@@ -790,7 +830,15 @@ hulu-text-font {
 }
 
 .app-topbar-left {
-    padding-left: 8px;
+    padding-left: 2px;
+}
+
+.app-topbar.with-sidebar .app-topbar-left {
+    padding-left: 0;
+}
+
+.app-topbar.with-sidebar .app-topbar-brand {
+    padding-right: 8px;
 }
 
 /* When running inside Electron on macOS, add extra padding for traffic lights */
@@ -828,8 +876,8 @@ hulu-text-font {
 }
 
 .app-topbar-btn {
-    width: 28px;
-    height: 28px;
+    width: 26px;
+    height: 26px;
     border-radius: 6px;
     border: 1px solid transparent;
     background: transparent;
@@ -845,8 +893,8 @@ hulu-text-font {
 }
 
 .app-topbar-icon {
-    width: 18px;
-    height: 18px;
+    width: 16px;
+    height: 16px;
     filter: invert(1) brightness(0.85);
 }
 
