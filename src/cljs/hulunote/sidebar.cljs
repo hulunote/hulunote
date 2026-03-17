@@ -259,15 +259,15 @@
   (let [collapsed? (rum/react sidebar-collapsed?)
         right-sidebar-open? (rum/react db/right-sidebar-open?)]
     ;; Set topbar height on :root so layout (sidebar, page-wrapper) adapts
-    (.setProperty (.-style (.-documentElement js/document)) "--app-topbar-height" "48px")
+    (.setProperty (.-style (.-documentElement js/document)) "--app-topbar-height" "40px")
     [:div.app-topbar
      {:class (when-not collapsed? "with-sidebar")}
      (when-not collapsed?
        [:div.app-topbar-brand
-        [:div.app-topbar-brand-main
+       [:div.app-topbar-brand-main
          [:img {:src (u/asset-path "/img/hulunote.webp")
-                :width "28px"
-                :height "28px"
+                :width "24px"
+                :height "24px"
                 :style {:border-radius "50%"}}]
          [:span.app-topbar-brand-text "HULUNOTE"]]])
      [:div.app-topbar-left

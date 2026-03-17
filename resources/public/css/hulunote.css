@@ -802,7 +802,7 @@ hulu-text-font {
     left: 0;
     right: 0;
     z-index: 90;
-    height: 48px;
+    height: 40px;
     padding: 0 14px;
     display: grid;
     grid-template-columns: auto 1fr auto;
@@ -820,7 +820,7 @@ hulu-text-font {
 }
 
 .app-topbar-brand {
-    height: 48px;
+    height: 40px;
     display: flex;
     align-items: center;
     justify-content: space-between;
