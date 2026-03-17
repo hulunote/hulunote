@@ -29,7 +29,8 @@
     --bullet-collapsed-glow: rgba(216, 216, 216, 0.28);
     --bullet-size-idle: 5px;
     --bullet-size-editing: 8px;
-    --note-title-align-left: calc(var(--space-xl) + 4px);
+    --note-content-align-left: 34px;
+    --note-title-align-left: var(--note-content-align-left);
     --app-topbar-height: 0px;
     --markdown-highlight-bg: rgba(102, 126, 234, 0.3);
     --markdown-highlight-color: var(--font-color);
@@ -509,6 +510,20 @@ hulu-text-font {
     background: rgba(255, 255, 255, 0.03);
 }
 
+.backlink-outline-node:not(.is-editing):hover {
+    background: transparent;
+}
+
+.backlink-note-link-title {
+    text-decoration: none;
+}
+
+.backlink-note-link-title:hover {
+    text-decoration: underline;
+    text-decoration-style: solid;
+    cursor: pointer;
+}
+
 .head-dot:hover .expand-icon {
     opacity: 1;
     visibility: visible;
@@ -766,11 +781,13 @@ hulu-text-font {
     overflow-y: auto;
     padding-top: 0;
     padding-left: 40px;
+    padding-right: 40px;
 }
 
 .main-content-area.sidebar-collapsed {
     margin-left: 0;
     padding-left: 24px;
+    padding-right: 24px;
 }
 
 /* ==================== App Top Bar ==================== */

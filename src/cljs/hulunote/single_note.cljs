@@ -6,7 +6,6 @@
             [hulunote.db :as db]
             [hulunote.sidebar :as sidebar]
             [hulunote.router :as router]
-            [hulunote.components :as comps]
             [re-frame.core :as re-frame]))
 
 ;; State for editing note title
@@ -264,17 +263,42 @@
 (defonce backlinks-collapsed? (atom {}))
 
 (rum/defc backlink-nav-item
-  "Render a single backlinked nav block with its parsed content"
-  [nav]
+  "Render a single backlinked nav block using the same editor behavior as normal outline nodes"
+  [source-note-id database-name nav]
   [:div.backlink-nav-item
-   {:style {:padding "6px 12px"
-            :margin "4px 0"
-            :background "rgba(255,255,255,0.03)"
-            :border-radius "4px"
-            :border-left "3px solid var(--theme-accent, #5c7cfa)"
-            :font-size "14px"
-            :line-height "1.6"}}
-   (comps/parse-and-render (:content nav) {})])
+   [:div {:class "head-dot flex backlink-outline-node"
+          :style {:padding-left "13px"
+                  :padding-top "5px"
+                  :padding-bottom "5px"
+                  :cursor "default"}}
+    [:span
+     {:class "controls hulu-text-font"
+      :style {:align-items "center"
+              :vertical-align "middle"
+              :width "26px"
+              :cursor "default"
+              :padding-left "0"
+              :justify-content "flex-start"
+              :display "flex"
+              :margin-right "10px"
+              :gap "7px"
+              :border-radius "8px"
+              :height "16px"}}
+     [:span
+      {:style {:width "9px"
+               :display "inline-flex"
+               :justify-content "center"}}]
+     [:span
+      {:class "controls customize-dot night-circular"
+       :style {:height "var(--bullet-size-idle)"
+               :width "var(--bullet-size-idle)"
+               :border-radius "50%"
+               :background-color "var(--bullet-idle-color)"
+               :box-shadow "none"
+               :cursor "default"
+               :display "block"
+               :vertical-align "middle"}}]]
+    (render/nav-content-editor (:id nav) (:content nav) source-note-id database-name)]])
 
 (rum/defc backlink-note-group < rum/reactive
   "Render a group of backlinks from a single source note"
@@ -287,9 +311,9 @@
      [:div.backlink-note-title
       {:style {:display "flex"
                :align-items "center"
-               :gap "6px"
-               :cursor "pointer"
-               :padding "6px 8px"
+               :gap "10px"
+               :cursor "default"
+               :padding "6px 0"
                :border-radius "4px"}
        :on-click (fn [e]
                    (u/stop-click-bubble e)
@@ -299,14 +323,14 @@
                       :color "rgba(255,255,255,0.4)"
                       :transition "transform 0.15s"
                       :display "inline-block"
+                      :cursor "pointer"
                       :transform (if collapsed? "rotate(0deg)" "rotate(90deg)")}}
        "\u25B6"]
       ;; Note title link (shift+click opens in right sidebar)
-      [:span {:style {:color "var(--theme-accent, #5c7cfa)"
-                      :font-weight "500"
+      [:span {:class "backlink-note-link-title"
+              :style {:font-weight "500"
                       :font-size "14px"
-                      :text-decoration "underline"
-                      :text-decoration-style "dotted"}
+                      :color "rgba(255,255,255,0.78)"} 
               :on-click (fn [e]
                           (u/stop-click-bubble e)
                           (if (.-shiftKey e)
@@ -320,16 +344,21 @@
                             (router/go-to-note! database-name source-note-id)))}
        source-title]
       ;; Count badge
-      [:span {:style {:font-size "11px"
+      [:span {:style {:display "inline-flex"
+                      :align-items "center"
+                      :font-size "11px"
+                      :line-height "1"
                       :color "rgba(255,255,255,0.4)"
                       :margin-left "4px"}}
        (str (count navs))]]
      ;; Nav content blocks
      (when-not collapsed?
        [:div.backlink-navs
-        {:style {:padding-left "20px"}}
+        {:style {:padding-left "0"}}
         (for [nav navs]
-          (rum/with-key (backlink-nav-item nav) (:id nav)))])]))
+          (rum/with-key
+            (backlink-nav-item source-note-id database-name nav)
+            (:id nav)))])]))
 
 (rum/defc linked-references < rum/reactive
   "Linked References panel - shows all notes that reference the current note"
@@ -342,6 +371,7 @@
     (when (pos? total-count)
       [:div.linked-references
        {:style {:margin-top "40px"
+                :margin-left "var(--note-content-align-left)"
                 :padding-top "20px"
                 :border-top "1px solid rgba(255,255,255,0.1)"}}
        ;; Section header
@@ -353,13 +383,7 @@
         [:span {:style {:font-size "15px"
                         :font-weight "600"
                         :color "rgba(255,255,255,0.7)"}}
-         "Linked References"]
-        [:span {:style {:font-size "12px"
-                        :color "rgba(255,255,255,0.4)"
-                        :background "rgba(255,255,255,0.08)"
-                        :padding "2px 8px"
-                        :border-radius "10px"}}
-         (str total-count)]]
+         (str total-count " Linked References")]]
        ;; Grouped backlinks
        [:div.linked-references-body
         (for [[source-note-id {:keys [title note-id navs]}] grouped]
