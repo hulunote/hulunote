@@ -361,19 +361,20 @@
         :class "parse-error"}
        string])))
 
+(def ^:private toast-preview-text
+  nil)
+
 (rum/defc toast
   [db]
-  (let [{:keys [date text]} (db/get-message db)]
-    (when (and date (< (.getTime (DateTime.)) date))
-      [:div.absolute.flex.flex-row.items-center.justify-center
-       {:style {:width "100%"
-                :z-index 10001
-                :bottom "10em"}}
-       [:div.ph3.pv2.br3.animated.fadeIn
-        {:style {:background "#303030"
-                 :opacity "0.8"
-                 :color "white"}}
-        text]])))
+  (let [{:keys [date text]} (db/get-message db)
+        now (.getTime (DateTime.))
+        active-text (or text toast-preview-text)
+        active? (or (and date (< now date))
+                    (some? toast-preview-text))]
+    (when active?
+      [:div.toast-shell
+       [:div.toast-card
+        [:div.toast-text active-text]]])))
 
 (defn wrapped-tooltip [props children]
   (apply rum/react Tooltip props children))
