@@ -164,6 +164,40 @@
     >
     daily-list))
 
+(defn get-recent-notes
+  "Get notes sorted by updated-at desc.
+   Falls back to created-at when updated-at is missing."
+  [conn]
+  (let [note-eids (d/q
+                    '[:find [?e ...]
+                      :where
+                      [?e :hulunote-notes/id]]
+                    conn)
+        notes (d/pull-many conn
+                '[:hulunote-notes/id
+                  :hulunote-notes/title
+                  :hulunote-notes/root-nav-id
+                  :hulunote-notes/database-id
+                  :hulunote-notes/updated-at
+                  :hulunote-notes/created-at]
+                note-eids)]
+    (->> notes
+         (map (fn [note]
+                (let [updated-at (or (:hulunote-notes/updated-at note)
+                                     (:updated-at note))
+                      created-at (or (:hulunote-notes/created-at note)
+                                     (:created-at note))
+                      sort-date (or updated-at created-at "1970-01-01")]
+                  {:note-id (:hulunote-notes/id note)
+                   :note-title (:hulunote-notes/title note)
+                   :root-nav-id (:hulunote-notes/root-nav-id note)
+                   :updated-at updated-at
+                   :created-at created-at
+                   :sort-date sort-date})))
+         (sort-by :sort-date)
+         reverse
+         vec)))
+
 (defn find-backlinks
   "Find all navs that reference the given note title via [[title]] or #title or #[[title]].
    Returns a set of [nav-content nav-id source-note-id source-title]."
