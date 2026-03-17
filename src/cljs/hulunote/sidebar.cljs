@@ -296,7 +296,7 @@
   (let [collapsed? (rum/react sidebar-collapsed?)
         peek-open? (rum/react sidebar-peek-open?)
         visible? (or (not collapsed?) peek-open?)
-        daily-list (db/sort-daily-list (db/get-daily-list db))
+        recent-notes (db/get-recent-notes db)
         {:keys [route-name]} (db/get-route db)]
     [:div.left-sidebar
      {:class (str
@@ -365,7 +365,7 @@
           [:div.sidebar-section-title "Recent Notes"]
 
           [:div.note-list
-           (for [[note-title note-id root-nav-id] (take 15 daily-list)]
+           (for [{:keys [note-title note-id root-nav-id]} (take 15 recent-notes)]
              [:div.note-list-item
               {:key note-id
                :on-click (fn [e]
