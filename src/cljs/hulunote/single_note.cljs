@@ -43,8 +43,11 @@
 (defn start-editing-title!
   "Start editing a note title"
   [note-id title]
-  (reset! editing-note-id note-id)
-  (reset! editing-note-title (or title "")))
+  (if (db/is-daily-title title)
+    (u/alert "Diary Title Cannot be Changed")
+    (do
+      (reset! editing-note-id note-id)
+      (reset! editing-note-title (or title "")))))
 
 (defn cancel-editing-title!
   "Cancel editing title"
@@ -255,7 +258,7 @@
                       (start-editing-title! note-id note-title)))
         :on-context-menu (fn [e]
                            (show-title-menu! e note-id note-title root-nav-id database-name))
-        :style {:cursor "pointer"}}
+        }
        note-title])))
 
 ;; ==================== Backlinks (Linked References) ====================

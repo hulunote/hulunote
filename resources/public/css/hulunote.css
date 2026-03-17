@@ -937,9 +937,12 @@ hulu-text-font {
 .note-title {
     font-size: 1.5rem;
     font-weight: bold;
-    cursor: pointer;
+    line-height: 1.2;
+    font-family: inherit;
+    display: block;
+    width: 100%;
+    cursor: text;
     padding: 4px 0;
-    border-radius: 4px;
     transition: background 0.2s ease;
 }
 
@@ -950,19 +953,25 @@ hulu-text-font {
 .note-title-input {
     font-size: 1.5rem;
     font-weight: bold;
-    background: #2a2f3a !important;
+    line-height: 1.2;
+    font-family: inherit;
+    display: block;
+    background: transparent !important;
     color: #fdfeffc4 !important;
-    border: 1px solid var(--theme-accent) !important;
-    border-radius: 4px;
+    border: none !important;
+    border-radius: 0;
     padding: 4px 0;
     outline: none;
     width: 100%;
-    max-width: 600px;
+    min-width: 0;
+    box-sizing: border-box;
+    box-shadow: none;
+    caret-color: var(--theme-accent);
 }
 
 .note-title-input:focus {
-    border-color: var(--theme-accent) !important;
-    box-shadow: 0 0 0 2px var(--theme-accent-glow);
+    border: none !important;
+    box-shadow: none;
 }
 
 /* ==================== Diaries Page ==================== */
