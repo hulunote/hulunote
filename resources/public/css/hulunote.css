@@ -925,6 +925,12 @@ hulu-text-font {
     color: #fff;
 }
 
+.app-topbar-btn.active {
+    background: var(--theme-accent-20);
+    border-color: var(--theme-accent-30);
+    color: #fff;
+}
+
 /* ==================== Note Title Editor ==================== */
 
 .note-title-wrapper {
@@ -1251,6 +1257,18 @@ hulu-text-font {
 .right-sidebar-body {
     flex: 1;
     overflow-y: auto;
+}
+
+.right-sidebar-empty {
+    min-height: 100%;
+    padding: 20px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: rgba(255, 255, 255, 0.55);
+    font-size: 13px;
+    line-height: 1.55;
+    text-align: center;
 }
 
 .right-sidebar-note {

@@ -44,7 +44,7 @@
   (let [open? (rum/react db/right-sidebar-open?)
         notes (rum/react db/right-sidebar-notes)]
     (prn "[right-sidebar render] open?:" open? "notes:" (count notes))
-    (when (and open? (seq notes))
+    (when open?
       [:div.right-sidebar
        ;; Header
        [:div.right-sidebar-header
@@ -56,7 +56,10 @@
          "\u00D7"]]
        ;; Note panels
        [:div.right-sidebar-body
-        (for [note notes]
-          (rum/with-key
-            (sidebar-note-panel db note)
-            (:note-id note)))]])))
+        (if (seq notes)
+          (for [note notes]
+            (rum/with-key
+              (sidebar-note-panel db note)
+              (:note-id note)))
+          [:div.right-sidebar-empty
+           "Shift-click bidirectional links, blocks, or block references to open them here."])]])))

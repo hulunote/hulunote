@@ -266,6 +266,11 @@
   (reset! right-sidebar-open? false)
   (reset! right-sidebar-notes []))
 
+(defn toggle-right-sidebar-visibility!
+  "Toggle right sidebar visibility without clearing loaded notes."
+  []
+  (swap! right-sidebar-open? not))
+
 (comment
   (defn get-note-list
     [conn]
