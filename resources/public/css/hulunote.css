@@ -31,6 +31,10 @@
     --bullet-size-editing: 8px;
     --note-content-align-left: 34px;
     --note-title-align-left: var(--note-content-align-left);
+    --diary-entry-padding-top: 40px;
+    --diary-entry-padding-bottom: 80px;
+    --diary-entry-gap: 18px;
+    --diary-entry-divider: rgba(151, 151, 151, 0.25);
     --app-topbar-height: 0px;
     --markdown-highlight-bg: rgba(102, 126, 234, 0.3);
     --markdown-highlight-color: var(--font-color);
@@ -959,6 +963,46 @@ hulu-text-font {
 .note-title-input:focus {
     border-color: var(--theme-accent) !important;
     box-shadow: 0 0 0 2px var(--theme-accent-glow);
+}
+
+/* ==================== Diaries Page ==================== */
+
+.diaries-page-content {
+    padding: 20px;
+    min-height: 100%;
+    box-sizing: border-box;
+    max-width: 900px;
+    margin: 0 auto;
+}
+
+.diaries-empty-state {
+    min-height: calc(100vh - var(--app-topbar-height) - 40px);
+}
+
+.diaries-list {
+    padding-bottom: 100px;
+}
+
+.diary-entry {
+    display: flex;
+    flex-direction: column;
+    gap: var(--diary-entry-gap);
+    padding: var(--diary-entry-padding-top) 0 var(--diary-entry-padding-bottom);
+    border-bottom: 1px solid var(--diary-entry-divider);
+}
+
+.diary-entry-title {
+    padding-left: var(--note-title-align-left);
+}
+
+.diary-entry-title .note-title,
+.diary-entry-title .note-title-input {
+    padding-top: 0;
+    padding-bottom: 0;
+}
+
+.diary-entry-body {
+    padding-left: 12px;
 }
 
 /* ==================== All Notes Page ==================== */
