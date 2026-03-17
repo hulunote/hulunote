@@ -802,7 +802,7 @@ hulu-text-font {
     left: 0;
     right: 0;
     z-index: 90;
-    height: 48px;
+    height: 40px;
     padding: 0 14px;
     display: grid;
     grid-template-columns: auto 1fr auto;
@@ -820,7 +820,7 @@ hulu-text-font {
 }
 
 .app-topbar-brand {
-    height: 48px;
+    height: 40px;
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -922,6 +922,12 @@ hulu-text-font {
 .app-topbar-btn:hover {
     background: rgba(255, 255, 255, 0.1);
     border-color: rgba(255, 255, 255, 0.12);
+    color: #fff;
+}
+
+.app-topbar-btn.active {
+    background: var(--theme-accent-20);
+    border-color: var(--theme-accent-30);
     color: #fff;
 }
 
@@ -1314,6 +1320,18 @@ hulu-text-font {
 .right-sidebar-body {
     flex: 1;
     overflow-y: auto;
+}
+
+.right-sidebar-empty {
+    min-height: 100%;
+    padding: 20px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: rgba(255, 255, 255, 0.55);
+    font-size: 13px;
+    line-height: 1.55;
+    text-align: center;
 }
 
 .right-sidebar-note {

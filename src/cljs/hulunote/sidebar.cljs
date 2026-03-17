@@ -256,17 +256,18 @@
 (rum/defc app-top-bar < rum/reactive
   "Global top bar for app pages."
    [_]
-  (let [collapsed? (rum/react sidebar-collapsed?)]
+  (let [collapsed? (rum/react sidebar-collapsed?)
+        right-sidebar-open? (rum/react db/right-sidebar-open?)]
     ;; Set topbar height on :root so layout (sidebar, page-wrapper) adapts
-    (.setProperty (.-style (.-documentElement js/document)) "--app-topbar-height" "48px")
+    (.setProperty (.-style (.-documentElement js/document)) "--app-topbar-height" "40px")
     [:div.app-topbar
      {:class (when-not collapsed? "with-sidebar")}
      (when-not collapsed?
        [:div.app-topbar-brand
-        [:div.app-topbar-brand-main
+       [:div.app-topbar-brand-main
          [:img {:src (u/asset-path "/img/hulunote.webp")
-                :width "28px"
-                :height "28px"
+                :width "24px"
+                :height "24px"
                 :style {:border-radius "50%"}}]
          [:span.app-topbar-brand-text "HULUNOTE"]]])
      [:div.app-topbar-left
@@ -289,7 +290,14 @@
     [:button.app-topbar-btn
      {:title "Search (placeholder)"
       :on-click #()}
-     [:img.app-topbar-icon {:src (u/asset-path "/img/icons/search.svg")}]]]]))
+     [:img.app-topbar-icon {:src (u/asset-path "/img/icons/search.svg")}]]
+    [:button.app-topbar-btn
+     {:class (when right-sidebar-open? "active")
+      :title (if right-sidebar-open?
+               "Hide Right Sidebar"
+               "Show Right Sidebar")
+      :on-click #(db/toggle-right-sidebar-visibility!)}
+     [:img.app-topbar-icon {:src (u/asset-path "/img/icons/dock_to_left.svg")}]]]]))
 
 (rum/defc left-sidebar < rum/reactive
   [db database-name]
