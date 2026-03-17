@@ -275,54 +275,13 @@
   display: flex;
   flex-direction: column;
   height: calc(100vh - var(--app-topbar-height));
-  background: #1e2028;
-}
-.graph-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 16px 24px;
-  background: rgba(46, 51, 64, 0.9);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-  flex-shrink: 0;
-}
-.graph-title {
-  font-size: 18px;
-  font-weight: 600;
-  color: #fff;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-.graph-title-icon {
-  width: 24px;
-  height: 24px;
-  border-radius: 6px;
-  background: linear-gradient(135deg, #667eea, #764ba2);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 14px;
-}
-.graph-stats {
-  display: flex;
-  gap: 16px;
-  font-size: 13px;
-  color: rgba(255, 255, 255, 0.5);
-}
-.graph-stat {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-}
-.graph-stat-num {
-  color: var(--theme-accent);
-  font-weight: 600;
+  background: transparent;
 }
 .graph-canvas {
   flex: 1;
   position: relative;
   overflow: hidden;
+  background: transparent;
 }
 .graph-empty {
   display: flex;
@@ -344,10 +303,13 @@
   position: absolute;
   bottom: 16px;
   right: 16px;
-  background: rgba(30, 32, 40, 0.9);
+  width: 280px;
+  max-width: min(280px, calc(100vw - 72px));
+  background: rgba(46, 51, 64, 0.92);
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 8px;
   padding: 12px 16px;
+  box-sizing: border-box;
   font-size: 12px;
   color: rgba(255, 255, 255, 0.6);
 }
@@ -367,78 +329,111 @@
   height: 10px;
   border-radius: 50%;
 }
-.graph-controls {
+.graph-help {
+  position: absolute;
+  bottom: 16px;
+  right: 8px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 10px;
+}
+.graph-help-btn {
+  width: 34px;
+  height: 34px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: rgba(46, 51, 64, 0.94);
+  color: rgba(255, 255, 255, 0.82);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 15px;
+  font-weight: 700;
+  transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+.graph-help-btn:hover {
+  background: rgba(102, 126, 234, 0.22);
+  border-color: rgba(102, 126, 234, 0.42);
+  color: #fff;
+}
+.graph-help-description {
+  margin: 0 0 10px;
+  font-size: 12px;
+  line-height: 1.45;
+  color: rgba(255, 255, 255, 0.62);
+}
+.graph-stats-card {
   position: absolute;
   top: 16px;
   right: 16px;
   display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-.graph-control-btn {
-  width: 32px;
-  height: 32px;
-  border-radius: 6px;
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  background: rgba(30, 32, 40, 0.9);
-  color: rgba(255, 255, 255, 0.7);
-  cursor: pointer;
-  display: flex;
   align-items: center;
-  justify-content: center;
-  font-size: 16px;
-  transition: all 0.15s ease;
+  gap: 18px;
+  padding: 10px 14px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(46, 51, 64, 0.92);
+  color: rgba(255, 255, 255, 0.62);
+  box-sizing: border-box;
 }
-.graph-control-btn:hover {
-  background: rgba(102, 126, 234, 0.2);
-  border-color: rgba(102, 126, 234, 0.4);
-  color: #fff;
+.graph-stat {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+}
+.graph-stat-num {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--theme-accent);
+  line-height: 1;
+}
+.graph-stat-label {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.62);
+  line-height: 1;
 }
 ")
 
 (defonce ^:private graph-css-injected? (atom false))
 
 (defn- ensure-graph-css! []
-  (when-not @graph-css-injected?
-    (let [style (.createElement js/document "style")]
-      (set! (.-id style) "hulunote-graph-css")
-      (set! (.-textContent style) graph-css)
-      (.appendChild (.-head js/document) style))
-    (reset! graph-css-injected? true)))
+  (let [existing-style (.getElementById js/document "hulunote-graph-css")]
+    (if existing-style
+      (set! (.-textContent existing-style) graph-css)
+      (let [style (.createElement js/document "style")]
+        (set! (.-id style) "hulunote-graph-css")
+        (set! (.-textContent style) graph-css)
+        (.appendChild (.-head js/document) style)))
+    (when-not @graph-css-injected?
+      (reset! graph-css-injected? true))))
 
 ;; ==================== Graph Page Component ====================
 
-(rum/defc graph-page < rum/reactive
+(rum/defcs graph-page < rum/reactive
+  (rum/local false ::help-open?)
   {:will-unmount
    (fn [state]
      (destroy-graph!)
      state)}
-  [db]
+  [state db]
   (ensure-graph-css!)
   (let [{:keys [route-name params]} (db/get-route db)
         database-name (:database params)
         sidebar-collapsed? (rum/react sidebar/sidebar-collapsed?)
         graph-data (build-graph-data db)
         node-count (count (:nodes graph-data))
-        link-count (count (:links graph-data))]
-    [:div.page-wrapper
+        link-count (count (:links graph-data))
+        help-open? (::help-open? state)]
+    [:div.night-center-boxBg.night-textColor-2
+     [:div.page-wrapper
      (sidebar/app-top-bar {:title "Knowledge Graph"})
      (sidebar/left-sidebar db database-name)
      [:div.main-content-area
       {:class (when @sidebar/sidebar-collapsed? "sidebar-collapsed")}
       [:div.graph-page-container
-       ;; Header
-       [:div.graph-header
-        [:div.graph-title
-         [:div.graph-title-icon "\uD83C\uDF10"]
-         "Knowledge Graph"]
-        [:div.graph-stats
-         [:div.graph-stat
-          [:span.graph-stat-num (str node-count)]
-          "notes"]
-         [:div.graph-stat
-          [:span.graph-stat-num (str link-count)]
-          "connections"]]]
+       {:on-click #(reset! help-open? false)}
        ;; Canvas
        [:div.graph-canvas
         (if (zero? node-count)
@@ -446,6 +441,13 @@
            [:div.graph-empty-icon "\uD83D\uDD78\uFE0F"]
            [:div.graph-empty-text "No notes yet. Create some notes with [[links]] to see the graph!"]]
           [:<>
+           [:div.graph-stats-card
+            [:div.graph-stat
+             [:span.graph-stat-num (str node-count)]
+             [:span.graph-stat-label "notes"]]
+            [:div.graph-stat
+             [:span.graph-stat-num (str link-count)]
+             [:span.graph-stat-label "connections"]]]
            [:div#graph-canvas
             {:style {:width "100%" :height "100%"}
              :ref (fn [el]
@@ -455,18 +457,28 @@
                         #(when (zero? (.-childElementCount el))
                            (create-graph! el graph-data database-name))
                         100)))}]
-           ;; Legend
-           [:div.graph-legend
-            [:div.graph-legend-title "Legend"]
-            [:div.graph-legend-item
-             [:div.graph-legend-dot {:style {:background "#667eea"}}]
-             "Hub note (5+ links)"]
-            [:div.graph-legend-item
-             [:div.graph-legend-dot {:style {:background "#764ba2"}}]
-             "Connected (3-5)"]
-            [:div.graph-legend-item
-             [:div.graph-legend-dot {:style {:background "#5a6b8a"}}]
-             "Few links (1-2)"]
-            [:div.graph-legend-item
-             [:div.graph-legend-dot {:style {:background "#3d4455"}}]
-             "Isolated"]]])]]]]))
+           [:div.graph-help
+            {:on-click #(.stopPropagation %)}
+            (when @help-open?
+              [:div.graph-legend
+               [:div.graph-legend-title "Node Connectivity"]
+               [:p.graph-help-description
+                "Node color indicates how many connections a note has in the graph."]
+               [:div.graph-legend-item
+                [:div.graph-legend-dot {:style {:background "#667eea"}}]
+                "Hub note (5+ connections)"]
+               [:div.graph-legend-item
+                [:div.graph-legend-dot {:style {:background "#764ba2"}}]
+                "Active note (3-4 connections)"]
+               [:div.graph-legend-item
+                [:div.graph-legend-dot {:style {:background "#5a6b8a"}}]
+                "Lightly connected (1-2 connections)"]
+               [:div.graph-legend-item
+                [:div.graph-legend-dot {:style {:background "#3d4455"}}]
+                "Isolated (0 connections)"]])
+            [:button.graph-help-btn
+             {:type "button"
+              :aria-label "Graph help"
+              :title "Graph help"
+              :on-click #(swap! help-open? not)}
+             "?"]]])]]]]]))
