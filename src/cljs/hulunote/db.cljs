@@ -119,6 +119,16 @@
          :where [?e :hulunote-databases/id ?name]]
     conn))
 
+(defn get-database-id-by-name
+  [conn database-name]
+  (d/q '[:find ?database-id .
+         :in $ ?database-name
+         :where
+         [?e :hulunote-databases/name ?database-name]
+         [?e :hulunote-databases/id ?database-id]]
+    conn
+    database-name))
+
 (defn is-daily-title
   "解决(= (u/get-time-now-stri-day) title): 今日笔记的标题不可修改 , 过去的标题就能修改了"
   [title]
@@ -182,6 +192,49 @@
                   :hulunote-notes/created-at]
                 note-eids)]
     (->> notes
+         (map (fn [note]
+                (let [updated-at (or (:hulunote-notes/updated-at note)
+                                     (:updated-at note))
+                      created-at (or (:hulunote-notes/created-at note)
+                                     (:created-at note))
+                      sort-date (or updated-at created-at "1970-01-01")]
+                  {:note-id (:hulunote-notes/id note)
+                   :note-title (:hulunote-notes/title note)
+                   :root-nav-id (:hulunote-notes/root-nav-id note)
+                   :updated-at updated-at
+                   :created-at created-at
+                   :sort-date sort-date})))
+         (sort-by :sort-date)
+         reverse
+         vec)))
+
+(defn get-starred-notes
+  "Get starred notes sorted by updated-at desc.
+   Falls back to created-at when updated-at is missing."
+  [conn database-name]
+  (let [note-eids (d/q
+                    '[:find [?e ...]
+                      :where
+                      [?e :hulunote-notes/id]
+                      [?e :hulunote-notes/is-shortcut true]]
+                    conn)
+        current-database-id (when database-name
+                              (get-database-id-by-name conn database-name))
+        notes (d/pull-many conn
+                '[:hulunote-notes/id
+                  :hulunote-notes/title
+                  :hulunote-notes/root-nav-id
+                  :hulunote-notes/database-id
+                  :hulunote-notes/updated-at
+                  :hulunote-notes/created-at]
+                note-eids)]
+    (->> notes
+         (filter (fn [note]
+                   (let [note-database-id (:hulunote-notes/database-id note)]
+                     (or (nil? database-name)
+                         (= note-database-id database-name)
+                         (= note-database-id current-database-id)
+                         (nil? current-database-id)))))
          (map (fn [note]
                 (let [updated-at (or (:hulunote-notes/updated-at note)
                                      (:updated-at note))

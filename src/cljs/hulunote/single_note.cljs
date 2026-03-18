@@ -33,12 +33,13 @@
   "Get note by id from datascript"
   [db note-id]
   (let [result (d/q
-                 '[:find ?title ?root-nav-id
+                 '[:find ?title ?root-nav-id ?is-shortcut
                    :in $ ?note-id
                    :where
                    [?e :hulunote-notes/id ?note-id]
                    [?e :hulunote-notes/title ?title]
-                   [?e :hulunote-notes/root-nav-id ?root-nav-id]]
+                   [?e :hulunote-notes/root-nav-id ?root-nav-id]
+                   [(get-else $ ?e :hulunote-notes/is-shortcut false) ?is-shortcut]]
                  db note-id)]
     (first result)))
 
@@ -165,6 +166,21 @@
      :cancel-text "Cancel"
      :danger? true
      :on-confirm #(delete-note! note-id database-name)}))
+
+(defn set-note-shortcut!
+  [note-id shortcut?]
+  (d/transact! db/dsdb
+    [[:db/add [:hulunote-notes/id note-id] :hulunote-notes/is-shortcut shortcut?]])
+  (re-frame/dispatch-sync
+    [:update-note
+     {:note-id note-id
+      :is-shortcut shortcut?
+      :op-fn (fn [data]
+               (prn "Note shortcut updated:" data))}]))
+
+(defn toggle-note-shortcut!
+  [note-id current-shortcut?]
+  (set-note-shortcut! note-id (not current-shortcut?)))
 
 (rum/defc title-context-menu < rum/reactive
   "Context menu component for note title"
@@ -408,10 +424,15 @@
        {:title (if note-info (first note-info) "Note")
         :more-menu-items
         (when note-info
-          (let [[note-title _root-nav-id] note-info]
-            [{:label "Star"
-              :icon (sidebar/star-menu-icon)
-              :on-click (fn [_] nil)}
+          (let [[note-title _root-nav-id is-shortcut] note-info]
+            [{:label (if is-shortcut
+                       "Remove from Shortcuts"
+                       "Add to Shortcuts")
+              :icon (if is-shortcut
+                      (sidebar/star-menu-icon-filled)
+                      (sidebar/star-menu-icon))
+              :on-click (fn [_]
+                          (toggle-note-shortcut! note-id is-shortcut))}
              {:label "Delete Page"
               :icon (sidebar/delete-menu-icon)
               :danger? true
