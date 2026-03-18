@@ -200,37 +200,54 @@
 
 (defn find-backlinks
   "Find all navs that reference the given note title via [[title]] or #title or #[[title]].
-   Returns a set of [nav-content nav-id source-note-id source-title]."
+   Returns a set of [nav-content nav-id source-note-id source-title parent-content]."
   [conn title]
   (when (and title (not (empty? title)))
-    (d/q '[:find ?nav-content ?nav-id ?source-note-id ?source-title
-           :in $ ?title ?match-fn
-           :where
-           [?nav :content ?nav-content]
-           [?nav :id ?nav-id]
-           [?nav :hulunote-note ?source-note-id]
-           [?source :hulunote-notes/id ?source-note-id]
-           [?source :hulunote-notes/title ?source-title]
-           [(?match-fn ?nav-content ?title)]]
-      conn title
-      (fn [content title]
-        (when (and (string? content) (not= content "ROOT"))
-          (or (clojure.string/includes? content (str "[[" title "]]"))
-              (clojure.string/includes? content (str "#[[" title "]]"))
-              (clojure.string/includes? content (str "#" title))))))))
+    (->> (d/q '[:find ?nav-content ?nav-id ?source-note-id ?source-title ?parent-id
+                :in $ ?title ?match-fn
+                :where
+                [?nav :content ?nav-content]
+                [?nav :id ?nav-id]
+                [?nav :hulunote-note ?source-note-id]
+                [?source :hulunote-notes/id ?source-note-id]
+                [?source :hulunote-notes/title ?source-title]
+                [?nav :origin-parid ?parent-id]
+                [(?match-fn ?nav-content ?title)]]
+          conn title
+          (fn [content title]
+            (when (and (string? content) (not= content "ROOT"))
+              (or (clojure.string/includes? content (str "[[" title "]]"))
+                  (clojure.string/includes? content (str "#[[" title "]]"))
+                  (clojure.string/includes? content (str "#" title))))))
+         (map (fn [[nav-content nav-id source-note-id source-title parent-id]]
+                (let [parent-content (when parent-id
+                                       (d/q '[:find ?parent-content .
+                                              :in $ ?parent-id
+                                              :where
+                                              [?parent :id ?parent-id]
+                                              [?parent :content ?parent-content]]
+                                         conn parent-id))
+                      parent-content (when (and (string? parent-content)
+                                                (not (clojure.string/blank? parent-content))
+                                                (not= parent-content "ROOT"))
+                                       parent-content)]
+                  [nav-content nav-id source-note-id source-title parent-content])))
+         set)))
 
 (defn group-backlinks-by-note
   "Group backlink results by source note. Returns a map of
    {source-note-id {:title source-title :navs [{:content ... :id ...}]}}"
   [backlinks]
   (reduce
-    (fn [acc [nav-content nav-id source-note-id source-title]]
+    (fn [acc [nav-content nav-id source-note-id source-title parent-content]]
       (update acc source-note-id
         (fn [existing]
           {:title source-title
            :note-id source-note-id
            :navs (conj (or (:navs existing) [])
-                   {:content nav-content :id nav-id})})))
+                   {:content nav-content
+                    :id nav-id
+                    :parent-content parent-content})})))
     {}
     backlinks))
 

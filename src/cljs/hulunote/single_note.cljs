@@ -269,6 +269,14 @@
   "Render a single backlinked nav block using the same editor behavior as normal outline nodes"
   [source-note-id database-name nav]
   [:div.backlink-nav-item
+   (when-let [parent-content (:parent-content nav)]
+     [:div
+      {:style {:padding-left "29px"
+               :padding-bottom "4px"
+               :font-size "inherit"
+               :line-height "inherit"
+               :color "rgba(255,255,255,0.42)"}}
+      parent-content])
    [:div {:class "head-dot flex backlink-outline-node"
           :style {:padding-left "13px"
                   :padding-top "5px"
@@ -332,7 +340,8 @@
       ;; Note title link (shift+click opens in right sidebar)
       [:span {:class "backlink-note-link-title"
               :style {:font-weight "500"
-                      :font-size "14px"
+                      :font-size "inherit"
+                      :line-height "inherit"
                       :color "rgba(255,255,255,0.78)"} 
               :on-click (fn [e]
                           (u/stop-click-bubble e)
@@ -363,36 +372,57 @@
             (backlink-nav-item source-note-id database-name nav)
             (:id nav)))])]))
 
-(rum/defc linked-references < rum/reactive
+(rum/defcs linked-references < rum/reactive
+  (rum/local false ::linked-references-collapsed?)
+  (rum/local false ::linked-references-header-hovered?)
   "Linked References panel - shows all notes that reference the current note"
-  [db note-title note-id database-name]
+  [state db note-title note-id database-name]
   (let [backlinks (db/find-backlinks db note-title)
         ;; Filter out self-references
-        backlinks (remove (fn [[_ _ source-id _]] (= source-id note-id)) backlinks)
+        backlinks (remove (fn [[_ _ source-id _ _]] (= source-id note-id)) backlinks)
         grouped (db/group-backlinks-by-note backlinks)
-        total-count (count backlinks)]
+        total-count (count backlinks)
+        collapsed? (rum/react (::linked-references-collapsed? state))
+        header-hovered? (rum/react (::linked-references-header-hovered? state))]
     (when (pos? total-count)
       [:div.linked-references
-       {:style {:margin-top "40px"
+       {:style {:margin-top "20px"
                 :margin-left "var(--note-content-align-left)"
-                :padding-top "20px"
-                :border-top "1px solid rgba(255,255,255,0.1)"}}
+                :padding-top "20px"}}
        ;; Section header
        [:div.linked-references-header
         {:style {:display "flex"
                  :align-items "center"
                  :gap "8px"
-                 :margin-bottom "16px"}}
+                 :margin-bottom "16px"
+                 :padding-bottom "12px"
+                 :border-bottom "1px solid rgba(255,255,255,0.1)"
+                 :cursor "pointer"}
+         :on-mouse-enter #(reset! (::linked-references-header-hovered? state) true)
+         :on-mouse-leave #(reset! (::linked-references-header-hovered? state) false)
+         :on-click (fn [e]
+                     (u/stop-click-bubble e)
+                     (swap! (::linked-references-collapsed? state) not))}
+        [:span
+         {:style {:font-size "10px"
+                  :color "rgba(255,255,255,0.42)"
+                  :transition "transform 0.15s ease, opacity 0.15s ease"
+                  :display "inline-block"
+                  :width "10px"
+                  :opacity (if header-hovered? 1 0)
+                  :transform (if collapsed? "rotate(0deg)" "rotate(90deg)")}}
+         "\u25B6"]
         [:span {:style {:font-size "15px"
                         :font-weight "600"
                         :color "rgba(255,255,255,0.7)"}}
          (str total-count " Linked References")]]
        ;; Grouped backlinks
-       [:div.linked-references-body
-        (for [[source-note-id {:keys [title note-id navs]}] grouped]
-          (rum/with-key
-            (backlink-note-group database-name source-note-id title navs)
-            source-note-id))]])))
+       (when-not collapsed?
+         [:div.linked-references-body
+          (for [[source-note-id {:keys [title note-id navs]}] grouped]
+            (rum/with-key
+              (backlink-note-group database-name source-note-id title navs)
+              source-note-id))])])))
 
 (rum/defc single-note-page < rum/reactive
   [db]
