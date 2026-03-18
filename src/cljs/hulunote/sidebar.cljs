@@ -2,6 +2,7 @@
   (:require [datascript.core :as d]
             [rum.core :as rum]
             [hulunote.db :as db]
+            [hulunote.menu :as menu]
             [hulunote.util :as u]
             [hulunote.router :as router]
             [hulunote.render :as render]
@@ -12,6 +13,7 @@
 (defonce sidebar-collapsed? (atom false))
 (defonce sidebar-peek-open? (atom false))
 (defonce sidebar-peek-timeout (atom nil))
+(defonce topbar-more-menu-open? (atom false))
 
 ;; State to track if we've already created today's note this session
 (defonce daily-note-created? (atom #{}))
@@ -44,6 +46,12 @@
   (clear-sidebar-peek-timeout!)
   (swap! sidebar-collapsed? not)
   (reset! sidebar-peek-open? false))
+
+(defn hide-topbar-more-menu! []
+  (reset! topbar-more-menu-open? false))
+
+(defn toggle-topbar-more-menu! []
+  (swap! topbar-more-menu-open? not))
 
 (defn generate-note-title
   "Generate a unique note title with date and time"
@@ -253,11 +261,48 @@
    [:div.sidebar-item-icon icon]
    [:div.sidebar-item-text text]])
 
+(defn more-menu-icon []
+  [:svg {:width "16"
+         :height "16"
+         :viewBox "0 0 24 24"
+         :fill "none"
+         :stroke "currentColor"
+         :stroke-width "2"
+         :stroke-linecap "round"
+         :stroke-linejoin "round"}
+   [:circle {:cx "5" :cy "12" :r "1.5"}]
+   [:circle {:cx "12" :cy "12" :r "1.5"}]
+   [:circle {:cx "19" :cy "12" :r "1.5"}]])
+
+(defn star-menu-icon []
+  [:svg {:viewBox "0 0 24 24"
+         :fill "none"
+         :stroke "currentColor"
+         :stroke-width "1.8"
+         :stroke-linecap "round"
+         :stroke-linejoin "round"}
+   [:polygon {:points "12 3 14.9 8.8 21.3 9.7 16.6 14.2 17.7 20.5 12 17.5 6.3 20.5 7.4 14.2 2.7 9.7 9.1 8.8 12 3"}]])
+
+(defn delete-menu-icon []
+  [:svg {:viewBox "0 0 24 24"
+         :fill "none"
+         :stroke "currentColor"
+         :stroke-width "1.8"
+         :stroke-linecap "round"
+         :stroke-linejoin "round"}
+   [:path {:d "M3 6h18"}]
+   [:path {:d "M8 6V4h8v2"}]
+   [:path {:d "M19 6l-1 14H6L5 6"}]
+   [:path {:d "M10 11v6"}]
+   [:path {:d "M14 11v6"}]])
+
 (rum/defc app-top-bar < rum/reactive
   "Global top bar for app pages."
-   [_]
+   [{:keys [more-menu-items]}]
   (let [collapsed? (rum/react sidebar-collapsed?)
-        right-sidebar-open? (rum/react db/right-sidebar-open?)]
+        right-sidebar-open? (rum/react db/right-sidebar-open?)
+        more-menu-open? (rum/react topbar-more-menu-open?)
+        more-menu-items (or more-menu-items [])]
     ;; Set topbar height on :root so layout (sidebar, page-wrapper) adapts
     (.setProperty (.-style (.-documentElement js/document)) "--app-topbar-height" "40px")
     [:div.app-topbar
@@ -287,10 +332,42 @@
      [:img.app-topbar-icon {:src (u/asset-path "/img/icons/arrow_forward.svg")}]]]
    [:div.app-topbar-center]
    [:div.app-topbar-right
-    [:button.app-topbar-btn
+   [:button.app-topbar-btn
      {:title "Search (placeholder)"
       :on-click #()}
      [:img.app-topbar-icon {:src (u/asset-path "/img/icons/search.svg")}]]
+    (when (seq more-menu-items)
+      [:div.topbar-more-menu-wrapper
+       {:on-click u/stop-click-bubble}
+       [:button.app-topbar-btn
+        {:class (when more-menu-open? "active")
+         :title "More"
+         :on-click (fn [e]
+                     (u/stop-click-bubble e)
+                     (toggle-topbar-more-menu!))}
+        (more-menu-icon)]
+       (when more-menu-open?
+         (into
+           (menu/menu-popover
+             {:class "topbar-more-menu"
+              :style {:position "absolute"
+                      :top "calc(100% + 8px)"
+                      :right "0"
+                      :min-width "160px"}})
+           (for [{:keys [label icon danger? on-click class style]} more-menu-items]
+             (menu/menu-item
+               {:class (str "topbar-more-menu-item"
+                            (when danger? " topbar-more-menu-item-danger")
+                            (when class (str " " class)))
+                :danger? danger?
+                :icon icon
+                :style style
+                :on-click (fn [e]
+                            (u/stop-click-bubble e)
+                            (when on-click
+                              (on-click e))
+                            (hide-topbar-more-menu!))}
+               label))))])
     [:button.app-topbar-btn
      {:class (when right-sidebar-open? "active")
       :title (if right-sidebar-open?

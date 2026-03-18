@@ -10,6 +10,7 @@
    [hulunote.util :as u]
    [hulunote.http :as http]
    [hulunote.router :as router]
+   [hulunote.sidebar :as sidebar]
    [goog.events :as events]
    [goog.history.EventType :as HistoryEventType]
    [reitit.core :as reitit]
@@ -57,7 +58,8 @@
      {:class (when right-sidebar-open? "right-sidebar-active")
       :on-click (fn [e]
                   ;; Close context menu when clicking outside
-                  (render/hide-context-menu!))}
+                  (render/hide-context-menu!)
+                  (sidebar/hide-topbar-more-menu!))}
      (case route-name
        ;; Root path: show home page if not logged in or expired, otherwise show database list
        :database (if (u/is-expired?)
@@ -86,6 +88,7 @@
      (right-sidebar/right-sidebar db)
      ;; Global context menu - rendered at app level
      (render/global-context-menu)
+     (comps/confirm-dialog)
      (comps/toast db)]))
 
 (defn hook-browser-navigation! []

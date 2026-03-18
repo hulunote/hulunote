@@ -1,6 +1,8 @@
 (ns hulunote.single-note
   (:require [datascript.core :as d]
             [rum.core :as rum]
+            [hulunote.components :as comps]
+            [hulunote.menu :as menu]
             [hulunote.util :as u]
             [hulunote.render :as render]
             [hulunote.db :as db]
@@ -154,87 +156,58 @@
   ;; Navigate back to diaries/all notes
   (router/go-to-all-notes! database-name))
 
+(defn confirm-and-delete-note!
+  [note-id note-title database-name]
+  (comps/show-confirm-dialog!
+    {:title "Delete Page"
+     :message (str "Delete \"" note-title "\"? This action cannot be undone.")
+     :confirm-text "Delete"
+     :cancel-text "Cancel"
+     :danger? true
+     :on-confirm #(delete-note! note-id database-name)}))
+
 (rum/defc title-context-menu < rum/reactive
   "Context menu component for note title"
   []
   (let [{:keys [visible x y note-id note-title root-nav-id database-name]} (rum/react title-menu-state)]
     (when visible
-      [:div.title-context-menu
-       {:style {:position "fixed"
-                :left (str x "px")
-                :top (str y "px")
-                :background "#2a2f3a"
-                :border "1px solid #444"
-                :border-radius "6px"
-                :box-shadow "0 4px 12px rgba(0,0,0,0.3)"
-                :z-index 10000
-                :min-width "180px"
-                :padding "4px 0"}
-        :on-mouse-leave hide-title-menu!}
-       ;; Note title info
-       [:div.context-menu-header
-        {:style {:padding "8px 12px"
-                 :color "#888"
-                 :font-size "11px"
-                 :border-bottom "1px solid #444"
-                 :max-width "200px"
-                 :overflow "hidden"
-                 :text-overflow "ellipsis"
-                 :white-space "nowrap"}}
-        note-title]
-       ;; Edit title option
-       [:div.context-menu-item
-        {:style {:padding "8px 12px"
-                 :cursor "pointer"
-                 :color "#fff"
-                 :font-size "13px"}
-         :on-mouse-over #(set! (-> % .-target .-style .-background) "#3a4555")
-         :on-mouse-out #(set! (-> % .-target .-style .-background) "transparent")
-         :on-click (fn [e]
-                     (.stopPropagation e)
-                     (start-editing-title! note-id note-title)
-                     (hide-title-menu!))}
-        "Edit Title"]
-       ;; Open in sidebar option
-       [:div.context-menu-item
-        {:style {:padding "8px 12px"
-                 :cursor "pointer"
-                 :color "#fff"
-                 :font-size "13px"}
-         :on-mouse-over #(set! (-> % .-target .-style .-background) "#3a4555")
-         :on-mouse-out #(set! (-> % .-target .-style .-background) "transparent")
-         :on-click (fn [e]
-                     (.stopPropagation e)
-                     (db/open-note-in-right-sidebar! note-id note-title root-nav-id database-name)
-                     (hide-title-menu!))}
-        "Open in Sidebar"]
-       ;; Copy as markdown option
-       [:div.context-menu-item
-        {:style {:padding "8px 12px"
-                 :cursor "pointer"
-                 :color "#fff"
-                 :font-size "13px"}
-         :on-mouse-over #(set! (-> % .-target .-style .-background) "#3a4555")
-         :on-mouse-out #(set! (-> % .-target .-style .-background) "transparent")
-         :on-click (fn [e]
-                     (.stopPropagation e)
-                     (copy-note-as-markdown! note-title root-nav-id)
-                     (hide-title-menu!))}
-        "Copy as Markdown"]
-       ;; Delete note option
-       [:div.context-menu-item
-        {:style {:padding "8px 12px"
-                 :cursor "pointer"
-                 :color "#ff6b6b"
-                 :font-size "13px"}
-         :on-mouse-over #(set! (-> % .-target .-style .-background) "#3a4555")
-         :on-mouse-out #(set! (-> % .-target .-style .-background) "transparent")
-         :on-click (fn [e]
-                     (.stopPropagation e)
-                     (when (js/confirm (str "Are you sure you want to delete \"" note-title "\"?"))
-                       (delete-note! note-id database-name))
-                     (hide-title-menu!))}
-        "Delete Note"]])))
+      (menu/menu-popover
+        {:class "title-context-menu"
+         :style {:position "fixed"
+                 :left (str x "px")
+                 :top (str y "px")
+                 :min-width "180px"
+                 :border-radius "6px"
+                 :box-shadow "0 4px 12px rgba(0,0,0,0.3)"
+                 :padding "4px 0"}
+         :on-mouse-leave hide-title-menu!}
+        (menu/menu-header note-title)
+        (menu/menu-item
+          {:on-click (fn [e]
+                       (.stopPropagation e)
+                       (start-editing-title! note-id note-title)
+                       (hide-title-menu!))}
+          "Edit Title")
+        (menu/menu-item
+          {:on-click (fn [e]
+                       (.stopPropagation e)
+                       (db/open-note-in-right-sidebar! note-id note-title root-nav-id database-name)
+                       (hide-title-menu!))}
+          "Open in Sidebar")
+        (menu/menu-item
+          {:on-click (fn [e]
+                       (.stopPropagation e)
+                       (copy-note-as-markdown! note-title root-nav-id)
+                       (hide-title-menu!))}
+          "Copy as Markdown")
+        (menu/menu-item
+          {:danger? true
+           :style {:color "#ff6b6b"}
+           :on-click (fn [e]
+                       (.stopPropagation e)
+                       (confirm-and-delete-note! note-id note-title database-name)
+                       (hide-title-menu!))}
+          "Delete Note")))))
 
 (rum/defc note-title-editor < rum/reactive
   "Editable note title component with right-click context menu.
@@ -431,7 +404,19 @@
         sidebar-collapsed? (rum/react sidebar/sidebar-collapsed?)
         right-sidebar-open? (rum/react db/right-sidebar-open?)]
     [:div.night-center-boxBg.night-textColor-2
-     (sidebar/app-top-bar {:title (if note-info (first note-info) "Note")})
+     (sidebar/app-top-bar
+       {:title (if note-info (first note-info) "Note")
+        :more-menu-items
+        (when note-info
+          (let [[note-title _root-nav-id] note-info]
+            [{:label "Star"
+              :icon (sidebar/star-menu-icon)
+              :on-click (fn [_] nil)}
+             {:label "Delete Page"
+              :icon (sidebar/delete-menu-icon)
+              :danger? true
+              :on-click (fn [_]
+                          (confirm-and-delete-note! note-id note-title database))}]))})
      [:div.page-wrapper
       ;; Left sidebar
       (sidebar/left-sidebar db database)
