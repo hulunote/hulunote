@@ -283,6 +283,11 @@
          :stroke-linejoin "round"}
    [:polygon {:points "12 3 14.9 8.8 21.3 9.7 16.6 14.2 17.7 20.5 12 17.5 6.3 20.5 7.4 14.2 2.7 9.7 9.1 8.8 12 3"}]])
 
+(defn star-menu-icon-filled []
+  [:svg {:viewBox "0 0 24 24"
+         :fill "currentColor"}
+   [:path {:d "M12 3l2.9 5.8 6.4.9-4.7 4.5 1.1 6.3L12 17.5 6.3 20.5l1.1-6.3-4.7-4.5 6.4-.9L12 3z"}]])
+
 (defn delete-menu-icon []
   [:svg {:viewBox "0 0 24 24"
          :fill "none"
@@ -381,7 +386,7 @@
   (let [collapsed? (rum/react sidebar-collapsed?)
         peek-open? (rum/react sidebar-peek-open?)
         visible? (or (not collapsed?) peek-open?)
-        recent-notes (db/get-recent-notes db)
+        starred-notes (db/get-starred-notes db database-name)
         {:keys [route-name]} (db/get-route db)]
     [:div.left-sidebar
      {:class (str
@@ -446,11 +451,11 @@
                         #(router/go-to-mcp-chat! database-name)
                         (= route-name :mcp-chat))
 
-          ;; Note list section
-          [:div.sidebar-section-title "Recent Notes"]
+          ;; Favorite notes section
+          [:div.sidebar-section-title "Shortcuts"]
 
           [:div.note-list
-           (for [{:keys [note-title note-id root-nav-id]} (take 15 recent-notes)]
+           (for [{:keys [note-title note-id root-nav-id]} (take 15 starred-notes)]
              [:div.note-list-item
               {:key note-id
                :on-click (fn [e]
