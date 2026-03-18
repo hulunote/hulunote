@@ -364,6 +364,36 @@
 (def ^:private toast-preview-text
   nil)
 
+(defonce confirm-dialog-state
+  (atom {:visible false
+         :title ""
+         :message ""
+         :confirm-text "Confirm"
+         :cancel-text "Cancel"
+         :danger? false
+         :on-confirm nil}))
+
+(defn hide-confirm-dialog! []
+  (reset! confirm-dialog-state
+    {:visible false
+     :title ""
+     :message ""
+     :confirm-text "Confirm"
+     :cancel-text "Cancel"
+     :danger? false
+     :on-confirm nil}))
+
+(defn show-confirm-dialog!
+  [{:keys [title message confirm-text cancel-text danger? on-confirm]}]
+  (reset! confirm-dialog-state
+    {:visible true
+     :title (or title "")
+     :message (or message "")
+     :confirm-text (or confirm-text "Confirm")
+     :cancel-text (or cancel-text "Cancel")
+     :danger? (boolean danger?)
+     :on-confirm on-confirm}))
+
 (rum/defc toast
   [db]
   (let [{:keys [date text]} (db/get-message db)
@@ -375,6 +405,33 @@
       [:div.toast-shell
        [:div.toast-card
         [:div.toast-text active-text]]])))
+
+(rum/defc confirm-dialog < rum/reactive []
+  (let [{:keys [visible title message confirm-text cancel-text danger? on-confirm]}
+        (rum/react confirm-dialog-state)]
+    (when visible
+      [:div.confirm-dialog-overlay
+       {:on-click (fn [_]
+                    (hide-confirm-dialog!))}
+       [:div.confirm-dialog-card
+        {:on-click #(.stopPropagation %)}
+        [:div.confirm-dialog-copy
+         [:div.confirm-dialog-title
+          {:class (when danger? "danger")}
+          title]
+         [:div.confirm-dialog-message message]]
+        [:div.confirm-dialog-actions
+         [:button.confirm-dialog-btn.confirm-dialog-btn-secondary
+          {:on-click (fn [_]
+                       (hide-confirm-dialog!))}
+          cancel-text]
+         [:button.confirm-dialog-btn
+          {:class (when danger? "confirm-dialog-btn-danger")
+           :on-click (fn [_]
+                       (when on-confirm
+                         (on-confirm))
+                       (hide-confirm-dialog!))}
+          confirm-text]]]])))
 
 (defn wrapped-tooltip [props children]
   (apply rum/react Tooltip props children))
