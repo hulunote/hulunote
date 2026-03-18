@@ -193,24 +193,31 @@
     (.removeChild (.-body js/document) textarea)
     (u/alert "Content copied to clipboard!")))
 
+(declare note-block-count)
+
 (defn delete-nav!
   "Delete a nav node"
   [nav-id note-id database-name]
-  (let [nav (u/get-nav-by-id @db/dsdb nav-id)
-        parid (:origin-parid nav)]
-    ;; Remove from parent's children in local datascript
-    (when parid
+  (if (<= (note-block-count note-id) 1)
+    (do
+      (u/alert "At least one bullet must remain in the note.")
+      false)
+    (let [nav (u/get-nav-by-id @db/dsdb nav-id)
+          parid (:origin-parid nav)]
+      ;; Remove from parent's children in local datascript
+      (when parid
+        (d/transact! db/dsdb
+          [[:db/retract [:id parid] :parid [:id nav-id]]]))
+      ;; Delete the nav entity
       (d/transact! db/dsdb
-        [[:db/retract [:id parid] :parid [:id nav-id]]]))
-    ;; Delete the nav entity
-    (d/transact! db/dsdb
-      [[:db/retractEntity [:id nav-id]]])
-    ;; Sync deletion to backend
-    (re-frame/dispatch-sync
-      [:delete-nav
-       {:database-name database-name
-        :note-id note-id
-        :id nav-id}])))
+        [[:db/retractEntity [:id nav-id]]])
+      ;; Sync deletion to backend
+      (re-frame/dispatch-sync
+        [:delete-nav
+         {:database-name database-name
+          :note-id note-id
+          :id nav-id}])
+      true)))
 
 (rum/defc context-menu < rum/reactive
   "Context menu component for nav bullet"
@@ -392,6 +399,19 @@
           (into (conj acc cid) (collect-descendant-ids cid))))
       #{}
       (:parid nav))))
+
+(defn note-block-count
+  "Count all non-root nav blocks in a note."
+  [note-id]
+  (if-let [root-nav-id (when note-id
+                         (d/q '[:find ?root-nav-id .
+                                :in $ ?note-id
+                                :where
+                                [?e :hulunote-notes/id ?note-id]
+                                [?e :hulunote-notes/root-nav-id ?root-nav-id]]
+                           @db/dsdb note-id))]
+    (count (collect-descendant-ids root-nav-id))
+    0))
 
 (defn valid-drop-target?
   "Validate drop target for moving drag-nav-id onto target-nav-id."
@@ -838,20 +858,20 @@
                           (u/get-nav-by-id @db/dsdb parid))
               ;; Try to use visible navigation for better UX
               prev-visible (get-prev-visible-nav root-nav-id nav-id)
-              next-focus-id (or (:id prev-visible)
+          next-focus-id (or (:id prev-visible)
                                (:id prev-sibling)
                                (when (and parent-nav
                                          (not= (:id parent-nav) db/root-id)
                                          (not= (:content parent-nav) "ROOT"))
                                  (:id parent-nav)))]
           ;; Delete the current nav
-          (delete-nav! nav-id note-id database-name)
-          ;; Focus on the previous visible node
-          (when next-focus-id
-            (let [next-nav (u/get-nav-by-id @db/dsdb next-focus-id)]
-              (js/setTimeout
-                #(start-editing-at-end! next-focus-id (or (:content next-nav) ""))
-                50)))))
+          (when (delete-nav! nav-id note-id database-name)
+            ;; Focus on the previous visible node
+            (when next-focus-id
+              (let [next-nav (u/get-nav-by-id @db/dsdb next-focus-id)]
+                (js/setTimeout
+                  #(start-editing-at-end! next-focus-id (or (:content next-nav) ""))
+                  50))))))
 
       ;; Tab key - indent (make child of previous sibling)
       (and (= key-code 9) (not shift?))
