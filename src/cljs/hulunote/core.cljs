@@ -27,6 +27,7 @@
    [hulunote.mcp-ui :as mcp-ui]
    [hulunote.chat-ui :as chat-ui]
    [hulunote.right-sidebar :as right-sidebar]
+   [hulunote.settings :as settings]
    [hulunote.plugin :as plugin])
   (:require-macros
    [hulunote.share :refer [profile]])
@@ -89,7 +90,9 @@
      ;; Global context menu - rendered at app level
      (render/global-context-menu)
      (comps/confirm-dialog)
-     (comps/toast db)]))
+     (comps/toast db)
+     ;; Settings modal - available globally
+     (settings/settings-modal)]))
 
 (defn hook-browser-navigation! []
   (doto (History.)

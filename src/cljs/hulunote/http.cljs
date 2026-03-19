@@ -532,6 +532,60 @@
 
 ;; ==================== Database Operations ====================
 
+;; ==================== User Profile Operations ====================
+
+(re-frame/reg-event-fx
+  :get-profile
+  (fn get-profile
+    [{:keys [db] :as cofx}
+     [_ {:keys [op-fn]}]]
+    {:db db
+     :http
+     {:uri "/user/profile"
+      :get-post :get
+      :params {}
+      :callback
+      {:succ
+       (fn [data]
+         (when op-fn (op-fn data)))}}}))
+
+(re-frame/reg-event-fx
+  :update-profile
+  (fn update-profile
+    [{:keys [db] :as cofx}
+     [_ {:keys [nickname introduction op-fn]}]]
+    {:db db
+     :http
+     {:uri "/user/update-profile"
+      :params {:nickname nickname
+               :introduction introduction}
+      :callback
+      {:succ
+       (fn [data]
+         (when op-fn (op-fn data)))
+       :err
+       (fn [err]
+         (prn "Failed to update profile:" err))}}}))
+
+(re-frame/reg-event-fx
+  :generate-user-token
+  (fn generate-user-token
+    [{:keys [db] :as cofx}
+     [_ {:keys [op-fn]}]]
+    {:db db
+     :http
+     {:uri "/user/generate-token"
+      :params {}
+      :callback
+      {:succ
+       (fn [data]
+         (when op-fn (op-fn data)))
+       :err
+       (fn [err]
+         (prn "Failed to generate token:" err))}}}))
+
+;; ==================== Database Operations ====================
+
 (re-frame/reg-event-fx
   :create-database
   (fn create-database
