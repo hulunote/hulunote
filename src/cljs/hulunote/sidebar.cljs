@@ -19,6 +19,7 @@
 (defonce sidebar-peek-timeout (atom nil))
 (defonce topbar-more-menu-open? (atom false))
 (defonce sidebar-user-menu-open? (atom false))
+(defonce database-list-loading? (atom false))
 
 ;; State to track if we've already created today's note this session
 (defonce daily-note-created? (atom #{}))
@@ -81,6 +82,10 @@
   (or (get m k)
       (get m (name k))
       (get m (keyword (clojure.string/replace (name k) "/" "-")))))
+
+(defn remove-nil-values
+  [m]
+  (into {} (remove (fn [[_ v]] (nil? v)) m)))
 
 (defn daily-note-exists?
   "Check if a daily note with today's date already exists"
@@ -334,6 +339,60 @@
    [:polyline {:points "16 17 21 12 16 7"}]
    [:line {:x1 "21" :y1 "12" :x2 "9" :y2 "12"}]])
 
+(defn available-database-names
+  [conn]
+  (->> (db/get-database conn)
+       (map first)
+       (keep :hulunote-databases/name)
+       (sort-by str/lower-case)))
+
+(defn load-database-list!
+  []
+  (reset! database-list-loading? true)
+  (re-frame/dispatch
+    [:get-database-list
+     {:op-fn (fn [{:keys [database-list]}]
+               (doseq [item (or database-list [])]
+                 (d/transact!
+                   db/dsdb
+                   [(remove-nil-values
+                      {:hulunote-databases/id (or (get-value item :hulunote-databases/id)
+                                                  (get-value item :database-id)
+                                                  (:database-id item))
+                       :hulunote-databases/name (or (get-value item :hulunote-databases/name)
+                                                    (get-value item :database-name)
+                                                    (:database-name item))
+                       :hulunote-databases/description (or (get-value item :hulunote-databases/description)
+                                                           (get-value item :database-description)
+                                                           (:database-description item))
+                       :hulunote-databases/is-public (or (get-value item :hulunote-databases/is-public)
+                                                         (get-value item :is-public)
+                                                         (:is-public item))})]))
+               (reset! database-list-loading? false))}]))
+
+(defn ensure-database-list-loaded!
+  [conn]
+  (when (and (empty? (available-database-names conn))
+             (not @database-list-loading?))
+    (load-database-list!)))
+
+(defn navigate-to-database!
+  [route-name database-name]
+  (case route-name
+    :all-notes (router/go-to-all-notes! database-name)
+    :graph (router/go-to-graph! database-name)
+    :mcp-settings (router/go-to-mcp-settings! database-name)
+    :mcp-chat (router/go-to-mcp-chat! database-name)
+    :diaries (router/go-to-diaries! database-name)
+    ;; single-note/show cannot be preserved across databases reliably.
+    (router/go-to-diaries! database-name)))
+
+(defn switch-database!
+  [route-name database-name]
+  (hide-sidebar-user-menu!)
+  (http/database-data-load database-name)
+  (navigate-to-database! route-name database-name))
+
 (defn user-menu-items []
   [{:label "Settings"
     :icon (settings-menu-icon)
@@ -351,6 +410,9 @@
 (rum/defc sidebar-user-trigger < rum/reactive
   [{:keys [database-name class]}]
   (let [menu-open? (rum/react sidebar-user-menu-open?)
+        app-db (rum/react db/dsdb)
+        {:keys [route-name]} (db/get-route app-db)
+        database-names (available-database-names app-db)
         hulunote-info (:hulunote @storage/jwt-auth)
         avatar-url (:accounts/avatar hulunote-info)
         username (or (:accounts/nickname hulunote-info)
@@ -360,6 +422,7 @@
                      (if (str/starts-with? avatar-url "http")
                        avatar-url
                        (str (http/http-uri "") avatar-url)))]
+    (ensure-database-list-loaded! app-db)
     [:div.sidebar-user-menu-anchor
      {:class class
       :on-click u/stop-click-bubble}
@@ -389,13 +452,27 @@
             :style {:position "absolute"
                     :top "calc(100% + 8px)"
                     :left "0"
-                    :min-width "188px"}})
-         (for [{:keys [label icon danger? on-click]} (user-menu-items)]
-           (menu/menu-item
-             {:icon icon
-              :danger? danger?
-              :on-click on-click}
-             label))))]))
+                    :min-width "236px"}})
+         (concat
+           [(menu/menu-header "Databases")]
+           (for [db-name database-names]
+             (menu/menu-item
+               {:class (str "sidebar-user-menu-database-item"
+                            (when (= db-name database-name) " active"))
+                :on-click (fn [_]
+                            (if (= db-name database-name)
+                              (hide-sidebar-user-menu!)
+                              (switch-database! route-name db-name)))}
+               db-name))
+           [[:div {:style {:height "1px"
+                           :background "var(--surface-border-strong)"
+                           :margin "6px 0"}}]]
+           (for [{:keys [label icon danger? on-click]} (user-menu-items)]
+             (menu/menu-item
+               {:icon icon
+                :danger? danger?
+                :on-click on-click}
+               label)))))]))
 
 (rum/defc sidebar-footer-brand []
   [:div.sidebar-footer-brand
