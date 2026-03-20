@@ -90,6 +90,8 @@
      (right-sidebar/right-sidebar db)
      ;; Global context menu - rendered at app level
      (render/global-context-menu)
+     ;; Slash command dropdown menu
+     (render/slash-command-menu)
      (comps/confirm-dialog)
      (comps/toast db)
      ;; Settings modal - available globally

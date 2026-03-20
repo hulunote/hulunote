@@ -1,5 +1,6 @@
 (ns hulunote.render
-  (:require [datascript.core :as d]
+  (:require [clojure.string :as str]
+            [datascript.core :as d]
             [rum.core :as rum]
             [hulunote.util :as u]
             [hulunote.db :as db]
@@ -29,6 +30,137 @@
 (defonce dragging-nav-id (atom nil))
 (defonce drag-over-nav-id (atom nil))
 (defonce drag-over-mode (atom nil))
+
+;; State for slash command menu
+(defonce slash-menu-state (atom {:visible false
+                                  :x 0
+                                  :y 0
+                                  :filter ""
+                                  :selected-index 0
+                                  :nav-id nil
+                                  :note-id nil
+                                  :database-name nil
+                                  :slash-pos nil}))
+
+(def slash-commands
+  [{:id :link        :label "[[]]  Page Link"       :icon "🔗" :insert-fn (fn [content pos]
+     (let [before (subs content 0 pos)
+           after  (subs content pos)]
+       {:text (str before "[[]]" after) :cursor (+ pos 2)}))}
+   {:id :code-block  :label "```  Code Block"       :icon "💻" :insert-fn (fn [_content _pos]
+     {:text "```js\n\n```" :replace-all true})}
+   {:id :todo        :label "TODO  Task"            :icon "☑️" :insert-fn (fn [content pos]
+     (let [before (subs content 0 pos)
+           after  (subs content pos)]
+       {:text (str before "{{TODO}} " after) :cursor (+ pos 9)}))}
+   {:id :done        :label "DONE  Completed"       :icon "✅" :insert-fn (fn [content pos]
+     (let [before (subs content 0 pos)
+           after  (subs content pos)]
+       {:text (str before "{{DONE}} " after) :cursor (+ pos 9)}))}
+   {:id :today       :label "Today  Insert Date"    :icon "📅" :insert-fn (fn [content pos]
+     (let [before (subs content 0 pos)
+           after  (subs content pos)
+           today  (.toLocaleDateString (js/Date.) "zh-CN" #js {:year "numeric" :month "2-digit" :day "2-digit"})]
+       {:text (str before "[[" today "]]" after) :cursor (+ pos (count today) 4)}))}
+   {:id :time        :label "Time  Insert Time"     :icon "⏰" :insert-fn (fn [content pos]
+     (let [before (subs content 0 pos)
+           after  (subs content pos)
+           now    (.toLocaleTimeString (js/Date.) "zh-CN" #js {:hour "2-digit" :minute "2-digit"})]
+       {:text (str before now after) :cursor (+ pos (count now))}))}
+   {:id :mermaid     :label "Mermaid  Diagram"      :icon "📊" :insert-fn (fn [_content _pos]
+     {:text "```mermaid\ngraph TD\n  A-->B\n```" :replace-all true})}
+   {:id :bold        :label "**Bold**  Text"        :icon "𝐁" :insert-fn (fn [content pos]
+     (let [before (subs content 0 pos)
+           after  (subs content pos)]
+       {:text (str before "****" after) :cursor (+ pos 2)}))}
+   {:id :italic      :label "__Italic__  Text"      :icon "𝐼" :insert-fn (fn [content pos]
+     (let [before (subs content 0 pos)
+           after  (subs content pos)]
+       {:text (str before "____" after) :cursor (+ pos 2)}))}
+   {:id :highlight   :label "^^Highlight^^  Text"   :icon "🖍" :insert-fn (fn [content pos]
+     (let [before (subs content 0 pos)
+           after  (subs content pos)]
+       {:text (str before "^^^^" after) :cursor (+ pos 2)}))}
+   {:id :strikethrough :label "~~Strike~~  Text"    :icon "🔠" :insert-fn (fn [content pos]
+     (let [before (subs content 0 pos)
+           after  (subs content pos)]
+       {:text (str before "~~~~" after) :cursor (+ pos 2)}))}
+   {:id :heading1    :label "# Heading 1"           :icon "H1" :insert-fn (fn [content pos]
+     (let [before (subs content 0 pos)
+           after  (subs content pos)]
+       {:text (str before "# " after) :cursor (+ pos 2)}))}
+   {:id :heading2    :label "## Heading 2"          :icon "H2" :insert-fn (fn [content pos]
+     (let [before (subs content 0 pos)
+           after  (subs content pos)]
+       {:text (str before "## " after) :cursor (+ pos 3)}))}
+   {:id :heading3    :label "### Heading 3"         :icon "H3" :insert-fn (fn [content pos]
+     (let [before (subs content 0 pos)
+           after  (subs content pos)]
+       {:text (str before "### " after) :cursor (+ pos 4)}))}])
+
+(defn filtered-slash-commands
+  "Return slash commands matching the current filter string."
+  [filter-str]
+  (if (empty? filter-str)
+    slash-commands
+    (let [f (str/lower-case filter-str)]
+      (filterv #(str/includes?
+                  (str/lower-case (:label %)) f)
+               slash-commands))))
+
+(defn show-slash-menu!
+  "Show the slash command menu at the cursor position."
+  [input nav-id note-id database-name]
+  (let [rect (.getBoundingClientRect input)
+        cursor-pos (.-selectionStart input)]
+    (reset! slash-menu-state
+      {:visible true
+       :x (.-left rect)
+       :y (+ (.-bottom rect) 4)
+       :filter ""
+       :selected-index 0
+       :nav-id nav-id
+       :note-id note-id
+       :database-name database-name
+       :slash-pos cursor-pos})))
+
+(defn hide-slash-menu! []
+  (swap! slash-menu-state assoc :visible false :filter "" :selected-index 0 :slash-pos nil))
+
+(defn execute-slash-command!
+  "Execute a slash command: insert its content and close the menu."
+  [cmd]
+  (let [{:keys [nav-id note-id database-name slash-pos]} @slash-menu-state
+        filter-str (:filter @slash-menu-state)
+        ;; Remove the "/" and filter text from content
+        current @editing-content
+        remove-start (max 0 (dec slash-pos))  ;; position of "/"
+        remove-end (+ slash-pos (count filter-str))
+        content-before (subs current 0 remove-start)
+        content-after (subs current (min remove-end (count current)))
+        clean-content (str content-before content-after)
+        insert-pos (count content-before)
+        result ((:insert-fn cmd) clean-content insert-pos)]
+    (if (:replace-all result)
+      (do
+        ;; For code blocks / mermaid: replace entire content
+        (reset! editing-content (:text result))
+        (d/transact! db/dsdb
+          [[:db/add [:id nav-id] :content (:text result)]])
+        (save-nav-content! nav-id note-id database-name
+          {:clear-editing? false :content (:text result)})
+        ;; Re-enter editing to refresh the block type
+        (reset! editing-nav-id nil)
+        (js/setTimeout
+          #(start-editing! nav-id (:text result) 0) 50))
+      (do
+        ;; For inline inserts: update content and set cursor
+        (reset! editing-content (:text result))
+        (reset! pending-selection {:nav-id nav-id
+                                    :start (:cursor result)
+                                    :end (:cursor result)
+                                    :focus? true})))
+    (hide-slash-menu!)))
 
 ;; State for context menu
 (defonce context-menu-state (atom {:visible false
@@ -765,6 +897,37 @@
     ;; Prevent global key handlers from stealing focus while editing.
     (.stopPropagation e)
     (cond
+      ;; === Slash menu keyboard handling ===
+      (and (:visible @slash-menu-state) (= key-code 40)) ;; Arrow Down
+      (do (.preventDefault e)
+          (let [cmds (filtered-slash-commands (:filter @slash-menu-state))
+                idx (:selected-index @slash-menu-state)]
+            (swap! slash-menu-state assoc :selected-index
+                   (min (dec (count cmds)) (inc idx)))))
+
+      (and (:visible @slash-menu-state) (= key-code 38)) ;; Arrow Up
+      (do (.preventDefault e)
+          (let [idx (:selected-index @slash-menu-state)]
+            (swap! slash-menu-state assoc :selected-index (max 0 (dec idx)))))
+
+      (and (:visible @slash-menu-state) (= key-code 13)) ;; Enter - select command
+      (do (.preventDefault e)
+          (let [cmds (filtered-slash-commands (:filter @slash-menu-state))
+                idx (:selected-index @slash-menu-state)]
+            (when (seq cmds)
+              (execute-slash-command! (nth cmds idx)))))
+
+      (and (:visible @slash-menu-state) (= key-code 27)) ;; Escape - close menu
+      (do (.preventDefault e)
+          (hide-slash-menu!))
+
+      (and (:visible @slash-menu-state) (= key-code 9)) ;; Tab - select command
+      (do (.preventDefault e)
+          (let [cmds (filtered-slash-commands (:filter @slash-menu-state))
+                idx (:selected-index @slash-menu-state)]
+            (when (seq cmds)
+              (execute-slash-command! (nth cmds idx)))))
+
       ;; Cmd/Ctrl + B/I/Y/H - inline markdown styling
       (and mod? (#{"b" "B"} key))
       (do
@@ -1036,11 +1199,35 @@
                                                   :start start
                                                   :end end
                                                   :focus? true})
-                       (reset! editing-content value)))
+                       (reset! editing-content value)
+                       ;; Slash command menu detection
+                       (let [slash-state @slash-menu-state]
+                         (if (:visible slash-state)
+                           ;; Menu is open: update filter from text after "/"
+                           (let [slash-p (:slash-pos slash-state)
+                                 filter-text (when (and slash-p (<= slash-p (count value)))
+                                               (subs value slash-p (min start (count value))))]
+                             (if (and filter-text
+                                      (not (str/includes? filter-text " "))
+                                      (>= start slash-p))
+                               (swap! slash-menu-state assoc
+                                      :filter filter-text
+                                      :selected-index 0)
+                               ;; Space or cursor moved before slash -> close
+                               (hide-slash-menu!)))
+                           ;; Menu is closed: check if "/" was just typed
+                           (when (and (pos? start)
+                                      (= "/" (subs value (dec start) start))
+                                      (or (= start 1) ;; at beginning
+                                          (= " " (subs value (- start 2) (dec start))))) ;; after space
+                             (show-slash-menu! input nav-id note-id database-name))))))
         ;; BUG FIX: Forward ALL key events to handle-key-down (including arrows)
         :on-key-down #(handle-key-down % nav-id note-id database-name)
         ;; BUG FIX: Save content on blur (prevents text loss)
-        :on-blur #(save-nav-content! nav-id note-id database-name)}]
+        :on-blur (fn [e]
+                   ;; Delay hide so menu click can fire before blur
+                   (js/setTimeout hide-slash-menu! 150)
+                   (save-nav-content! nav-id note-id database-name))}]
       ;; Non-editing view
       [:span.nav-content
        {:style {:cursor "text"
@@ -1195,6 +1382,68 @@
         (rum/with-key
           (nav-input db id actual-note-id actual-db-name)
           (or id dbid))))))
+
+;; Slash command dropdown menu - render at app level
+(rum/defc slash-command-menu < rum/reactive
+  []
+  (let [{:keys [visible x y filter selected-index]} (rum/react slash-menu-state)]
+    (when visible
+      (let [cmds (filtered-slash-commands filter)]
+        [:div.slash-menu
+         {:style {:position "fixed"
+                  :left (str x "px")
+                  :top (str y "px")
+                  :min-width "240px"
+                  :max-height "320px"
+                  :overflow-y "auto"
+                  :background "var(--surface-popover)"
+                  :border "1px solid var(--surface-border-strong)"
+                  :border-radius "8px"
+                  :box-shadow "0 8px 24px rgba(0,0,0,0.28)"
+                  :z-index 10001
+                  :padding "4px 0"}
+          :on-mouse-down (fn [e] (.preventDefault e))}
+         [:div.slash-menu-header
+          {:style {:padding "6px 12px"
+                   :color "#888"
+                   :font-size "11px"
+                   :border-bottom "1px solid var(--surface-border-strong)"}}
+          (if (empty? filter)
+            "Type to filter..."
+            (str "Filter: " filter))]
+         (if (empty? cmds)
+           [:div {:style {:padding "12px"
+                          :color "#666"
+                          :font-size "12px"
+                          :text-align "center"}}
+            "No matching commands"]
+           (map-indexed
+             (fn [idx cmd]
+               [:div.slash-menu-item
+                {:key (name (:id cmd))
+                 :class (when (= idx selected-index) "slash-menu-item-selected")
+                 :style {:padding "7px 12px"
+                         :cursor "pointer"
+                         :color "#fff"
+                         :font-size "13px"
+                         :display "flex"
+                         :align-items "center"
+                         :gap "10px"
+                         :background (when (= idx selected-index)
+                                       "var(--surface-hover)")}
+                 :on-mouse-enter (fn [_]
+                                   (swap! slash-menu-state assoc :selected-index idx))
+                 :on-click (fn [e]
+                             (.preventDefault e)
+                             (.stopPropagation e)
+                             (execute-slash-command! cmd))}
+                [:span.slash-menu-icon
+                 {:style {:width "24px"
+                          :text-align "center"
+                          :font-size "14px"}}
+                 (:icon cmd)]
+                [:span.slash-menu-label (:label cmd)]])
+             cmds))]))))
 
 ;; Global context menu - render at app level
 (rum/defc global-context-menu < rum/reactive

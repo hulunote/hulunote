@@ -487,4 +487,6 @@
       ;; Global title context menu
       (title-context-menu)
       ;; Global nav context menu (from render.cljs)
-      (render/global-context-menu)]]))
+      (render/global-context-menu)
+      ;; Slash command dropdown menu
+      (render/slash-command-menu)]]))
