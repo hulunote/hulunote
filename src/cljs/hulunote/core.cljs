@@ -74,9 +74,11 @@
        :diaries (diaries/diaries-page db)
        :all-notes (all-notes/all-notes-page db)
        :single-note (single-note/single-note-page db)
-       ;; MCP settings pages
-       :mcp-settings (mcp-ui/mcp-settings-panel db)
-       :mcp-settings-global (mcp-ui/mcp-settings-panel db)
+       ;; Settings page (unified)
+       :settings (settings/settings-page db)
+       ;; MCP settings pages (redirect to unified settings)
+       :mcp-settings (settings/settings-page db {:initial-tab :mcp-servers})
+       :mcp-settings-global (settings/settings-page db {:initial-tab :mcp-servers})
        ;; MCP chat pages
        :mcp-chat (chat-ui/chat-page db)
        :mcp-chat-global (chat-ui/chat-page db)
@@ -94,8 +96,6 @@
      (render/slash-command-menu)
      (comps/confirm-dialog)
      (comps/toast db)
-     ;; Settings modal - available globally
-     (settings/settings-modal)
      ;; Search modal - available globally
      (sidebar/search-modal)]))
 

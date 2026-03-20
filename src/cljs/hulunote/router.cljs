@@ -21,6 +21,7 @@
      ["/app/:database/note/:note-id" :single-note]
      ["/app/:database/mcp-settings" :mcp-settings]
      ["/app/:database/mcp-chat" :mcp-chat]
+     ["/app/:database/settings" :settings]
      ;; 首页：登录，主页，价格，下载
      ["/login" :login]
      ["/main" :main]
@@ -68,6 +69,11 @@
   (if database-name
     (switch-router! (str "/app/" database-name "/mcp-chat"))
     (switch-router! "/mcp-chat")))
+
+(defn go-to-settings!
+  "Navigate to settings page"
+  [database-name]
+  (switch-router! (str "/app/" database-name "/settings")))
 
 (defn is-route-in-login []
   (= (.-hash js/window.location)

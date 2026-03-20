@@ -129,8 +129,10 @@
               (swap! chat-state assoc :available-models sorted-models))))))))
 
 (defn open-settings! []
-  (swap! chat-state assoc :show-settings? true)
-  (load-models!))
+  (let [current-db @db/dsdb
+        {:keys [params]} (db/get-route current-db)
+        database-name (:database params)]
+    (router/go-to-settings! database-name)))
 
 ;; ==================== 保存设置 ====================
 
@@ -530,5 +532,4 @@
                      :cursor "pointer"}}
             "Clear conversation"]])]]]
 
-     ;; Settings modal
-     (settings-modal)]))
+     ]))

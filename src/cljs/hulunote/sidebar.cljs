@@ -5,7 +5,6 @@
             [hulunote.db :as db]
             [hulunote.http :as http]
             [hulunote.menu :as menu]
-            [hulunote.settings :as settings]
             [hulunote.storage :as storage]
             [hulunote.util :as u]
             [hulunote.router :as router]
@@ -386,7 +385,8 @@
   (case route-name
     :all-notes (router/go-to-all-notes! database-name)
     :graph (router/go-to-graph! database-name)
-    :mcp-settings (router/go-to-mcp-settings! database-name)
+    :mcp-settings (router/go-to-settings! database-name)
+    :settings (router/go-to-settings! database-name)
     :mcp-chat (router/go-to-mcp-chat! database-name)
     :diaries (router/go-to-diaries! database-name)
     ;; single-note/show cannot be preserved across databases reliably.
@@ -398,12 +398,12 @@
   (http/database-data-load database-name)
   (navigate-to-database! route-name database-name))
 
-(defn user-menu-items []
+(defn user-menu-items [database-name]
   [{:label "Settings"
     :icon (settings-menu-icon)
     :on-click (fn [_]
                 (hide-sidebar-user-menu!)
-                (settings/open-settings!))}
+                (router/go-to-settings! database-name))}
    {:label "Logout"
     :icon (logout-menu-icon)
     :danger? true
@@ -472,7 +472,7 @@
            [[:div {:style {:height "1px"
                            :background "var(--surface-border-strong)"
                            :margin "6px 0"}}]]
-           (for [{:keys [label icon danger? on-click]} (user-menu-items)]
+           (for [{:keys [label icon danger? on-click]} (user-menu-items database-name)]
              (menu/menu-item
                {:icon icon
                 :danger? danger?
@@ -623,11 +623,11 @@
                         #(router/go-to-graph! database-name)
                         (= route-name :graph))
 
-          (sidebar-item [:img.sidebar-symbol-icon {:src (u/asset-path "/img/icons/tune.svg")}] "MCP Settings"
-                        #(router/go-to-mcp-settings! database-name)
-                        (= route-name :mcp-settings))
+          #_(sidebar-item [:img.sidebar-symbol-icon {:src (u/asset-path "/img/icons/tune.svg")}] "Settings"
+                        #(router/go-to-settings! database-name)
+                        (= route-name :settings))
 
-          (sidebar-item [:img.sidebar-symbol-icon {:src (u/asset-path "/img/icons/chat_bubble.svg")}] "MCP Chat"
+          (sidebar-item [:img.sidebar-symbol-icon {:src (u/asset-path "/img/icons/chat_bubble.svg")}] "AI Chat"
                         #(router/go-to-mcp-chat! database-name)
                         (= route-name :mcp-chat))
 
