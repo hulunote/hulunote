@@ -39,7 +39,7 @@
          [:div {:style {:font-weight "600"
                         :color "#fa8c16"
                         :margin-bottom "4px"}}
-          "MCP is only available in Electron"]
+          "MCP is only available in Hulunote PC App"]
          [:div {:style {:color "rgba(250,140,22,0.8)"
                         :font-size "13px"}}
           "Please use the Hulunote desktop application to configure MCP servers."]]])
