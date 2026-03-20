@@ -4,8 +4,8 @@
             [hulunote.chat :as chat]
             [hulunote.mcp :as mcp]
             [hulunote.mcp-state :as mcp-state]
+            [hulunote.settings :as settings]
             [hulunote.util :as u]
-            [hulunote.router :as router]
             [hulunote.db :as db]
             [hulunote.sidebar :as sidebar]
             [cljs.core.async :as a :refer [<! go]]
@@ -129,10 +129,7 @@
               (swap! chat-state assoc :available-models sorted-models))))))))
 
 (defn open-settings! []
-  (let [current-db @db/dsdb
-        {:keys [params]} (db/get-route current-db)
-        database-name (:database params)]
-    (router/go-to-settings! database-name)))
+  (settings/open-settings! :chat))
 
 ;; ==================== 保存设置 ====================
 

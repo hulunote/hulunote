@@ -549,9 +549,6 @@
      ;; Create modal
      (create-modal)
 
-     ;; Settings modal
-     (settings/settings-modal)
-
      ;; Footer
      [:div
       {:style {:background "#1a1a2e"
