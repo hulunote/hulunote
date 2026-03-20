@@ -105,6 +105,31 @@
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }
+.hulunote-cm-lang-select {
+  background: transparent;
+  color: #888;
+  border: 1px solid transparent;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  cursor: pointer;
+  outline: none;
+  font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+  padding: 2px 4px;
+  border-radius: 3px;
+}
+.hulunote-cm-lang-select:hover {
+  border-color: #555;
+  background: rgba(255,255,255,0.05);
+}
+.hulunote-cm-lang-select:focus {
+  border-color: #667eea;
+}
+.hulunote-cm-lang-select option {
+  background: #1a1c24;
+  color: #e0e0e0;
+}
 ")
 
 (defn- ensure-css!
@@ -162,6 +187,29 @@
    "md"         "markdown"
    "markdown"   "markdown"})
 
+(def ^:private selectable-languages
+  "Languages available in the code block dropdown [value label]"
+  [["js" "JavaScript"]
+   ["ts" "TypeScript"]
+   ["json" "JSON"]
+   ["css" "CSS"]
+   ["clj" "Clojure"]
+   ["html" "HTML"]
+   ["xml" "XML"]
+   ["md" "Markdown"]])
+
+(def ^:private lang-canonical
+  "Maps language aliases to canonical select values"
+  {"javascript" "js" "typescript" "ts"
+   "cljs" "clj" "clojure" "clj"
+   "markdown" "md" "htmlmixed" "html"})
+
+(defn- canonical-lang
+  "Normalize a language tag to its canonical select value"
+  [lang]
+  (let [l (some-> lang str/lower-case)]
+    (get lang-canonical l l)))
+
 (defn- resolve-mode [lang]
   (get lang->mode (some-> lang str/lower-case) nil))
 
@@ -184,27 +232,38 @@
 (defn create-editor!
   "Create a CodeMirror editor in the given container element.
    Options:
-     :code       - initial code string
-     :lang       - language string (js, css, clojure, etc.)
-     :read-only? - if true, editor is not editable
-     :on-change  - fn called with new code string on every change
-     :on-blur    - fn called with final code string when editor loses focus
-     :on-escape  - fn called when Escape is pressed"
-  [container {:keys [code lang read-only? on-change on-blur on-escape]}]
+     :code           - initial code string
+     :lang           - language string (js, css, clojure, etc.)
+     :read-only?     - if true, editor is not editable
+     :on-change      - fn called with new code string on every change
+     :on-blur        - fn called with (code, lang) when editor loses focus
+     :on-escape      - fn called when Escape is pressed
+     :on-lang-change - fn called with (new-lang, current-code) when language is changed"
+  [container {:keys [code lang read-only? on-change on-blur on-escape on-lang-change]}]
   (ensure-css!)
-  (let [mode (resolve-mode lang)
-        wrapper (.createElement js/document "div")]
+  (let [current-lang (atom (or lang "js"))
+        mode (resolve-mode lang)
+        wrapper (.createElement js/document "div")
+        badge (.createElement js/document "div")
+        select (.createElement js/document "select")]
     (.setAttribute wrapper "class" "hulunote-cm-wrapper")
     ;; Stop click from propagating to the nav-input's on-click (which would start text editing)
     (.addEventListener wrapper "click"
       (fn [e] (.stopPropagation e)))
 
-    ;; Language badge
-    (let [badge (.createElement js/document "div")]
-      (.setAttribute badge "class" "hulunote-cm-lang-badge")
-      (set! (.-innerHTML badge)
-        (str "<span>" (or lang "code") "</span>"))
-      (.appendChild wrapper badge))
+    ;; Language badge with dropdown selector
+    (.setAttribute badge "class" "hulunote-cm-lang-badge")
+    (.setAttribute select "class" "hulunote-cm-lang-select")
+    (let [canonical (canonical-lang (or lang "js"))]
+      (doseq [[value label] selectable-languages]
+        (let [opt (.createElement js/document "option")]
+          (set! (.-value opt) value)
+          (set! (.-textContent opt) label)
+          (when (= value canonical)
+            (set! (.-selected opt) true))
+          (.appendChild select opt))))
+    (.appendChild badge select)
+    (.appendChild wrapper badge)
 
     ;; CodeMirror container
     (let [cm-container (.createElement js/document "div")]
@@ -229,6 +288,16 @@
                                                 (.indentSelection cm "add")
                                                 (let [spaces (apply str (repeat (.-tabSize (.getOption cm "indentUnit")) " "))]
                                                   (.replaceSelection cm "  " "end"))))}})]
+        ;; Language change handler
+        (.addEventListener select "change"
+          (fn [_]
+            (let [new-lang (.-value select)
+                  new-mode (resolve-mode new-lang)]
+              (reset! current-lang new-lang)
+              (.setOption cm "mode" new-mode)
+              (when on-lang-change
+                (on-lang-change new-lang (.getValue cm))))))
+
         ;; Events
         (when on-change
           (.on cm "change"
@@ -237,7 +306,7 @@
         (when on-blur
           (.on cm "blur"
             (fn [_cm _e]
-              (on-blur (.getValue cm)))))
+              (on-blur (.getValue cm) @current-lang))))
 
         ;; Auto-focus when editable
         (when-not read-only?

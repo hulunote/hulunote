@@ -65,6 +65,35 @@
   font-size: 13px;
   padding: 8px;
 }
+.hulunote-mermaid-edit-btn {
+  cursor: pointer;
+  color: #667eea;
+  font-size: 11px;
+  padding: 2px 8px;
+  border-radius: 3px;
+  border: 1px solid transparent;
+  background: transparent;
+  font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+  font-weight: 500;
+}
+.hulunote-mermaid-edit-btn:hover {
+  border-color: #667eea;
+  background: rgba(102, 126, 234, 0.1);
+}
+.hulunote-mermaid-editor {
+  width: 100%;
+  min-height: 120px;
+  background: #1e2028;
+  color: #e0e0e0;
+  border: none;
+  padding: 12px;
+  font-family: 'SF Mono', 'Fira Code', 'JetBrains Mono', Menlo, Monaco, monospace;
+  font-size: 13px;
+  line-height: 1.6;
+  resize: vertical;
+  outline: none;
+  box-sizing: border-box;
+}
 ")
 
 (defonce ^:private css-injected? (atom false))
@@ -100,20 +129,29 @@
            :gantt #js {:useMaxWidth true}})
     (reset! initialized? true)))
 
+(defn- render-diagram-body!
+  "Render mermaid diagram SVG into a body element."
+  [body-el diagram-text]
+  (if @initialized?
+    (let [render-id (str "mermaid-" (swap! render-counter inc))]
+      (-> (.render js/mermaid render-id diagram-text)
+          (.then (fn [result]
+                   (set! (.-innerHTML body-el) (.-svg result))))
+          (.catch (fn [err]
+                    (let [error-div (.createElement js/document "div")]
+                      (.setAttribute error-div "class" "hulunote-mermaid-error")
+                      (set! (.-textContent error-div) (str "Mermaid error: " (.-message err)))
+                      (set! (.-innerHTML body-el) "")
+                      (.appendChild body-el error-div))))))
+    (do
+      (set! (.-innerHTML body-el) "<div class='hulunote-mermaid-loading'>Loading mermaid...</div>")
+      (swap! pending-renders conj [body-el diagram-text]))))
+
 (defn- flush-pending-renders! []
   (let [renders @pending-renders]
     (reset! pending-renders [])
     (doseq [[body-el diagram-text] renders]
-      (let [render-id (str "mermaid-" (swap! render-counter inc))]
-        (-> (.render js/mermaid render-id diagram-text)
-            (.then (fn [result]
-                     (set! (.-innerHTML body-el) (.-svg result))))
-            (.catch (fn [err]
-                      (let [error-div (.createElement js/document "div")]
-                        (.setAttribute error-div "class" "hulunote-mermaid-error")
-                        (set! (.-textContent error-div) (str "Mermaid error: " (.-message err)))
-                        (set! (.-innerHTML body-el) "")
-                        (.appendChild body-el error-div)))))))))
+      (render-diagram-body! body-el diagram-text))))
 
 (defn- load-mermaid-script! []
   (when-not @loaded?
@@ -144,34 +182,55 @@
       (str/trim body))))
 
 (defn render-mermaid!
-  "Render mermaid diagram into the given container element."
-  [container diagram-text]
+  "Render mermaid diagram into the given container element.
+   Options:
+     :on-save - fn called with new diagram text when edit is saved"
+  [container diagram-text & [{:keys [on-save]}]]
   (ensure-css!)
   (load-mermaid-script!)
   (let [wrapper (.createElement js/document "div")
         badge (.createElement js/document "div")
-        body (.createElement js/document "div")]
+        body (.createElement js/document "div")
+        current-text (atom diagram-text)
+        editing? (atom false)]
     (.setAttribute wrapper "class" "hulunote-mermaid-wrapper")
     (.setAttribute badge "class" "hulunote-mermaid-badge")
     (set! (.-innerHTML badge) "<span>MERMAID</span>")
     (.setAttribute body "class" "hulunote-mermaid-body")
+
+    ;; Add edit/done toggle button when on-save is provided
+    (when on-save
+      (let [edit-btn (.createElement js/document "span")]
+        (.setAttribute edit-btn "class" "hulunote-mermaid-edit-btn")
+        (set! (.-textContent edit-btn) "Edit")
+        (.addEventListener edit-btn "click"
+          (fn [e]
+            (.stopPropagation e)
+            (if @editing?
+              ;; Exit edit mode → save and re-render diagram
+              (let [textarea (.querySelector body "textarea")
+                    new-text (when textarea (str/trim (.-value textarea)))]
+                (when (and new-text (seq new-text))
+                  (reset! current-text new-text)
+                  (on-save new-text))
+                (reset! editing? false)
+                (set! (.-textContent edit-btn) "Edit")
+                (render-diagram-body! body @current-text))
+              ;; Enter edit mode → show textarea with diagram source
+              (let [textarea (.createElement js/document "textarea")]
+                (.setAttribute textarea "class" "hulunote-mermaid-editor")
+                (set! (.-value textarea) @current-text)
+                (set! (.-innerHTML body) "")
+                (.appendChild body textarea)
+                (reset! editing? true)
+                (set! (.-textContent edit-btn) "Done")
+                (.focus textarea)))))
+        (.appendChild badge edit-btn)))
+
     (.appendChild wrapper badge)
     (.appendChild wrapper body)
     (set! (.-innerHTML container) "")
     (.appendChild container wrapper)
-    (if @initialized?
-      ;; Mermaid is ready, render immediately
-      (let [render-id (str "mermaid-" (swap! render-counter inc))]
-        (-> (.render js/mermaid render-id diagram-text)
-            (.then (fn [result]
-                     (set! (.-innerHTML body) (.-svg result))))
-            (.catch (fn [err]
-                      (let [error-div (.createElement js/document "div")]
-                        (.setAttribute error-div "class" "hulunote-mermaid-error")
-                        (set! (.-textContent error-div) (str "Mermaid error: " (.-message err)))
-                        (set! (.-innerHTML body) "")
-                        (.appendChild body error-div))))))
-      ;; Still loading, queue for later
-      (do
-        (set! (.-innerHTML body) "<div class='hulunote-mermaid-loading'>Loading mermaid...</div>")
-        (swap! pending-renders conj [body diagram-text])))))
+
+    ;; Initial diagram render
+    (render-diagram-body! body diagram-text)))

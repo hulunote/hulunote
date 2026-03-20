@@ -1266,24 +1266,34 @@
                (cm/create-editor! el
                  {:code      code
                   :lang      lang
-                  :on-blur   (fn [new-code]
-                               (let [new-content (cm/wrap-code new-code lang)]
+                  :on-blur   (fn [new-code current-lang]
+                               (let [new-content (cm/wrap-code new-code current-lang)]
                                  (save-nav-content! nav-id note-id database-name
                                    {:clear-editing? true
                                     :content new-content})))
+                  :on-lang-change (fn [new-lang current-code]
+                                    (let [new-content (cm/wrap-code current-code new-lang)]
+                                      (save-nav-content! nav-id note-id database-name
+                                        {:clear-editing? false
+                                         :content new-content})))
                   :on-escape (fn []
                                (cancel-editing!))})))
       :style {:width "100%"}
       :on-click (fn [e] (.stopPropagation e))}]))
 
 (rum/defc mermaid-block-editor
-  "Renders a mermaid diagram block. Clicking enters edit mode via CodeMirror."
+  "Renders a mermaid diagram block. Click Edit to modify the diagram source."
   [nav-id content note-id database-name]
   (let [diagram-text (mermaid/parse-mermaid-block content)]
     [:div.hulunote-mermaid-block
      {:ref (fn [el]
              (when (and el (zero? (.-childElementCount el)))
-               (mermaid/render-mermaid! el diagram-text)))
+               (mermaid/render-mermaid! el diagram-text
+                 {:on-save (fn [new-text]
+                             (let [new-content (str "```mermaid\n" new-text "\n```")]
+                               (save-nav-content! nav-id note-id database-name
+                                 {:clear-editing? false
+                                  :content new-content})))})))
       :style {:width "100%"}
       :on-click (fn [e] (.stopPropagation e))}]))
 
