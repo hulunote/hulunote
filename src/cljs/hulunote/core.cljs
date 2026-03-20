@@ -95,6 +95,7 @@
      (render/global-context-menu)
      ;; Slash command dropdown menu
      (render/slash-command-menu)
+     (settings/settings-modal)
      (comps/confirm-dialog)
      (comps/toast db)
      ;; Search modal - available globally

@@ -5,6 +5,7 @@
             [hulunote.db :as db]
             [hulunote.http :as http]
             [hulunote.menu :as menu]
+            [hulunote.settings-state :as settings-state]
             [hulunote.storage :as storage]
             [hulunote.util :as u]
             [hulunote.router :as router]
@@ -403,7 +404,7 @@
     :icon (settings-menu-icon)
     :on-click (fn [_]
                 (hide-sidebar-user-menu!)
-                (router/go-to-settings! database-name))}
+                (settings-state/open-settings!))}
    {:label "Logout"
     :icon (logout-menu-icon)
     :danger? true
