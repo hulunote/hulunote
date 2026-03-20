@@ -28,7 +28,8 @@
    [hulunote.chat-ui :as chat-ui]
    [hulunote.right-sidebar :as right-sidebar]
    [hulunote.settings :as settings]
-   [hulunote.plugin :as plugin])
+   [hulunote.plugin :as plugin]
+   [hulunote.ws :as ws])
   (:require-macros
    [hulunote.share :refer [profile]])
   (:import goog.History))
@@ -137,6 +138,8 @@
                (exists? js/window.electronAPI)
                (.-setAuthToken js/window.electronAPI))
       (.setAuthToken js/window.electronAPI token)))
+  ;; Initialize WebSocket for AI integration (real-time note sync)
+  (ws/init!)
   (hook-browser-navigation!)
   (render))
 
