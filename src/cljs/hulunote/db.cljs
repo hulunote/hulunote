@@ -304,6 +304,46 @@
     {}
     backlinks))
 
+(defn search-notes
+  "Search notes by title. Returns up to `limit` results sorted by updated-at desc."
+  ([conn query] (search-notes conn query 20))
+  ([conn query limit]
+   (if (or (nil? query) (empty? query))
+     []
+     (let [q-lower (clojure.string/lower-case query)
+           note-eids (d/q '[:find [?e ...]
+                             :where [?e :hulunote-notes/id]]
+                       conn)
+           notes (d/pull-many conn
+                   '[:hulunote-notes/id
+                     :hulunote-notes/title
+                     :hulunote-notes/root-nav-id
+                     :hulunote-notes/database-id
+                     :hulunote-notes/updated-at
+                     :hulunote-notes/created-at]
+                   note-eids)]
+       (->> notes
+            (filter (fn [note]
+                      (when-let [title (:hulunote-notes/title note)]
+                        (clojure.string/includes?
+                          (clojure.string/lower-case title) q-lower))))
+            (map (fn [note]
+                   (let [updated-at (or (:hulunote-notes/updated-at note)
+                                        (:updated-at note))
+                         created-at (or (:hulunote-notes/created-at note)
+                                        (:created-at note))
+                         sort-date (or updated-at created-at "1970-01-01")]
+                     {:note-id (:hulunote-notes/id note)
+                      :note-title (:hulunote-notes/title note)
+                      :root-nav-id (:hulunote-notes/root-nav-id note)
+                      :database-id (:hulunote-notes/database-id note)
+                      :updated-at updated-at
+                      :created-at created-at
+                      :sort-date sort-date})))
+            (sort-by :sort-date #(compare %2 %1))
+            (take limit)
+            vec)))))
+
 ;; ==================== Right Sidebar State ====================
 
 (defonce right-sidebar-open? (atom false))

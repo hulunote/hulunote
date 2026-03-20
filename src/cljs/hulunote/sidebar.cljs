@@ -24,6 +24,11 @@
 ;; State to track if we've already created today's note this session
 (defonce daily-note-created? (atom #{}))
 
+;; ==================== Search Modal State ====================
+(defonce search-state (atom {:visible false
+                              :query ""
+                              :selected-index 0}))
+
 (defn clear-sidebar-peek-timeout! []
   (when-let [timeout-id @sidebar-peek-timeout]
     (js/clearTimeout timeout-id)
@@ -517,8 +522,8 @@
    [:div.app-topbar-center]
    [:div.app-topbar-right
    [:button.app-topbar-btn
-     {:title "Search (placeholder)"
-      :on-click #()}
+     {:title "Search (Cmd+K)"
+      :on-click #(show-search!)}
      [:img.app-topbar-icon {:src (u/asset-path "/img/icons/search.svg")}]]
     (when (seq more-menu-items)
       [:div.topbar-more-menu-wrapper
@@ -650,3 +655,89 @@
 
         [:div.sidebar-bottom-slot
          (sidebar-footer-brand)]])]))
+
+;; ==================== Search Modal ====================
+
+(defn show-search! []
+  (reset! search-state {:visible true :query "" :selected-index 0}))
+
+(defn hide-search! []
+  (reset! search-state {:visible false :query "" :selected-index 0}))
+
+(defn search-navigate! [database-name note-id]
+  (when (and database-name note-id)
+    (router/go-to-note! database-name note-id)
+    (hide-search!)))
+
+(rum/defc search-modal < rum/reactive
+  {:did-mount (fn [state]
+                ;; Add global Cmd+K / Ctrl+K listener
+                (let [handler (fn [e]
+                                (when (and (or (.-metaKey e) (.-ctrlKey e))
+                                           (= (.-key e) "k"))
+                                  (.preventDefault e)
+                                  (if (:visible @search-state)
+                                    (hide-search!)
+                                    (show-search!))))]
+                  (.addEventListener js/document "keydown" handler)
+                  (assoc state ::global-handler handler)))
+   :will-unmount (fn [state]
+                   (when-let [handler (::global-handler state)]
+                     (.removeEventListener js/document "keydown" handler))
+                   state)}
+  []
+  (let [{:keys [visible query selected-index]} (rum/react search-state)
+        db (rum/react db/dsdb)
+        current-route (db/get-route db)
+        database-name (get-in current-route [:params :database])
+        results (when (and visible (not (str/blank? query)))
+                  (db/search-notes db query 20))
+        results (or results [])]
+    (when visible
+      [:div.search-modal-overlay
+       {:on-click (fn [e]
+                    (when (= (.-target e) (.-currentTarget e))
+                      (hide-search!)))}
+       [:div.search-modal
+        [:div.search-modal-input-wrapper
+         [:img.search-modal-icon {:src (u/asset-path "/img/icons/search.svg")}]
+         [:input.search-modal-input
+          {:type "text"
+           :placeholder "Search notes..."
+           :auto-focus true
+           :value query
+           :on-change (fn [e]
+                        (let [v (.. e -target -value)]
+                          (swap! search-state assoc :query v :selected-index 0)))
+           :on-key-down (fn [e]
+                          (case (.-key e)
+                            "Escape" (hide-search!)
+                            "ArrowDown" (do (.preventDefault e)
+                                            (swap! search-state update :selected-index
+                                              (fn [i] (min (inc i) (max 0 (dec (count results)))))))
+                            "ArrowUp" (do (.preventDefault e)
+                                          (swap! search-state update :selected-index
+                                            (fn [i] (max (dec i) 0))))
+                            "Enter" (when-let [item (get results selected-index)]
+                                      (search-navigate! database-name (:note-id item)))
+                            nil))}]
+         [:span.search-modal-shortcut "ESC"]]
+        [:div.search-modal-results
+         (if (str/blank? query)
+           [:div.search-modal-hint "Type to search notes by title"]
+           (if (empty? results)
+             [:div.search-modal-hint "No results found"]
+             (map-indexed
+               (fn [idx {:keys [note-id note-title updated-at]}]
+                 [:div.search-modal-item
+                  {:key note-id
+                   :class (when (= idx selected-index) "search-modal-item-selected")
+                   :ref (fn [el]
+                          (when (and el (= idx selected-index))
+                            (.scrollIntoView el #js {:block "nearest"})))
+                   :on-mouse-enter #(swap! search-state assoc :selected-index idx)
+                   :on-click #(search-navigate! database-name note-id)}
+                  [:div.search-modal-item-title note-title]
+                  (when updated-at
+                    [:div.search-modal-item-date updated-at])])
+               results)))]]])))

@@ -95,7 +95,9 @@
      (comps/confirm-dialog)
      (comps/toast db)
      ;; Settings modal - available globally
-     (settings/settings-modal)]))
+     (settings/settings-modal)
+     ;; Search modal - available globally
+     (sidebar/search-modal)]))
 
 (defn hook-browser-navigation! []
   (doto (History.)
