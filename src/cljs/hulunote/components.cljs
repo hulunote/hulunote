@@ -116,6 +116,56 @@
                            (prn "Warning: No root-nav-id returned for bi-directional link note, navigating anyway")
                            (router/go-to-note! database-name id)))))}])))))
 
+(defn ensure-note-exists-by-title!
+  "Ensure a note exists by title in the current database without navigation.
+   Calls optional callback with {:id ... :title ... :exists? bool}."
+  ([title]
+   (ensure-note-exists-by-title! title nil))
+  ([title callback]
+   (let [database-name (get-current-database-name)
+         existing-note-id (find-note-by-title @db/dsdb title)
+         op-fn (fn [note-info]
+                 (let [id (or (get-value note-info :hulunote-notes/id)
+                              (get-value note-info :id)
+                              (:id note-info))
+                       root-nav-id (or (get-value note-info :hulunote-notes/root-nav-id)
+                                       (get-value note-info :root-nav-id)
+                                       (:root_nav_id note-info)
+                                       (:root-nav-id note-info))
+                       tx-data (cond-> [{:hulunote-notes/id id
+                                         :hulunote-notes/title title
+                                         :hulunote-notes/database-id database-name
+                                         :hulunote-notes/is-delete false
+                                         :hulunote-notes/is-public false
+                                         :hulunote-notes/is-shortcut false
+                                         :hulunote-notes/updated-at (.toISOString (js/Date.))}]
+                                  root-nav-id
+                                  (conj {:id root-nav-id
+                                         :content "ROOT"
+                                         :hulunote-note id
+                                         :same-deep-order 0
+                                         :is-display true
+                                         :origin-parid db/root-id})
+                                  root-nav-id
+                                  (update 0 assoc :hulunote-notes/root-nav-id root-nav-id))]
+                   (when id
+                     (d/transact! db/dsdb tx-data)
+                     (when callback
+                       (callback {:id id
+                                  :title title
+                                  :exists? false})))))]
+     (when database-name
+       (if existing-note-id
+         (when callback
+           (callback {:id existing-note-id
+                      :title title
+                      :exists? true}))
+         (re-frame/dispatch-sync
+           [:create-note
+            {:database-name database-name
+             :title title
+             :op-fn op-fn}]))))))
+
 ;; Header for editor pages - fixed at top with proper height
 (rum/defc header-editor []
   [:div.td-navbar
