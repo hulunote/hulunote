@@ -1,8 +1,12 @@
 (ns hulunote.sidebar
-  (:require [datascript.core :as d]
+  (:require [clojure.string :as str]
+            [datascript.core :as d]
             [rum.core :as rum]
             [hulunote.db :as db]
+            [hulunote.http :as http]
             [hulunote.menu :as menu]
+            [hulunote.settings :as settings]
+            [hulunote.storage :as storage]
             [hulunote.util :as u]
             [hulunote.router :as router]
             [hulunote.render :as render]
@@ -14,6 +18,7 @@
 (defonce sidebar-peek-open? (atom false))
 (defonce sidebar-peek-timeout (atom nil))
 (defonce topbar-more-menu-open? (atom false))
+(defonce sidebar-user-menu-open? (atom false))
 
 ;; State to track if we've already created today's note this session
 (defonce daily-note-created? (atom #{}))
@@ -50,7 +55,14 @@
 (defn hide-topbar-more-menu! []
   (reset! topbar-more-menu-open? false))
 
+(defn hide-sidebar-user-menu! []
+  (reset! sidebar-user-menu-open? false))
+
+(defn toggle-sidebar-user-menu! []
+  (swap! sidebar-user-menu-open? not))
+
 (defn toggle-topbar-more-menu! []
+  (hide-sidebar-user-menu!)
   (swap! topbar-more-menu-open? not))
 
 (defn generate-note-title
@@ -301,25 +313,115 @@
    [:path {:d "M10 11v6"}]
    [:path {:d "M14 11v6"}]])
 
+(defn settings-menu-icon []
+  [:svg {:viewBox "0 0 24 24"
+         :fill "none"
+         :stroke "currentColor"
+         :stroke-width "1.8"
+         :stroke-linecap "round"
+         :stroke-linejoin "round"}
+   [:circle {:cx "12" :cy "12" :r "3"}]
+   [:path {:d "M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"}]])
+
+(defn logout-menu-icon []
+  [:svg {:viewBox "0 0 24 24"
+         :fill "none"
+         :stroke "currentColor"
+         :stroke-width "1.8"
+         :stroke-linecap "round"
+         :stroke-linejoin "round"}
+   [:path {:d "M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"}]
+   [:polyline {:points "16 17 21 12 16 7"}]
+   [:line {:x1 "21" :y1 "12" :x2 "9" :y2 "12"}]])
+
+(defn user-menu-items []
+  [{:label "Settings"
+    :icon (settings-menu-icon)
+    :on-click (fn [_]
+                (hide-sidebar-user-menu!)
+                (settings/open-settings!))}
+   {:label "Logout"
+    :icon (logout-menu-icon)
+    :danger? true
+    :on-click (fn [_]
+                (hide-sidebar-user-menu!)
+                (reset! storage/jwt-auth {})
+                (router/switch-router! "/login"))}])
+
+(rum/defc sidebar-user-trigger < rum/reactive
+  [{:keys [database-name class]}]
+  (let [menu-open? (rum/react sidebar-user-menu-open?)
+        hulunote-info (:hulunote @storage/jwt-auth)
+        avatar-url (:accounts/avatar hulunote-info)
+        username (or (:accounts/nickname hulunote-info)
+                     (first (str/split (or (:accounts/mail hulunote-info) "") #"@"))
+                     "User")
+        avatar-src (when avatar-url
+                     (if (str/starts-with? avatar-url "http")
+                       avatar-url
+                       (str (http/http-uri "") avatar-url)))]
+    [:div.sidebar-user-menu-anchor
+     {:class class
+      :on-click u/stop-click-bubble}
+     [:button.sidebar-user-trigger
+      {:class (when menu-open? "active")
+       :title database-name
+       :on-click (fn [e]
+                   (u/stop-click-bubble e)
+                   (hide-topbar-more-menu!)
+                   (toggle-sidebar-user-menu!))}
+      [:span.sidebar-user-avatar
+       (if avatar-src
+         [:img {:src avatar-src
+                :style {:width "100%" :height "100%" :object-fit "cover"}}]
+         [:span.sidebar-user-avatar-fallback
+          (-> username first str/upper-case)])]
+      [:span.sidebar-user-meta
+       [:span.sidebar-user-database-name database-name]]
+      [:svg.sidebar-user-chevron
+       {:viewBox "0 0 24 24"
+        :fill "currentColor"}
+       [:path {:d "M7 10l5 5 5-5z"}]]]
+     (when menu-open?
+       (into
+         (menu/menu-popover
+           {:class "sidebar-user-menu"
+            :style {:position "absolute"
+                    :top "calc(100% + 8px)"
+                    :left "0"
+                    :min-width "188px"}})
+         (for [{:keys [label icon danger? on-click]} (user-menu-items)]
+           (menu/menu-item
+             {:icon icon
+              :danger? danger?
+              :on-click on-click}
+             label))))]))
+
+(rum/defc sidebar-footer-brand []
+  [:div.sidebar-footer-brand
+   [:img {:src (u/asset-path "/img/hulunote.webp")
+          :width "28px"
+          :height "28px"
+          :style {:border-radius "50%"}}]
+   [:span.sidebar-footer-brand-text "HULUNOTE"]])
+
 (rum/defc app-top-bar < rum/reactive
   "Global top bar for app pages."
    [{:keys [more-menu-items]}]
   (let [collapsed? (rum/react sidebar-collapsed?)
         right-sidebar-open? (rum/react db/right-sidebar-open?)
+        current-route (db/get-route (rum/react db/dsdb))
+        database-name (get-in current-route [:params :database])
         more-menu-open? (rum/react topbar-more-menu-open?)
         more-menu-items (or more-menu-items [])]
     ;; Set topbar height on :root so layout (sidebar, page-wrapper) adapts
-    (.setProperty (.-style (.-documentElement js/document)) "--app-topbar-height" "40px")
+    (.setProperty (.-style (.-documentElement js/document)) "--app-topbar-height" "44px")
     [:div.app-topbar
      {:class (when-not collapsed? "with-sidebar")}
      (when-not collapsed?
        [:div.app-topbar-brand
-       [:div.app-topbar-brand-main
-         [:img {:src (u/asset-path "/img/hulunote.webp")
-                :width "24px"
-                :height "24px"
-                :style {:border-radius "50%"}}]
-         [:span.app-topbar-brand-text "HULUNOTE"]]])
+        (sidebar-user-trigger {:database-name database-name
+                               :class "sidebar-user-trigger-topbar"})])
      [:div.app-topbar-left
     [:button.app-topbar-btn
      {:title (if collapsed? "Show Sidebar" "Hide Sidebar")
@@ -398,39 +500,35 @@
                          (close-sidebar-peek!))}
 
      (when visible?
-        [:<>
-         ;; Sidebar header with logo only in temporary peek mode
-         (when collapsed?
-           [:div.sidebar-header
-            [:div.flex.items-center
-             [:img {:src (u/asset-path "/img/hulunote.webp")
-                    :width "24px"
-                    :style {:border-radius "50%"}}]
-             [:span.sidebar-title.ml2 "HULUNOTE"]]])
+       [:<>
+        ;; Sidebar header is only shown when peeking the collapsed sidebar.
+        (when collapsed?
+          [:div.sidebar-header
+           (sidebar-user-trigger {:database-name database-name
+                                  :class "sidebar-user-trigger-sidebar"})])
 
-         ;; Today's Daily Note button
-         [:button.daily-note-btn
-          {:style {:width "100%"
-                   :background "linear-gradient(135deg, #667eea 0%, #764ba2 100%)"
-                   :color "#fff"
-                   :border "none"
-                   :border-radius "8px"
-                   :padding "10px 16px"
-                   :font-size "14px"
-                   :font-weight "500"
-                   :cursor "pointer"
-                   :display "none";;"flex"
-                   :align-items "center"
-                   :justify-content "center"
-                   :margin-bottom "16px"
-                   :transition "all 0.2s ease"}
-           :on-click #(ensure-daily-note! database-name {:navigate? true})}
-          [:span {:style {:margin-right "8px"}} "📅"]
-          (str "Today: " (get-today-title))]
+        ;; Today's Daily Note button
+        [:button.daily-note-btn
+         {:style {:width "100%"
+                  :background "linear-gradient(135deg, #667eea 0%, #764ba2 100%)"
+                  :color "#fff"
+                  :border "none"
+                  :border-radius "8px"
+                  :padding "10px 16px"
+                  :font-size "14px"
+                  :font-weight "500"
+                  :cursor "pointer"
+                  :display "none"
+                  :align-items "center"
+                  :justify-content "center"
+                  :margin-bottom "16px"
+                  :transition "all 0.2s ease"}
+          :on-click #(ensure-daily-note! database-name {:navigate? true})}
+         [:span {:style {:margin-right "8px"}} "📅"]
+         (str "Today: " (get-today-title))]
 
-         ;; Sidebar content
-         [:div.sidebar-content
-          ;; Menu items
+        [:div.sidebar-content
+         [:div.sidebar-nav-primary
           (sidebar-item [:img.sidebar-symbol-icon {:src (u/asset-path "/img/icons/calendar_month.svg")}] "Diaries"
                         #(router/go-to-diaries! database-name)
                         (= route-name :diaries))
@@ -451,7 +549,13 @@
                         #(router/go-to-mcp-chat! database-name)
                         (= route-name :mcp-chat))
 
-          ;; Favorite notes section
+          [:div {:style {:padding "8px 16px 4px 16px"}}
+           [:button.new-note-btn.sidebar-new-note-btn
+            {:style {:margin 0
+                     :width "100%"}
+             :on-click #(create-new-note! database-name)}
+            "New Note"]]
+
           [:div.sidebar-section-title "Shortcuts"]
 
           [:div.note-list
@@ -465,16 +569,7 @@
                                (db/open-note-in-right-sidebar! note-id note-title root-nav-id database-name))
                              (router/go-to-note! database-name note-id)))
                :title (str note-title " (Shift+click to open in sidebar)")}
-              note-title])]]
+              note-title])]]]
 
-         ;; Bottom fixed action - New Note button
-         [:div
-          {:style {:padding "12px 16px"
-                   :border-top "1px solid rgba(255, 255, 255, 0.08)"
-                   :flex-shrink 0}}
-         [:button.new-note-btn
-           {:style {:margin "0"
-                    :width "100%"}
-            :on-click #(create-new-note! database-name)}
-           [:span.new-note-btn-icon "+"]
-           "New Note"]]])]))
+        [:div.sidebar-bottom-slot
+         (sidebar-footer-brand)]])]))
