@@ -305,12 +305,14 @@
     backlinks))
 
 (defn search-notes
-  "Search notes by title. Returns up to `limit` results sorted by updated-at desc."
-  ([conn query] (search-notes conn query 20))
+  "Search notes by title and nav content. Returns up to `limit` results.
+   Each result has :match-type (:title or :content) and optional :match-content snippet."
+  ([conn query] (search-notes conn query 30))
   ([conn query limit]
    (if (or (nil? query) (empty? query))
      []
      (let [q-lower (clojure.string/lower-case query)
+           ;; --- Title matches ---
            note-eids (d/q '[:find [?e ...]
                              :where [?e :hulunote-notes/id]]
                        conn)
@@ -321,26 +323,77 @@
                      :hulunote-notes/database-id
                      :hulunote-notes/updated-at
                      :hulunote-notes/created-at]
-                   note-eids)]
-       (->> notes
-            (filter (fn [note]
-                      (when-let [title (:hulunote-notes/title note)]
-                        (clojure.string/includes?
-                          (clojure.string/lower-case title) q-lower))))
-            (map (fn [note]
-                   (let [updated-at (or (:hulunote-notes/updated-at note)
-                                        (:updated-at note))
-                         created-at (or (:hulunote-notes/created-at note)
-                                        (:created-at note))
-                         sort-date (or updated-at created-at "1970-01-01")]
-                     {:note-id (:hulunote-notes/id note)
-                      :note-title (:hulunote-notes/title note)
-                      :root-nav-id (:hulunote-notes/root-nav-id note)
-                      :database-id (:hulunote-notes/database-id note)
-                      :updated-at updated-at
-                      :created-at created-at
-                      :sort-date sort-date})))
-            (sort-by :sort-date #(compare %2 %1))
+                   note-eids)
+           title-matches
+           (->> notes
+                (filter (fn [note]
+                          (when-let [title (:hulunote-notes/title note)]
+                            (clojure.string/includes?
+                              (clojure.string/lower-case title) q-lower))))
+                (map (fn [note]
+                       {:note-id (:hulunote-notes/id note)
+                        :note-title (:hulunote-notes/title note)
+                        :root-nav-id (:hulunote-notes/root-nav-id note)
+                        :database-id (:hulunote-notes/database-id note)
+                        :updated-at (or (:hulunote-notes/updated-at note)
+                                        (:hulunote-notes/created-at note)
+                                        "1970-01-01")
+                        :match-type :title})))
+           title-note-ids (set (map :note-id title-matches))
+           ;; --- Content matches (nav nodes) ---
+           nav-hits (d/q '[:find ?nav-content ?nav-id ?note-id
+                            :in $ ?match-fn
+                            :where
+                            [?nav :content ?nav-content]
+                            [?nav :id ?nav-id]
+                            [?nav :hulunote-note ?note-id]
+                            [(?match-fn ?nav-content)]]
+                      conn
+                      (fn [content]
+                        (and (string? content)
+                             (not= content "ROOT")
+                             (> (count content) 0)
+                             (clojure.string/includes?
+                               (clojure.string/lower-case content) q-lower))))
+           ;; Group by note-id, keep first matching nav per note
+           nav-by-note (reduce
+                         (fn [acc [nav-content nav-id note-id]]
+                           (if (contains? acc note-id)
+                             acc
+                             (assoc acc note-id {:nav-content nav-content :nav-id nav-id})))
+                         {} nav-hits)
+           ;; Build note info map for content-matched notes
+           content-note-ids (remove title-note-ids (keys nav-by-note))
+           content-matches
+           (when (seq content-note-ids)
+             (let [note-info-map (into {}
+                                   (map (fn [note]
+                                          [(:hulunote-notes/id note) note]))
+                                   notes)]
+               (->> content-note-ids
+                    (map (fn [nid]
+                           (let [info (get note-info-map nid)
+                                 nav (get nav-by-note nid)]
+                             (when info
+                               {:note-id nid
+                                :note-title (or (:hulunote-notes/title info) "Untitled")
+                                :root-nav-id (:hulunote-notes/root-nav-id info)
+                                :database-id (:hulunote-notes/database-id info)
+                                :updated-at (or (:hulunote-notes/updated-at info)
+                                                (:hulunote-notes/created-at info)
+                                                "1970-01-01")
+                                :match-type :content
+                                :match-content (:nav-content nav)}))))
+                    (remove nil?))))
+           ;; Also add match-content to title matches if they have content hits
+           title-matches-enriched
+           (map (fn [m]
+                  (if-let [nav (get nav-by-note (:note-id m))]
+                    (assoc m :match-content (:nav-content nav))
+                    m))
+                title-matches)]
+       (->> (concat title-matches-enriched content-matches)
+            (sort-by :updated-at #(compare %2 %1))
             (take limit)
             vec)))))
 

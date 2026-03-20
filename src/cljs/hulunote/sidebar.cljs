@@ -724,20 +724,28 @@
          [:span.search-modal-shortcut "ESC"]]
         [:div.search-modal-results
          (if (str/blank? query)
-           [:div.search-modal-hint "Type to search notes by title"]
+           [:div.search-modal-hint "Type to search notes by title or content"]
            (if (empty? results)
              [:div.search-modal-hint "No results found"]
              (map-indexed
-               (fn [idx {:keys [note-id note-title updated-at]}]
+               (fn [idx {:keys [note-id note-title match-type match-content]}]
                  [:div.search-modal-item
-                  {:key note-id
+                  {:key (str note-id "-" idx)
                    :class (when (= idx selected-index) "search-modal-item-selected")
                    :ref (fn [el]
                           (when (and el (= idx selected-index))
                             (.scrollIntoView el #js {:block "nearest"})))
                    :on-mouse-enter #(swap! search-state assoc :selected-index idx)
                    :on-click #(search-navigate! database-name note-id)}
-                  [:div.search-modal-item-title note-title]
-                  (when updated-at
-                    [:div.search-modal-item-date updated-at])])
+                  [:div.search-modal-item-left
+                   [:div.search-modal-item-title note-title]
+                   (when match-content
+                     [:div.search-modal-item-snippet
+                      (let [content (str match-content)
+                            max-len 80]
+                        (if (> (count content) max-len)
+                          (str (subs content 0 max-len) "...")
+                          content))])]
+                  [:div.search-modal-item-badge
+                   (if (= match-type :title) "Title" "Content")]])
                results)))]]])))

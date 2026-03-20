@@ -1927,17 +1927,35 @@ hulu-text-font {
     background: var(--surface-hover);
 }
 
+.search-modal-item-left {
+    flex: 1;
+    min-width: 0;
+}
+
 .search-modal-item-title {
     font-size: 14px;
     color: #fff;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    flex: 1;
 }
 
-.search-modal-item-date {
-    font-size: 11px;
-    color: rgba(255, 255, 255, 0.35);
+.search-modal-item-snippet {
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.45);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    margin-top: 2px;
+}
+
+.search-modal-item-badge {
+    font-size: 10px;
+    color: rgba(255, 255, 255, 0.45);
+    background: rgba(255, 255, 255, 0.08);
+    padding: 2px 6px;
+    border-radius: 4px;
     flex-shrink: 0;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
 }
