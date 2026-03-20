@@ -19,9 +19,11 @@
          :loading? false        ; 是否正在等待回复
          :api-key ""            ; API Key
          :api-key-set? false    ; API Key 是否已设置
-         :model "anthropic/claude-3.5-sonnet"
+         :model "anthropic/claude-sonnet-4.6"
          :use-tools? true       ; 是否使用 MCP 工具
          :show-settings? false  ; 是否显示设置面板
+         :available-models []   ; 从 OpenRouter 获取的模型列表
+         :models-loading? false ; 是否正在加载模型列表
          :error nil}))
 
 ;; ==================== 辅助函数 ====================
@@ -103,6 +105,33 @@
                   (add-message! "error" (str "Error: " (:error result))))))))))))
 
 
+;; ==================== 加载模型列表 ====================
+
+(defn load-models! []
+  (when (and (chat/chat-available?)
+             (not (:models-loading? @chat-state)))
+    (swap! chat-state assoc :models-loading? true)
+    (go
+      (when-let [ch (chat/get-models!)]
+        (let [result (js->clj-safe (<! ch))]
+          (swap! chat-state assoc :models-loading? false)
+          (when (:success result)
+            (let [models (:models result)
+                  ;; 按 provider 分组排序，常用的放前面
+                  preferred-providers ["anthropic" "openai" "google" "meta-llama" "deepseek" "mistralai"]
+                  provider-rank (into {} (map-indexed (fn [i p] [p i]) preferred-providers))
+                  sorted-models (->> models
+                                     (filter #(:id %))
+                                     (sort-by (fn [m]
+                                                (let [id (:id m)
+                                                      provider (first (str/split id #"/"))]
+                                                  [(get provider-rank provider 99) id]))))]
+              (swap! chat-state assoc :available-models sorted-models))))))))
+
+(defn open-settings! []
+  (swap! chat-state assoc :show-settings? true)
+  (load-models!))
+
 ;; ==================== 保存设置 ====================
 
 (defn save-api-key! [api-key]
@@ -159,7 +188,7 @@
       content]]))
 
 (rum/defc settings-modal < rum/reactive []
-  (let [{:keys [show-settings? api-key model]} (rum/react chat-state)]
+  (let [{:keys [show-settings? api-key model available-models models-loading?]} (rum/react chat-state)]
     (when show-settings?
       [:div.modal-overlay
        {:style {:position "fixed"
@@ -223,7 +252,12 @@
                           :font-size "14px"
                           :font-weight "500"
                           :color "rgba(255,255,255,0.6)"}}
-          "Model"]
+          "Model"
+          (when models-loading?
+            [:span {:style {:margin-left "8px"
+                            :font-size "12px"
+                            :color "rgba(255,255,255,0.4)"}}
+             "Loading models..."])]
          [:select
           {:value model
            :on-change #(swap! chat-state assoc :model (.. % -target -value))
@@ -236,12 +270,24 @@
                    :box-sizing "border-box"
                    :background "#363b48"
                    :color "#fdfeffc4"}}
-          [:option {:value "anthropic/claude-3.5-sonnet"} "Claude 3.5 Sonnet"]
-          [:option {:value "anthropic/claude-3-opus"} "Claude 3 Opus"]
-          [:option {:value "openai/gpt-4-turbo"} "GPT-4 Turbo"]
-          [:option {:value "openai/gpt-4o"} "GPT-4o"]
-          [:option {:value "google/gemini-pro-1.5"} "Gemini Pro 1.5"]
-          [:option {:value "meta-llama/llama-3.1-405b-instruct"} "Llama 3.1 405B"]]]
+          (if (seq available-models)
+            ;; 动态模型列表
+            (for [m available-models]
+              (let [id (:id m)
+                    name (or (:name m) id)]
+                [:option {:key id :value id} name]))
+            ;; 加载前的默认选项
+            (list
+              [:option {:key "anthropic/claude-sonnet-4.6" :value "anthropic/claude-sonnet-4.6"} "Claude Sonnet 4"]
+              [:option {:key "anthropic/claude-haiku-4.5" :value "anthropic/claude-haiku-4.5"} "Claude Haiku 4"]
+              [:option {:key "openai/gpt-4o" :value "openai/gpt-4o"} "GPT-4o"]
+              [:option {:key "google/gemini-3.1-pro-preview" :value "google/gemini-3.1-pro-preview"} "Gemini 3 Pro"]
+              [:option {:key "deepseek/deepseek-chat-v3-0324" :value "deepseek/deepseek-chat-v3-0324"} "DeepSeek V3"]))]
+         (when (seq available-models)
+           [:div {:style {:font-size "12px"
+                          :color "rgba(255,255,255,0.4)"
+                          :margin-top "6px"}}
+            (str (count available-models) " models available from OpenRouter")])]
 
         ;; Buttons
         [:div {:style {:display "flex"
@@ -329,7 +375,7 @@
            (str connected-count " MCP connected")]
           ;; Settings button
           [:button.pointer
-           {:on-click #(swap! chat-state assoc :show-settings? true)
+           {:on-click #(open-settings!)
             :style {:background "rgba(255,255,255,0.1)"
                     :border "1px solid rgba(255,255,255,0.2)"
                     :padding "6px 14px"

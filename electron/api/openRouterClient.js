@@ -74,7 +74,11 @@ class OpenRouterClient {
       return response.data;
     } catch (error) {
       if (error.response) {
-        throw new Error(`API Error: ${error.response.data.error?.message || error.message}`);
+        console.error('[OpenRouterClient] API error details:', JSON.stringify(error.response.data, null, 2));
+        console.error('[OpenRouterClient] HTTP status:', error.response.status);
+        const errData = error.response.data.error;
+        const detail = errData?.metadata?.raw || errData?.message || error.message;
+        throw new Error(`API Error (${error.response.status}): ${detail}`);
       }
       throw new Error(`Failed to send message: ${error.message}`);
     }

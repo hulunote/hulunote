@@ -7,6 +7,8 @@ class McpToolsMiddleware extends Middleware {
   constructor(mcpManager) {
     super();
     this.mcpManager = mcpManager;
+    // Map sanitized tool name -> { clientId, toolName }
+    this.toolNameMap = new Map();
   }
 
   async getTools(state) {
@@ -15,15 +17,19 @@ class McpToolsMiddleware extends Middleware {
     const clientIds = this.mcpManager.getAllClientIds();
     if (clientIds.length === 0) return [];
 
+    this.toolNameMap.clear();
     const tools = [];
     for (const clientId of clientIds) {
       try {
         const clientTools = await this.mcpManager.listTools(clientId);
+        const safeClientId = clientId.replace(/[^a-zA-Z0-9_-]/g, '_');
         for (const tool of clientTools) {
+          const safeName = `${safeClientId}__${tool.name}`.replace(/[^a-zA-Z0-9_-]/g, '_').slice(0, 128);
+          this.toolNameMap.set(safeName, { clientId, toolName: tool.name });
           tools.push({
             type: 'function',
             function: {
-              name: `${clientId}__${tool.name}`,
+              name: safeName,
               description: tool.description || '',
               parameters: tool.inputSchema || { type: 'object', properties: {} }
             }
@@ -35,6 +41,13 @@ class McpToolsMiddleware extends Middleware {
     }
 
     return tools;
+  }
+
+  /**
+   * Resolve a sanitized tool name back to original clientId and toolName
+   */
+  resolve(safeName) {
+    return this.toolNameMap.get(safeName) || null;
   }
 }
 

@@ -553,7 +553,7 @@ ipcMain.handle('chat:send-message', async (event, { messages, useTools }) => {
     }
 
     const settings = await loadMcpSettings();
-    const model = settings.model || 'anthropic/claude-3.5-sonnet';
+    const model = settings.model || 'anthropic/claude-sonnet-4.6';
 
     // Load sub-agent config if present
     const subAgents = settings.subAgents || [];

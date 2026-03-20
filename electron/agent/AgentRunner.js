@@ -128,9 +128,21 @@ class AgentRunner {
             // Middleware-provided tool
             resultContent = await middlewareTool._executor(args, state);
           } else {
-            // MCP tool: parse clientId__toolName
-            const [clientId, ...toolNameParts] = fullName.split('__');
-            const toolName = toolNameParts.join('__');
+            // MCP tool: resolve sanitized name back to original clientId + toolName
+            const McpToolsMiddleware = require('./middleware/McpToolsMiddleware');
+            const mcpMw = this.middleware.find(m => m instanceof McpToolsMiddleware);
+            const resolved = mcpMw && mcpMw.resolve(fullName);
+
+            let clientId, toolName;
+            if (resolved) {
+              clientId = resolved.clientId;
+              toolName = resolved.toolName;
+            } else {
+              // Fallback: parse clientId__toolName
+              const [cid, ...toolNameParts] = fullName.split('__');
+              clientId = cid;
+              toolName = toolNameParts.join('__');
+            }
             const result = await this.mcpManager.callTool(clientId, toolName, args);
             resultContent = JSON.stringify(result);
           }
