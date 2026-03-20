@@ -13,7 +13,6 @@
    :color "#888"
    :font-size "11px"
    :border-bottom "1px solid var(--surface-border-strong)"
-   :max-width "200px"
    :overflow "hidden"
    :text-overflow "ellipsis"
    :white-space "nowrap"})

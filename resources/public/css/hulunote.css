@@ -801,7 +801,39 @@ hulu-text-font {
 }
 
 .sidebar-user-menu {
-    max-width: calc(var(--sidebar-width) - 24px);
+    width: calc(var(--sidebar-width) - 6px);
+    max-width: calc(var(--sidebar-width) - 6px);
+    box-sizing: border-box;
+}
+
+.sidebar-user-menu .menu-popover-header {
+    padding: 8px 14px 6px;
+    max-width: 100%;
+}
+
+.sidebar-user-menu .menu-popover-item {
+    min-height: 32px;
+    margin: 3px 8px;
+    padding-left: 12px;
+    padding-right: 12px;
+}
+
+.sidebar-user-menu .menu-popover-item-label {
+    font-size: 12px;
+}
+
+.sidebar-user-menu .menu-popover-item-label {
+    min-width: 0;
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.sidebar-user-menu-database-item.active {
+    background: var(--theme-accent-20);
+    border: 1px solid var(--theme-accent-30);
+    color: #fff;
 }
 
 .sidebar-content {
@@ -1004,7 +1036,7 @@ hulu-text-font {
     top: 0;
     left: 0;
     right: 0;
-    z-index: 90;
+    z-index: 160;
     height: 44px;
     padding: 0 14px;
     display: grid;
