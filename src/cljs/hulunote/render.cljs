@@ -42,6 +42,17 @@
                                   :database-name nil
                                   :slash-pos nil}))
 
+;; State for page-link suggestion menu triggered by [[
+(defonce page-link-menu-state (atom {:visible false
+                                     :x 0
+                                     :y 0
+                                     :query ""
+                                     :selected-index 0
+                                     :nav-id nil
+                                     :note-id nil
+                                     :database-name nil
+                                     :link-open-pos nil}))
+
 (def slash-commands
   [{:id :link        :label "[[]]  Page Link"       :icon "🔗" :insert-fn (fn [content pos]
      (let [before (subs content 0 pos)
@@ -126,6 +137,105 @@
 
 (defn hide-slash-menu! []
   (swap! slash-menu-state assoc :visible false :filter "" :selected-index 0 :slash-pos nil))
+
+(defn show-page-link-menu!
+  "Show the page-link suggestion menu below the current input."
+  [input nav-id note-id database-name open-pos]
+  (let [rect (.getBoundingClientRect input)]
+    (reset! page-link-menu-state
+            {:visible true
+             :x (.-left rect)
+             :y (+ (.-bottom rect) 6)
+             :query ""
+             :selected-index 0
+             :nav-id nav-id
+             :note-id note-id
+             :database-name database-name
+             :link-open-pos open-pos})))
+
+(defn hide-page-link-menu! []
+  (swap! page-link-menu-state assoc
+         :visible false
+         :query ""
+         :selected-index 0
+         :link-open-pos nil))
+
+(defn page-link-close-pos
+  "Find the first closing ]] after the opening [[."
+  [value open-pos]
+  (when (and (some? open-pos)
+             (<= (+ open-pos 2) (count value)))
+    (str/index-of value "]]" (+ open-pos 2))))
+
+(defn update-page-link-menu!
+  "Keep page-link suggestion menu in sync with current editor value and cursor position."
+  [input value cursor-pos nav-id note-id database-name]
+  (let [{:keys [visible link-open-pos]} @page-link-menu-state]
+    (if visible
+      (let [query-start (+ link-open-pos 2)
+            close-pos (page-link-close-pos value link-open-pos)]
+        (if (and close-pos
+                 (<= 0 link-open-pos)
+                 (<= (+ link-open-pos 2) (count value))
+                 (= "[[" (subs value link-open-pos (+ link-open-pos 2)))
+                 (<= query-start cursor-pos close-pos))
+          (swap! page-link-menu-state assoc
+                 :query (subs value query-start close-pos)
+                 :selected-index 0
+                 :nav-id nav-id
+                 :note-id note-id
+                 :database-name database-name)
+          (hide-page-link-menu!)))
+      ;; Fallback for cases like paste or re-entering an existing [[...]] range.
+      (when (>= cursor-pos 2)
+        (let [open-pos (str/last-index-of (subs value 0 cursor-pos) "[[")
+              close-pos (page-link-close-pos value open-pos)
+              query-start (when open-pos (+ open-pos 2))]
+          (when (and open-pos close-pos query-start
+                     (<= query-start cursor-pos close-pos))
+            (show-page-link-menu! input nav-id note-id database-name open-pos)
+            (swap! page-link-menu-state assoc
+                   :query (subs value query-start close-pos)
+                   :selected-index 0)))))))
+
+(defn page-link-results
+  []
+  (let [{:keys [database-name query]} @page-link-menu-state]
+    (if (str/blank? query)
+      []
+      (db/search-page-links @db/dsdb database-name query 8))))
+
+(defn execute-page-link-selection!
+  "Replace the current [[query]] with a selected page link and keep editing."
+  [{:keys [note-title]}]
+  (let [{:keys [nav-id link-open-pos]} @page-link-menu-state
+        current @editing-content
+        close-pos (page-link-close-pos current link-open-pos)]
+    (when (and nav-id (some? link-open-pos))
+      (let [replace-end (if close-pos (+ close-pos 2) (count current))
+            before (subs current 0 link-open-pos)
+            after (subs current replace-end)
+            inserted (str "[[" note-title "]]")
+            next-text (str before inserted after)
+            next-cursor (+ (count before) (count inserted))]
+        (reset! editing-content next-text)
+        (reset! pending-selection {:nav-id nav-id
+                                   :start next-cursor
+                                   :end next-cursor
+                                   :focus? true})
+        (hide-page-link-menu!)))))
+
+(defn confirm-page-link-entry!
+  "Confirm current [[query]] entry. If no result is selected, keep the typed link
+   and create the page in background when needed."
+  []
+  (let [{:keys [query]} @page-link-menu-state
+        results (page-link-results)]
+    (if-let [item (nth results (:selected-index @page-link-menu-state) nil)]
+      (execute-page-link-selection! item)
+      (when-not (str/blank? query)
+        (comps/ensure-note-exists-by-title! query)
+        (hide-page-link-menu!)))))
 
 (defn execute-slash-command!
   "Execute a slash command: insert its content and close the menu."
@@ -267,7 +377,9 @@
   (reset! editing-nav-id nil)
   (reset! editing-content "")
   (reset! pending-selection nil)
-  (reset! target-cursor-column nil))
+  (reset! target-cursor-column nil)
+  (hide-slash-menu!)
+  (hide-page-link-menu!))
 
 (defn save-nav-content!
   "Save the edited content of a nav.
@@ -897,6 +1009,31 @@
     ;; Prevent global key handlers from stealing focus while editing.
     (.stopPropagation e)
     (cond
+      ;; === Page link menu keyboard handling ===
+      (and (:visible @page-link-menu-state) (= key-code 40)) ;; Arrow Down
+      (do (.preventDefault e)
+          (let [results (page-link-results)
+                idx (:selected-index @page-link-menu-state)]
+            (swap! page-link-menu-state assoc :selected-index
+                   (min (dec (count results)) (inc idx)))))
+
+      (and (:visible @page-link-menu-state) (= key-code 38)) ;; Arrow Up
+      (do (.preventDefault e)
+          (let [idx (:selected-index @page-link-menu-state)]
+            (swap! page-link-menu-state assoc :selected-index (max 0 (dec idx)))))
+
+      (and (:visible @page-link-menu-state) (= key-code 13)) ;; Enter
+      (do (.preventDefault e)
+          (confirm-page-link-entry!))
+
+      (and (:visible @page-link-menu-state) (= key-code 27)) ;; Escape
+      (do (.preventDefault e)
+          (hide-page-link-menu!))
+
+      (and (:visible @page-link-menu-state) (= key-code 9)) ;; Tab
+      (do (.preventDefault e)
+          (confirm-page-link-entry!))
+
       ;; === Slash menu keyboard handling ===
       (and (:visible @slash-menu-state) (= key-code 40)) ;; Arrow Down
       (do (.preventDefault e)
@@ -927,6 +1064,31 @@
                 idx (:selected-index @slash-menu-state)]
             (when (seq cmds)
               (execute-slash-command! (nth cmds idx)))))
+
+      ;; Type second "[" after "[" to auto-complete a page link: [[ ]]
+      (and (= key "[")
+           (not mod?)
+           (not (.-altKey e))
+           (not (.-isComposing e))
+           (some? cursor-pos)
+           (= cursor-pos (or (.-selectionEnd input) cursor-pos))
+           (> cursor-pos 0)
+           (= "[" (subs current-content (dec cursor-pos) cursor-pos))
+           (not (str/starts-with? (subs current-content cursor-pos) "]]")))
+      (do
+        (.preventDefault e)
+        (let [open-pos (dec cursor-pos)
+              before (subs current-content 0 open-pos)
+              after (subs current-content cursor-pos)
+              next-text (str before "[[]]" after)
+              next-cursor (inc cursor-pos)]
+          (hide-slash-menu!)
+          (reset! editing-content next-text)
+          (reset! pending-selection {:nav-id nav-id
+                                     :start next-cursor
+                                     :end next-cursor
+                                     :focus? true})
+          (show-page-link-menu! input nav-id note-id database-name open-pos)))
 
       ;; Cmd/Ctrl + B/I/Y/H - inline markdown styling
       (and mod? (#{"b" "B"} key))
@@ -1163,11 +1325,23 @@
 (rum/defc nav-content-editor < rum/reactive
   "Editable content component"
   [nav-id content note-id database-name]
-  (let [is-editing (= nav-id (rum/react editing-nav-id))]
+  (let [is-editing (= nav-id (rum/react editing-nav-id))
+        sync-page-link-menu! (fn [e]
+                               (let [input (.-target e)
+                                     value (.-value input)
+                                     start (or (.-selectionStart input) 0)
+                                     end (or (.-selectionEnd input) start)]
+                                 (reset! pending-selection {:nav-id nav-id
+                                                            :start start
+                                                            :end end
+                                                            :focus? true})
+                                 (update-page-link-menu! input value start nav-id note-id database-name)))]
     (if is-editing
       [:input.nav-editor-input
        {:type "text"
         :value (rum/react editing-content)
+        :on-mouse-down #(.stopPropagation %)
+        :on-click #(.stopPropagation %)
         :ref (fn [el]
                (when-let [{:keys [nav-id start end focus?]} @pending-selection]
                  (when (and el (= nav-id @editing-nav-id))
@@ -1180,8 +1354,10 @@
                 :border-radius "0"
                 :padding "0"
                 :outline "none"
+                :display "block"
+                :flex "1 1 auto"
                 :width "100%"
-                :min-width "100px"
+                :min-width "0"
                 :font-size "inherit"
                 :font-family "inherit"
                 :font-weight "inherit"
@@ -1200,40 +1376,54 @@
                                                   :end end
                                                   :focus? true})
                        (reset! editing-content value)
+                       (update-page-link-menu! input value start nav-id note-id database-name)
                        ;; Slash command menu detection
-                       (let [slash-state @slash-menu-state]
-                         (if (:visible slash-state)
-                           ;; Menu is open: update filter from text after "/"
-                           (let [slash-p (:slash-pos slash-state)
-                                 filter-text (when (and slash-p (<= slash-p (count value)))
-                                               (subs value slash-p (min start (count value))))]
-                             (if (and filter-text
-                                      (not (str/includes? filter-text " "))
-                                      (>= start slash-p))
-                               (swap! slash-menu-state assoc
-                                      :filter filter-text
-                                      :selected-index 0)
-                               ;; Space or cursor moved before slash -> close
-                               (hide-slash-menu!)))
-                           ;; Menu is closed: check if "/" was just typed
-                           (when (and (pos? start)
-                                      (= "/" (subs value (dec start) start))
-                                      (or (= start 1) ;; at beginning
-                                          (= " " (subs value (- start 2) (dec start))))) ;; after space
-                             (show-slash-menu! input nav-id note-id database-name))))))
+                       (when-not (:visible @page-link-menu-state)
+                         (let [slash-state @slash-menu-state]
+                           (if (:visible slash-state)
+                             ;; Menu is open: update filter from text after "/"
+                             (let [slash-p (:slash-pos slash-state)
+                                   filter-text (when (and slash-p (<= slash-p (count value)))
+                                                 (subs value slash-p (min start (count value))))]
+                               (if (and filter-text
+                                        (not (str/includes? filter-text " "))
+                                        (>= start slash-p))
+                                 (swap! slash-menu-state assoc
+                                        :filter filter-text
+                                        :selected-index 0)
+                                 ;; Space or cursor moved before slash -> close
+                                 (hide-slash-menu!)))
+                             ;; Menu is closed: check if "/" was just typed
+                             (when (and (pos? start)
+                                        (= "/" (subs value (dec start) start))
+                                        (or (= start 1) ;; at beginning
+                                            (= " " (subs value (- start 2) (dec start))))) ;; after space
+                               (show-slash-menu! input nav-id note-id database-name)))))))
         ;; BUG FIX: Forward ALL key events to handle-key-down (including arrows)
         :on-key-down #(handle-key-down % nav-id note-id database-name)
+        :on-key-up sync-page-link-menu!
+        :on-mouse-up sync-page-link-menu!
+        :on-select sync-page-link-menu!
         ;; BUG FIX: Save content on blur (prevents text loss)
         :on-blur (fn [e]
+                   (let [input (.-target e)
+                         value (.-value input)]
+                     (reset! editing-content value)
+                     (save-nav-content! nav-id note-id database-name {:content value}))
                    ;; Delay hide so menu click can fire before blur
-                   (js/setTimeout hide-slash-menu! 150)
-                   (save-nav-content! nav-id note-id database-name))}]
+                   (js/setTimeout
+                     (fn []
+                       (hide-slash-menu!)
+                       (hide-page-link-menu!))
+                     150))}]
       ;; Non-editing view
       [:span.nav-content
        {:style {:cursor "text"
+                :display "block"
+                :flex "1 1 auto"
                 :min-height "20px"
-                :display "inline-block"
-                :min-width "100px"}
+                :min-width "0"
+                :width "100%"}
         :on-click (fn [e]
                     (u/stop-click-bubble e)
                     (reset! target-cursor-column nil)
@@ -1349,7 +1539,8 @@
                        (reset! drag-over-mode nil)
                        (reset! dragging-nav-id nil))
             :on-click (fn [e]
-                        (when-not is-special-block
+                        (when (and (not is-special-block)
+                                   (not is-editing))
                           (reset! target-cursor-column nil)
                           (let [cursor-pos (estimate-cursor-pos-from-click e content)]
                             (start-editing! id content cursor-pos))))}
@@ -1454,6 +1645,71 @@
                  (:icon cmd)]
                 [:span.slash-menu-label (:label cmd)]])
              cmds))]))))
+
+(rum/defc page-link-suggestion-menu < rum/reactive
+  []
+  (let [{:keys [visible x y query selected-index]} (rum/react page-link-menu-state)
+        results (when visible (page-link-results))
+        results (or results [])]
+    (when visible
+      [:div.page-link-menu
+       {:style {:position "fixed"
+                :left (str x "px")
+                :top (str y "px")
+                :min-width "280px"
+                :max-width "420px"
+                :background "var(--surface-popover)"
+                :border "1px solid var(--surface-border-strong)"
+                :border-radius "10px"
+                :box-shadow "0 10px 28px rgba(0,0,0,0.34)"
+                :z-index 10001
+                :padding "6px"}
+        :on-mouse-down (fn [e] (.preventDefault e))}
+       [:div
+        {:style {:padding "8px 10px 10px"
+                 :color "rgba(255,255,255,0.58)"
+                 :font-size "12px"}}
+        (if (str/blank? query)
+          "Search for a Page"
+          (str "Search: " query))]
+       (if (str/blank? query)
+         [:div
+          {:style {:padding "2px 10px 10px"
+                   :color "rgba(255,255,255,0.38)"
+                   :font-size "12px"}}
+          "Type to search page titles"]
+         [:div
+          {:style {:max-height "240px"
+                   :overflow-y "auto"
+                   :padding-bottom "2px"}}
+          (if (empty? results)
+            [:div
+             {:style {:padding "8px 10px 10px"
+                      :color "rgba(255,255,255,0.4)"
+                      :font-size "12px"}}
+             "No matching pages"]
+            (map-indexed
+              (fn [idx {:keys [note-id note-title]}]
+                [:div
+                 {:key (str note-id "-" idx)
+                  :ref (fn [el]
+                         (when (and el (= idx selected-index))
+                           (.scrollIntoView el #js {:block "nearest"})))
+                  :style {:padding "8px 12px"
+                          :border-radius "8px"
+                          :cursor "pointer"
+                          :font-size "13px"
+                          :font-weight "500"
+                          :color "#fff"
+                          :background (when (= idx selected-index)
+                                        "var(--surface-hover)")}
+                  :on-mouse-enter #(swap! page-link-menu-state assoc :selected-index idx)
+                  :on-click (fn [e]
+                              (.preventDefault e)
+                              (.stopPropagation e)
+                              (execute-page-link-selection! {:note-title note-title}))}
+                 note-title])
+              results))])])))
 
 ;; Global context menu - render at app level
 (rum/defc global-context-menu < rum/reactive

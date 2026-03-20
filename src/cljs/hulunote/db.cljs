@@ -251,6 +251,57 @@
          reverse
          vec)))
 
+(defn note-in-database?
+  "Return true when the note belongs to the current database.
+   Handles both legacy local values (database name) and synced values (database id)."
+  [conn database-name note]
+  (let [current-database-id (when database-name
+                              (get-database-id-by-name conn database-name))
+        note-database-id (:hulunote-notes/database-id note)]
+    (or (nil? database-name)
+        (= note-database-id database-name)
+        (= note-database-id current-database-id)
+        (nil? current-database-id))))
+
+(defn search-page-links
+  "Search note titles for page-link suggestions inside the current database.
+   Blank query falls back to recent note titles."
+  ([conn database-name query] (search-page-links conn database-name query 8))
+  ([conn database-name query limit]
+   (let [q-lower (some-> query clojure.string/lower-case)
+         note-eids (d/q '[:find [?e ...]
+                          :where
+                          [?e :hulunote-notes/id]]
+                        conn)
+         notes (d/pull-many conn
+                 '[:hulunote-notes/id
+                   :hulunote-notes/title
+                   :hulunote-notes/root-nav-id
+                   :hulunote-notes/database-id
+                   :hulunote-notes/updated-at
+                   :hulunote-notes/created-at]
+                 note-eids)]
+     (->> notes
+          (filter #(note-in-database? conn database-name %))
+          (filter (fn [note]
+                    (let [title (:hulunote-notes/title note)]
+                      (and (string? title)
+                           (if (clojure.string/blank? query)
+                             true
+                             (clojure.string/includes?
+                               (clojure.string/lower-case title)
+                               q-lower))))))
+          (map (fn [note]
+                 {:note-id (:hulunote-notes/id note)
+                  :note-title (:hulunote-notes/title note)
+                  :root-nav-id (:hulunote-notes/root-nav-id note)
+                  :updated-at (or (:hulunote-notes/updated-at note)
+                                  (:hulunote-notes/created-at note)
+                                  "1970-01-01")}))
+          (sort-by :updated-at #(compare %2 %1))
+          (take limit)
+          vec))))
+
 (defn find-backlinks
   "Find all navs that reference the given note title via [[title]] or #title or #[[title]].
    Returns a set of [nav-content nav-id source-note-id source-title parent-content]."
