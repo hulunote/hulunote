@@ -60,7 +60,8 @@
       :on-click (fn [e]
                   ;; Close context menu when clicking outside
                   (render/hide-context-menu!)
-                  (sidebar/hide-topbar-more-menu!))}
+                  (sidebar/hide-topbar-more-menu!)
+                  (sidebar/hide-sidebar-user-menu!))}
      (case route-name
        ;; Root path: show home page if not logged in or expired, otherwise show database list
        :database (if (u/is-expired?)
