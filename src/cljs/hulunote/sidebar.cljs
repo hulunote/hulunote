@@ -30,7 +30,7 @@
                               :selected-index 0}))
 
 (declare ensure-database-list-loaded!)
-(declare show-search!)
+(declare show-search! hide-search!)
 
 (defn clear-sidebar-peek-timeout! []
   (when-let [timeout-id @sidebar-peek-timeout]
@@ -403,6 +403,10 @@
 
 (defn switch-database!
   [route-name database-name]
+  (render/cancel-editing!)
+  (db/close-right-sidebar!)
+  (hide-search!)
+  (hide-topbar-more-menu!)
   (hide-sidebar-user-menu!)
   (http/database-data-load database-name)
   (navigate-to-database! route-name database-name))
@@ -482,6 +486,12 @@
                               (hide-sidebar-user-menu!)
                               (switch-database! route-name db-name)))}
                db-name))
+           [(menu/menu-item
+              {:icon (settings-menu-icon)
+               :on-click (fn [_]
+                           (hide-sidebar-user-menu!)
+                           (router/switch-router! "/"))}
+              "Database Settings")]
            [[:div {:style {:height "1px"
                            :background "var(--surface-border-strong)"
                            :margin "6px 0"}}]]

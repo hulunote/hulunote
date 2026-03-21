@@ -622,3 +622,25 @@
        :err
        (fn [err]
          (prn "Failed to delete database:" err))}}}))
+
+(re-frame/reg-event-fx
+  :update-database
+  (fn update-database
+    [{:keys [db] :as cofx}
+     [_ {:keys [database-id db-name is-public is-default is-delete op-fn]}]]
+    {:db db
+     :http
+     {:uri "/hulunote/update-database"
+      :params (cond-> {:database-id database-id}
+                db-name (assoc :db-name db-name)
+                (some? is-public) (assoc :is-public is-public)
+                (some? is-default) (assoc :is-default is-default)
+                (some? is-delete) (assoc :is-delete is-delete))
+      :callback
+      {:succ
+       (fn [data]
+         (prn "Database updated successfully:" data)
+         (when op-fn (op-fn data)))
+       :err
+       (fn [err]
+         (prn "Failed to update database:" err))}}}))
