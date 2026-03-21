@@ -74,14 +74,16 @@
                :loading? true
                :error nil)
         ;; 发送请求
-        (go
-          (when-let [ch (chat/send-message! {:messages all-messages
-                                             :use-tools use-tools?})]
-            (let [raw (<! ch)
-                  _ (js/console.log "[DEBUG] raw IPC result:" raw)
-                  _ (js/console.log "[DEBUG] raw type:" (type raw))
-                  _ (js/console.log "[DEBUG] raw.progressLog:" (.-progressLog raw))
-                  result (js->clj-safe raw)]
+	        (go
+	          (when-let [ch (chat/send-message! {:messages all-messages
+	                                             :use-tools use-tools?})]
+	            (let [raw (<! ch)
+	                  raw-progress-log (when (object? raw)
+	                                     (unchecked-get raw "progressLog"))
+	                  _ (js/console.log "[DEBUG] raw IPC result:" raw)
+	                  _ (js/console.log "[DEBUG] raw type:" (type raw))
+	                  _ (js/console.log "[DEBUG] raw.progressLog:" raw-progress-log)
+	                  result (js->clj-safe raw)]
               (js/console.log "[DEBUG] result keys:" (pr-str (keys result)))
               (js/console.log "[DEBUG] :progressLog =" (pr-str (:progressLog result)))
               (js/console.log "[DEBUG] :success =" (pr-str (:success result)))

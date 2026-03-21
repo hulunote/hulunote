@@ -13,6 +13,8 @@
 
 (declare render-navs)
 (declare get-visible-nav-list)
+(declare save-nav-content!)
+(declare start-editing!)
 
 (rum/defc label [text]
   [:div {:class "label"} text])

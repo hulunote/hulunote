@@ -29,6 +29,9 @@
                               :query ""
                               :selected-index 0}))
 
+(declare ensure-database-list-loaded!)
+(declare show-search!)
+
 (defn clear-sidebar-peek-timeout! []
   (when-let [timeout-id @sidebar-peek-timeout]
     (js/clearTimeout timeout-id)
@@ -63,6 +66,11 @@
 
 (defn hide-sidebar-user-menu! []
   (reset! sidebar-user-menu-open? false))
+
+(defn show-sidebar-user-menu! []
+  (hide-topbar-more-menu!)
+  (ensure-database-list-loaded! @db/dsdb)
+  (reset! sidebar-user-menu-open? true))
 
 (defn toggle-sidebar-user-menu! []
   (swap! sidebar-user-menu-open? not))
@@ -399,6 +407,10 @@
   (http/database-data-load database-name)
   (navigate-to-database! route-name database-name))
 
+(defn current-database-name
+  []
+  (get-in (db/get-route @db/dsdb) [:params :database]))
+
 (defn user-menu-items [database-name]
   [{:label "Settings"
     :icon (settings-menu-icon)
@@ -665,27 +677,17 @@
 (defn hide-search! []
   (reset! search-state {:visible false :query "" :selected-index 0}))
 
+(defn toggle-search! []
+  (if (:visible @search-state)
+    (hide-search!)
+    (show-search!)))
+
 (defn search-navigate! [database-name note-id]
   (when (and database-name note-id)
     (router/go-to-note! database-name note-id)
     (hide-search!)))
 
 (rum/defc search-modal < rum/reactive
-  {:did-mount (fn [state]
-                ;; Add global Cmd+K / Ctrl+K listener
-                (let [handler (fn [e]
-                                (when (and (or (.-metaKey e) (.-ctrlKey e))
-                                           (= (.-key e) "k"))
-                                  (.preventDefault e)
-                                  (if (:visible @search-state)
-                                    (hide-search!)
-                                    (show-search!))))]
-                  (.addEventListener js/document "keydown" handler)
-                  (assoc state ::global-handler handler)))
-   :will-unmount (fn [state]
-                   (when-let [handler (::global-handler state)]
-                     (.removeEventListener js/document "keydown" handler))
-                   state)}
   []
   (let [{:keys [visible query selected-index]} (rum/react search-state)
         db (rum/react db/dsdb)
