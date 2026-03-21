@@ -28,6 +28,8 @@
 (defonce ^:private loaded-scripts (atom #{}))
 (defonce ^:private loaded-css (atom #{}))
 
+(declare build-api)
+
 ;; ==================== Style Injection ====================
 
 (defn- inject-style!
@@ -106,7 +108,7 @@
   (let [plugin-name (.-name plugin-def)
         version (.-version plugin-def)
         styles-css (.-styles plugin-def)
-        renderers-obj (.-renderers plugin-def)]
+        renderers-obj (unchecked-get plugin-def "renderers")]
     (when-not plugin-name
       (throw (js/Error. "Plugin must have a 'name' property")))
 

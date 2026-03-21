@@ -11,6 +11,8 @@
    [hulunote.http :as http]
    [hulunote.router :as router]
    [hulunote.sidebar :as sidebar]
+   [hulunote.commands :as commands]
+   [hulunote.shortcuts :as shortcuts]
    [goog.events :as events]
    [goog.history.EventType :as HistoryEventType]
    [reitit.core :as reitit]
@@ -123,6 +125,8 @@
 (defn init! []
   (db/init-db)
   (plugin/init-plugin-system!)
+  (commands/register-core-commands!)
+  (shortcuts/install-global-shortcuts!)
   ;; http://127.0.0.1:6689/#/app/JackyWong-5721/diaries
   (if (re-find
         #"#/app/(.*)"

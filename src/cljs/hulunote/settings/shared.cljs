@@ -76,6 +76,12 @@
           :background "rgba(82,196,26,0.18)"
           :color "#d7ffd1"}))
 
+(def btn-secondary-style
+  (merge button-base-style
+         {:border "1px solid var(--surface-border)"
+          :background "rgba(255,255,255,0.02)"
+          :color "rgba(255,255,255,0.86)"}))
+
 (def btn-disabled-style
   (merge button-base-style
          {:border "1px solid rgba(255,255,255,0.08)"
@@ -91,6 +97,7 @@
     :style (merge
              (cond
                disabled? btn-disabled-style
+               (= tone :secondary) btn-secondary-style
                (= tone :success) btn-success-style
                :else btn-primary-style)
              style)}

@@ -89,6 +89,12 @@
     (str (subs title 0 max-len) "...")
     title))
 
+(defn- node-link-count [node]
+  (or (unchecked-get node "linkCount") 0))
+
+(defn- node-title [node]
+  (or (unchecked-get node "title") ""))
+
 (defn destroy-graph! []
   (when-let [state @graph-state]
     (when-let [sim (:simulation state)]
@@ -149,7 +155,7 @@
                          (d3/forceCenter (/ width 2) (/ height 2)))
                        (.force "collision"
                          (-> (d3/forceCollide)
-                             (.radius (fn [d] (+ (node-radius (.-linkCount d)) 8))))))
+                             (.radius (fn [d] (+ (node-radius (node-link-count d)) 8))))))
 
         ;; Draw links
         link (-> (.append g "g")
@@ -170,9 +176,9 @@
 
         ;; Add circles to nodes
         _ (-> (.append node "circle")
-              (.attr "r" (fn [d] (node-radius (.-linkCount d))))
+              (.attr "r" (fn [d] (node-radius (node-link-count d))))
               (.attr "fill" (fn [d]
-                              (let [lc (or (.-linkCount d) 0)]
+                              (let [lc (node-link-count d)]
                                 (cond
                                   (> lc 5) "#667eea"
                                   (> lc 2) "#764ba2"
@@ -184,8 +190,8 @@
 
         ;; Add labels
         _ (-> (.append node "text")
-              (.text (fn [d] (truncate-title (.-title d) 20)))
-              (.attr "dy" (fn [d] (+ (node-radius (.-linkCount d)) 14)))
+              (.text (fn [d] (truncate-title (node-title d) 20)))
+              (.attr "dy" (fn [d] (+ (node-radius (node-link-count d)) 14)))
               (.attr "text-anchor" "middle")
               (.style "font-size" "11px")
               (.style "fill" "rgba(255,255,255,0.7)")

@@ -4,6 +4,7 @@
             [hulunote.settings.shared :as shared]
             [hulunote.settings.profile :as profile]
             [hulunote.settings.token :as token]
+            [hulunote.settings.hotkeys :as hotkeys]
             [hulunote.settings.mcp-servers :as mcp-servers]
             [hulunote.settings.chat :as chat]
             [hulunote.util :as u]
@@ -15,6 +16,7 @@
 (def settings-nav-items
   [{:key :profile :label "Profile"}
    {:key :token :label "Token"}
+   {:key :shortcuts :label "Hotkeys"}
    {:key :mcp-servers :label "MCP Servers"}
    {:key :chat :label "Chat"}])
 
@@ -65,6 +67,7 @@
   (case current-tab
     :profile (profile/page)
     :token (token/page)
+    :shortcuts (hotkeys/page)
     :mcp-servers (mcp-servers/page)
     :chat (chat/page)
     nil))
