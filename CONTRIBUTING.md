@@ -24,6 +24,7 @@ Thanks for contributing to Hulunote. Small improvements are welcome—docs, bug 
 - Explain **what** you changed and **why**
 - Include a short note on **how you verified** the change
 - Add screenshots for UI changes when relevant
+- For new UI icons, follow the icon rules in `UI_DESIGN_SYSTEM.md`
 
 ## AI-Assisted PRs Welcome
 

@@ -524,6 +524,12 @@ hulu-text-font {
     display: block;
 }
 
+.menu-popover-item-icon img {
+    width: 14px;
+    height: 14px;
+    display: block;
+}
+
 .menu-popover-item-label {
     min-width: 0;
     white-space: nowrap;
@@ -791,7 +797,8 @@ hulu-text-font {
 .sidebar-user-chevron {
     width: 14px;
     height: 14px;
-    color: rgba(255,255,255,0.7);
+    opacity: 0.7;
+    filter: brightness(0) invert(1);
     flex-shrink: 0;
     transition: transform 0.15s ease;
 }

@@ -1,6 +1,7 @@
 (ns hulunote.settings.hotkeys
   (:require [rum.core :as rum]
             [hulunote.commands :as commands]
+            [hulunote.icon :as icon]
             [hulunote.shortcuts :as shortcuts]
             [hulunote.shortcut-state :as shortcut-state]
             [hulunote.settings.shared :as shared]))
@@ -59,7 +60,7 @@
       (commit-shortcut! command shortcut))))
 
 (rum/defc icon-button
-  [{:keys [title on-click path disabled?]}]
+  [{:keys [title on-click icon-name disabled?]}]
   [:button
    {:title title
     :on-click (fn [e]
@@ -81,15 +82,12 @@
             :align-items "center"
             :justify-content "center"
             :flex-shrink 0}}
-   [:svg {:width "16"
-          :height "16"
-          :viewBox "0 0 24 24"
-          :fill "none"
-          :stroke "currentColor"
-          :stroke-width "1.9"
-          :stroke-linecap "round"
-          :stroke-linejoin "round"}
-    [:path {:d path}]]])
+   (icon/svg-icon
+     {:name icon-name
+      :style {:width "16px"
+              :height "16px"
+              :opacity (if disabled? 0.24 0.72)
+              :filter "brightness(0) invert(1)"}})])
 
 (rum/defc shortcut-button < rum/reactive [command]
   (let [{:keys [id]} command
@@ -161,14 +159,14 @@
        (when (seq (shortcuts/normalize-shortcut current-shortcut))
          (icon-button
            {:title "Clear shortcut"
-            :path "M3 6h18 M8 6V4h8v2 M6 6l1 14h10l1-14 M10 11v6 M14 11v6"
+            :icon-name "delete"
             :on-click #(do
                          (shortcut-state/blank-user-shortcut! id)
                          (shortcut-state/stop-recording!))}))
        (when (and default-shortcut has-user-override?)
          (icon-button
            {:title "Reset to default"
-            :path "M3 12a9 9 0 1 0 3-6.7 M3 4v5h5"
+            :icon-name "reset"
             :on-click #(do
                          (shortcut-state/clear-user-shortcut! id)
                          (shortcut-state/stop-recording!))})) ]
