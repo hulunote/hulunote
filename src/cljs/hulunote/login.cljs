@@ -7,7 +7,22 @@
             [re-frame.core :as re-frame]
             [hulunote.router :as router]
             [hulunote.storage :as storage]
+            [hulunote.http :as http]
             [hulunote.db :as db]))
+
+(defn remove-nil-values [m]
+  (into {} (remove (fn [[_ v]] (nil? v)) m)))
+
+(defn- navigate-after-login! [database-list]
+  (let [default-db (some (fn [item]
+                           (when (:hulunote-databases/is-default item)
+                             item))
+                     database-list)]
+    (if-let [default-db-name (:hulunote-databases/name default-db)]
+      (do
+        (http/database-data-load default-db-name)
+        (router/go-to-diaries! default-db-name))
+      (router/switch-router! "/"))))
 
 
 (defn signup-api [{:keys [username password platform-code registration-code]}]
@@ -29,7 +44,12 @@
                           (when (and (exists? js/window.electronAPI)
                                      (.-setAuthToken js/window.electronAPI))
                             (.setAuthToken js/window.electronAPI (:token data)))
-                          (router/switch-router! "/"))}]))
+                          (re-frame/dispatch-sync
+                            [:get-database-list
+                             {:op-fn (fn [{:keys [database-list]}]
+                                       (doseq [item (or database-list [])]
+                                         (d/transact! db/dsdb [(remove-nil-values item)]))
+                                       (navigate-after-login! database-list))}]))}]))
 
 ;; Input field component
 (rum/defc input-field [label placeholder type value on-change & [{:keys [on-key-down id]}]]

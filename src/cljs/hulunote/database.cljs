@@ -22,9 +22,14 @@
                                    :x 0
                                    :y 0
                                    :database-name nil
-                                   :database-id nil}))
+                                   :database-id nil
+                                   :is-default false}))
 
 (defonce create-modal-state (atom {:visible false
+                                   :database-name ""}))
+
+(defonce rename-modal-state (atom {:visible false
+                                   :database-id nil
                                    :database-name ""}))
 
 (defonce import-state (atom {:importing false
@@ -34,6 +39,36 @@
 
 ;; Holds the database-id to import into (set before opening file picker)
 (defonce import-target-db-id (atom nil))
+
+(defn sync-local-database!
+  [database-id attrs]
+  (d/transact! db/dsdb
+    [(merge {:hulunote-databases/id database-id}
+       attrs)]))
+
+(defn set-default-database!
+  [database-id database-name]
+  (let [current-defaults (->> (db/get-database @db/dsdb)
+                           (map first)
+                           (filter :hulunote-databases/is-default)
+                           (remove #(= (:hulunote-databases/id %) database-id))
+                           vec)]
+    (doseq [item current-defaults]
+      (re-frame/dispatch
+        [:update-database
+         {:database-id (:hulunote-databases/id item)
+          :is-default false}]))
+    (re-frame/dispatch
+      [:update-database
+       {:database-id database-id
+        :is-default true
+        :op-fn (fn [_]
+                 (doseq [item current-defaults]
+                   (sync-local-database! (:hulunote-databases/id item)
+                     {:hulunote-databases/is-default false}))
+                 (sync-local-database! database-id
+                   {:hulunote-databases/is-default true})
+                 (u/alert (str "Database \"" database-name "\" set as default")))}])))
 
 ;; ==================== Import Helper ====================
 (defn import-notes-to-database!
@@ -63,7 +98,7 @@
 
 ;; ==================== Context Menu Component ====================
 (rum/defc context-menu < rum/reactive []
-  (let [{:keys [visible x y database-name database-id]} (rum/react context-menu-state)
+  (let [{:keys [visible x y database-name database-id is-default]} (rum/react context-menu-state)
         {:keys [importing]} (rum/react import-state)]
     (when visible
       [:div.context-menu
@@ -123,6 +158,48 @@
                          100)))}
         [:span {:style {:color "#764ba2"}} "\uD83D\uDDDC\uFE0F"]
         [:span {:style {:color "#333"}} (if importing "Importing..." "Import ZIP")]]
+
+       ;; Divider
+       [:div {:style {:height "1px"
+                      :background "#eee"
+                      :margin "4px 0"}}]
+
+       ;; Rename Database option
+       [:div.context-menu-item.pointer
+        {:style {:padding "10px 16px"
+                 :display "flex"
+                 :align-items "center"
+                 :gap "8px"
+                 :transition "background 0.2s"}
+         :on-mouse-enter #(set! (.. % -target -style -background) "#f5f5f5")
+         :on-mouse-leave #(set! (.. % -target -style -background) "transparent")
+         :on-click (fn [e]
+                     (.stopPropagation e)
+                     (reset! rename-modal-state {:visible true
+                                                 :database-id database-id
+                                                 :database-name database-name})
+                     (swap! context-menu-state assoc :visible false))}
+        [:span {:style {:color "#667eea"}} "✏️"]
+        [:span {:style {:color "#333"}} "Rename Database"]]
+
+       ;; Set as default option
+       [:div.context-menu-item.pointer
+        {:style {:padding "10px 16px"
+                 :display "flex"
+                 :align-items "center"
+                 :gap "8px"
+                 :transition "background 0.2s"
+                 :opacity (if is-default 0.55 1)}
+         :on-mouse-enter #(when-not is-default
+                            (set! (.. % -target -style -background) "#f5f5f5"))
+         :on-mouse-leave #(set! (.. % -target -style -background) "transparent")
+         :on-click (fn [e]
+                     (.stopPropagation e)
+                     (when-not is-default
+                       (set-default-database! database-id database-name))
+                     (swap! context-menu-state assoc :visible false))}
+        [:span {:style {:color "#f5a623"}} "★"]
+        [:span {:style {:color "#333"}} (if is-default "Default Database" "Set as Default")]]
 
        ;; Divider
        [:div {:style {:height "1px"
@@ -248,27 +325,151 @@
                    :font-weight "600"
                    :color "#fff"
                    :cursor "pointer"}}
-          "Create"]]]])))
+         "Create"]]]])))
+
+(rum/defc rename-modal < rum/reactive []
+  (let [{:keys [visible database-id database-name]} (rum/react rename-modal-state)]
+    (when visible
+      [:div.modal-overlay
+       {:style {:position "fixed"
+                :top 0
+                :left 0
+                :right 0
+                :bottom 0
+                :background "rgba(0,0,0,0.5)"
+                :display "flex"
+                :align-items "center"
+                :justify-content "center"
+                :z-index 10000}
+        :on-click #(reset! rename-modal-state {:visible false
+                                               :database-id nil
+                                               :database-name ""})}
+       [:div.modal-content
+        {:style {:background "#fff"
+                 :border-radius "16px"
+                 :padding "32px"
+                 :min-width "400px"
+                 :box-shadow "0 8px 32px rgba(0,0,0,0.2)"}
+         :on-click #(.stopPropagation %)}
+        [:h2 {:style {:margin "0 0 24px 0"
+                      :font-size "24px"
+                      :font-weight "600"
+                      :color "#1a1a2e"}}
+         "Rename Database"]
+        [:div {:style {:margin-bottom "24px"}}
+         [:label {:style {:display "block"
+                          :margin-bottom "8px"
+                          :font-size "14px"
+                          :font-weight "500"
+                          :color "#666"}}
+          "Database Name"]
+         [:input
+          {:type "text"
+           :placeholder "Enter database name..."
+           :value database-name
+           :on-change #(swap! rename-modal-state assoc :database-name (.. % -target -value))
+           :on-key-down (fn [e]
+                          (when (= (.-key e) "Enter")
+                            (let [name (clojure.string/trim database-name)]
+                              (when (and database-id (not (empty? name)))
+                                (re-frame/dispatch
+                                  [:update-database
+                                   {:database-id database-id
+                                    :db-name name
+                                    :op-fn (fn [_]
+                                             (sync-local-database! database-id
+                                               {:hulunote-databases/name name})
+                                             (reset! rename-modal-state {:visible false
+                                                                         :database-id nil
+                                                                         :database-name ""})
+                                             (u/alert (str "Database renamed to \"" name "\"")))}])))))
+           :style {:width "100%"
+                   :padding "12px 16px"
+                   :border "2px solid #e0e0e0"
+                   :border-radius "8px"
+                   :font-size "16px"
+                   :outline "none"
+                   :transition "border-color 0.2s"}}]]
+        [:div {:style {:display "flex"
+                       :justify-content "flex-end"
+                       :gap "12px"}}
+         [:button.pointer
+          {:on-click #(reset! rename-modal-state {:visible false
+                                                  :database-id nil
+                                                  :database-name ""})
+           :style {:padding "12px 24px"
+                   :border "2px solid #e0e0e0"
+                   :border-radius "8px"
+                   :background "#fff"
+                   :font-size "16px"
+                   :font-weight "500"
+                   :color "#666"
+                   :cursor "pointer"}}
+          "Cancel"]
+         [:button.pointer
+          {:on-click (fn []
+                       (let [name (clojure.string/trim database-name)]
+                         (when (and database-id (not (empty? name)))
+                           (re-frame/dispatch
+                             [:update-database
+                              {:database-id database-id
+                               :db-name name
+                               :op-fn (fn [_]
+                                        (sync-local-database! database-id
+                                          {:hulunote-databases/name name})
+                                        (reset! rename-modal-state {:visible false
+                                                                    :database-id nil
+                                                                    :database-name ""})
+                                        (u/alert (str "Database renamed to \"" name "\"")))}]))))
+           :style {:padding "12px 24px"
+                   :border "none"
+                   :border-radius "8px"
+                   :background "linear-gradient(135deg, #667eea 0%, #764ba2 100%)"
+                   :font-size "16px"
+                   :font-weight "600"
+                   :color "#fff"
+                   :cursor "pointer"}}
+          "Save"]]]])))
 
 ;; ==================== Database Card Component ====================
-(rum/defc database-card [name database-id on-click]
+(rum/defc database-card [name database-id is-default on-click]
   [:div.flex.pointer.database-card
    {:on-click on-click
     :on-context-menu (fn [e]
                        (.preventDefault e)
+                       (.stopPropagation e)
                        (swap! context-menu-state assoc
                               :visible true
                               :x (.-clientX e)
                               :y (.-clientY e)
                               :database-name name
-                              :database-id database-id))
+                              :database-id database-id
+                              :is-default (boolean is-default)))
     :style {:background "#fff"
+            :position "relative"
             :border-radius "12px"
             :padding "32px 24px"
-            :box-shadow "0 2px 12px rgba(0,0,0,0.08)"
+            :box-shadow (if is-default
+                          "0 10px 30px rgba(102,126,234,0.08), 0 0 0 1px rgba(102,126,234,0.14)"
+                          "0 2px 12px rgba(0,0,0,0.08)")
             :transition "all 0.3s ease"
             :border "2px solid transparent"
             :min-width "200px"}}
+   (when is-default
+     [:div
+      {:style {:position "absolute"
+               :top "18px"
+               :right "18px"
+               :padding "6px 12px"
+               :border-radius "999px"
+               :background "rgba(102, 126, 234, 0.08)"
+               :border "1px solid rgba(102, 126, 234, 0.16)"
+               :font-size "11px"
+               :font-weight "700"
+               :letter-spacing "0.02em"
+               :line-height "1"
+               :color "#5c6fdf"}}
+      "Default"])
    [:div.flex.flex-column.items-center.w-100
     [:div {:style {:font-size "40px"
                    :margin-bottom "16px"}}
@@ -340,6 +541,7 @@
   (let [database-list (db/get-database db)
         _ (rum/react context-menu-state)  ;; Subscribe to context menu state
         _ (rum/react create-modal-state)  ;; Subscribe to create modal state
+        _ (rum/react rename-modal-state)  ;; Subscribe to rename modal state
         _ (rum/react user-menu-open?)]    ;; Subscribe to user menu state
     [:div.flex.flex-column
      {:style {:min-height "100vh"
@@ -418,24 +620,6 @@
                              :min-width "180px" :z-index 10000
                              :padding "8px 0"
                              :overflow "hidden"}}
-               ;; Settings
-               [:div.pointer
-                {:style {:padding "10px 16px" :display "flex" :align-items "center"
-                         :gap "10px" :transition "background 0.15s" :color "#333"}
-                 :on-mouse-enter #(set! (.. % -currentTarget -style -background) "#f5f5f5")
-                 :on-mouse-leave #(set! (.. % -currentTarget -style -background) "transparent")
-                 :on-click (fn [e]
-                             (.stopPropagation e)
-                             (reset! user-menu-open? false)
-                             (settings/open-settings!))}
-                [:svg {:width "16" :height "16" :viewBox "0 0 24 24" :fill "none"
-                       :stroke "currentColor" :stroke-width "2"
-                       :stroke-linecap "round" :stroke-linejoin "round"}
-                 [:circle {:cx "12" :cy "12" :r "3"}]
-                 [:path {:d "M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"}]]
-                [:span "Settings"]]
-               ;; Divider
-               [:div {:style {:height "1px" :background "#f0f0f0" :margin "4px 0"}}]
                ;; Logout
                [:div.pointer
                 {:style {:padding "10px 16px" :display "flex" :align-items "center"
@@ -508,11 +692,13 @@
          (for [item database-list]
            (let [db-item (first item)
                  db-name (:hulunote-databases/name db-item)
-                 db-id (:hulunote-databases/id db-item)]
+                 db-id (:hulunote-databases/id db-item)
+                 is-default (:hulunote-databases/is-default db-item)]
              (rum/with-key
                (database-card
                  db-name
                  db-id
+                 is-default
                  (fn []
                    (http/database-data-load db-name)
                    (router/go-to-diaries! db-name)))
@@ -548,6 +734,9 @@
 
      ;; Create modal
      (create-modal)
+
+     ;; Rename modal
+     (rename-modal)
 
      ;; Footer
      [:div
