@@ -6,6 +6,10 @@ const fsPromises = require('fs').promises;
 const McpClientManager = require('./mcp/mcpClientManager');
 const { OpenRouterClient } = require('./api/openRouterClient');
 const { createDeepAgent } = require('./agent');
+const HulunoteToolsMiddleware = require('./agent/middleware/HulunoteToolsMiddleware');
+
+// Built-in Hulunote tools (direct HTTP, replaces MCP server process)
+const hulunoteTools = new HulunoteToolsMiddleware();
 
 // MCP Manager instance
 let mcpManager = null;
@@ -249,20 +253,6 @@ ipcMain.handle('mcp:get-servers', async () => {
       ...server,
       connected: connectedClients.includes(server.name)
     }));
-
-    // Include built-in MCP server if connected
-    if (connectedClients.includes('hulunote-builtin')) {
-      const alreadyListed = servers.some(s => s.name === 'hulunote-builtin');
-      if (!alreadyListed) {
-        servers.unshift({
-          name: 'hulunote-builtin',
-          command: 'node',
-          args: ['mcp-server.js'],
-          connected: true,
-          builtin: true
-        });
-      }
-    }
 
     return { success: true, data: servers };
   } catch (error) {
@@ -767,6 +757,7 @@ ipcMain.handle('chat:send-message', async (event, { messages, useTools, database
       llmClient: openRouterClient,
       model,
       mcpManager: (useTools && mcpManager) ? mcpManager : null,
+      hulunoteTools: useTools ? hulunoteTools : null,
       databaseName: databaseName || null,
       subAgents,
       maxIterations: 20,
@@ -801,70 +792,19 @@ ipcMain.handle('chat:send-message', async (event, { messages, useTools, database
   }
 });
 
-// ============= Built-in MCP Server =============
+// ============= Built-in Hulunote Tools =============
 
-let builtinAuthToken = '';
-
-function getMcpServerPath() {
-  const devPath = path.join(__dirname, '..', 'mcp-server.js');
-  const prodPath = path.join(__dirname, 'mcp-server.js');
-  if (fs.existsSync(devPath)) return devPath;
-  if (fs.existsSync(prodPath)) return prodPath;
-  return null;
-}
-
-async function startBuiltinMcpServer(token) {
-  if (!mcpManager) {
-    console.error('MCP Manager not ready, cannot start built-in server');
-    return;
-  }
-
-  const mcpServerPath = getMcpServerPath();
-  if (!mcpServerPath) {
-    console.warn('Built-in MCP server not found');
-    return;
-  }
-
-  if (token) builtinAuthToken = token;
-  if (!builtinAuthToken) {
-    console.log('No auth token yet, built-in MCP server will start after login');
-    return;
-  }
-
-  try {
-    // Disconnect existing built-in server if running
-    if (mcpManager.isConnected('hulunote-builtin')) {
-      await mcpManager.removeClient('hulunote-builtin');
-    }
-
-    const serverConfig = {
-      name: 'hulunote-builtin',
-      command: 'node',
-      args: [mcpServerPath],
-      env: {
-        HULUNOTE_API_TOKEN: builtinAuthToken,
-        HULUNOTE_API_BASE: 'https://www.hulunote.top'
-      }
-    };
-
-    await mcpManager.createClient(serverConfig);
-    console.log('Built-in Hulunote MCP server started successfully');
-
-    if (mainWindow) {
-      mainWindow.webContents.send('mcp:server-connected', {
-        name: 'hulunote-builtin',
-        builtin: true
-      });
-    }
-  } catch (error) {
-    console.error('Failed to start built-in MCP server:', error);
+function setHulunoteAuthToken(token) {
+  if (token) {
+    hulunoteTools.setToken(token);
+    console.log('Hulunote built-in tools: auth token set');
   }
 }
 
 // Renderer sends auth token after login
 ipcMain.handle('hulunote:set-auth-token', async (event, token) => {
   try {
-    await startBuiltinMcpServer(token);
+    setHulunoteAuthToken(token);
     return { success: true };
   } catch (error) {
     return { success: false, error: error.message };
@@ -877,7 +817,6 @@ ipcMain.handle('hulunote:set-auth-token', async (event, token) => {
 app.whenReady().then(async () => {
   await initMcpManager();
   createWindow();
-  await startBuiltinMcpServer();
 });
 
 // Quit when all windows are closed
