@@ -2,11 +2,26 @@
   (:require [rum.core :as rum]
             [hulunote.render :as render]
             [hulunote.db :as db]
+            [hulunote.http :as http]
             [hulunote.sidebar :as sidebar]
             [hulunote.router :as router]))
 
 ;; State to track if we've initialized the daily note
 (defonce daily-note-initialized? (atom #{}))
+
+(declare get-current-database-name)
+
+(defn- maybe-initialize-daily-note!
+  [db]
+  (let [database-name (get-current-database-name db)]
+    (when (and database-name
+               (http/note-list-loaded? database-name)
+               (not (@daily-note-initialized? database-name)))
+      (swap! daily-note-initialized? conj database-name)
+      (sidebar/ensure-daily-note! database-name
+        {:navigate? false
+         :on-ready (fn [note-info]
+                     (prn "Daily note ready:" note-info))}))))
 
 (defn get-current-database-name
   "Get current database name from route params"
@@ -25,15 +40,13 @@
 (def daily-note-init-mixin
   {:did-mount
    (fn [state]
-     (let [[db] (:rum/args state)
-           database-name (get-current-database-name db)]
-       (when (and database-name (not (@daily-note-initialized? database-name)))
-         (swap! daily-note-initialized? conj database-name)
-         ;; Ensure today's daily note exists
-         (sidebar/ensure-daily-note! database-name
-           {:navigate? false
-            :on-ready (fn [note-info]
-                       (prn "Daily note ready:" note-info))})))
+     (let [[db] (:rum/args state)]
+       (maybe-initialize-daily-note! db))
+     state)
+   :did-update
+   (fn [state]
+     (let [[db] (:rum/args state)]
+       (maybe-initialize-daily-note! db))
      state)})
 
 (rum/defc diaries-page < rum/reactive daily-note-init-mixin

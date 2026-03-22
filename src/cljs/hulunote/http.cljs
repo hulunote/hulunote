@@ -180,6 +180,13 @@
            [:db/retractEntity [:hulunote-notes/id note-id]])))
   (d/transact! db/dsdb all-note-list))
 
+(defonce note-list-loaded-databases
+  (atom #{}))
+
+(defn note-list-loaded?
+  [database-name]
+  (contains? @note-list-loaded-databases database-name))
+
 (defn execute-cb
   "执行回调的通用函数，支持 Vector, Function 和 Set （多个）。"
   [cb arg]
@@ -292,11 +299,13 @@
 (defn database-data-load
   [database-name]
   (do
+    (swap! note-list-loaded-databases disj database-name)
     (re-frame/dispatch-sync [:get-note-list {:database-name database-name
                                              :page 1
                                              :size 100
                                              :op-fn (fn [{:keys [note-list]}]
-                                                      (transact-all-note note-list))}])
+                                                      (transact-all-note note-list)
+                                                      (swap! note-list-loaded-databases conj database-name))}])
     (re-frame/dispatch-sync [:get-all-nav-by-page
                              {:database-name database-name
                               :backend-ts 0
