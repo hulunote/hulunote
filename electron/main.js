@@ -753,6 +753,19 @@ ipcMain.handle('chat:send-message', async (event, { messages, useTools, database
       }
     };
 
+    // Set up note event callback to notify frontend of note/nav creation
+    // Uses executeJavaScript to call the global window.__hulunoteNoteEvent function
+    // set by chat_ui.cljs (same proven mechanism as progress bubbles)
+    if (useTools && hulunoteTools) {
+      hulunoteTools.setOnNoteEvent((noteEvent) => {
+        if (mainWindow && !mainWindow.isDestroyed()) {
+          const jsonStr = JSON.stringify(JSON.stringify(noteEvent));
+          const code = '(function(){try{var d=JSON.parse(' + jsonStr + ');window.__hulunoteNoteEvent&&window.__hulunoteNoteEvent(d);}catch(e){console.error("[hulunote] note event error:",e);}})();';
+          mainWindow.webContents.executeJavaScript(code).catch(() => {});
+        }
+      });
+    }
+
     const runAgent = createDeepAgent({
       llmClient: openRouterClient,
       model,
