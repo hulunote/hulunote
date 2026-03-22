@@ -34,7 +34,7 @@
           {:name "edit"
            :style {:width "12px"
                    :height "12px"
-                   :filter "brightness(0) invert(1)"}})]]
+                   :color "var(--ui-accent-text)"}})]]
       [:div
        [:div {:style {:font-size "14px" :color "var(--app-text-soft)" :margin-bottom "4px"}} "Profile Photo"]
        [:div {:style {:font-size "12px" :color "var(--app-text-faint)"}} "Click to upload (max 5MB)"]]]

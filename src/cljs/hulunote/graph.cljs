@@ -233,7 +233,7 @@
                                       (.select "text")
                                       (.transition)
                                       (.duration 200)
-                                      (.style "fill" "var(--ui-accent-text)")
+                                      (.style "fill" "var(--ui-accent)")
                                       (.style "font-size" "13px"))))
         _ (.on node "mouseout" (fn [event d]
                                  (-> (d3/select (.-currentTarget event))

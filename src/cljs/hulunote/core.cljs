@@ -9,6 +9,7 @@
    [hulunote.dom :as dom]
    [hulunote.util :as u]
    [hulunote.http :as http]
+   [hulunote.theme :as theme]
    [hulunote.router :as router]
    [hulunote.sidebar :as sidebar]
    [hulunote.commands :as commands]
@@ -164,6 +165,7 @@
   (rum/mount (app db/dsdb) (js/document.getElementById "app")))
 
 (defn init! []
+  (theme/init-theme!)
   (db/init-db)
   (plugin/init-plugin-system!)
   (commands/register-core-commands!)

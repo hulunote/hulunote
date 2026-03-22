@@ -2,6 +2,7 @@
   (:require [rum.core :as rum]
             [hulunote.settings-state :as settings-state]
             [hulunote.settings.shared :as shared]
+            [hulunote.settings.preferences :as preferences]
             [hulunote.settings.profile :as profile]
             [hulunote.settings.token :as token]
             [hulunote.settings.hotkeys :as hotkeys]
@@ -14,14 +15,15 @@
 (defonce initialized-settings-version (atom nil))
 
 (def settings-nav-items
-  [{:key :profile :label "Profile"}
+  [{:key :preferences :label "Preferences"}
+   {:key :profile :label "Profile"}
    {:key :token :label "Token"}
    {:key :shortcuts :label "Hotkeys"}
    {:key :mcp-servers :label "MCP Servers"}
    {:key :chat :label "Chat"}])
 
 (defn open-settings!
-  ([] (open-settings! :profile))
+  ([] (open-settings! :preferences))
   ([initial-tab]
    (settings-state/open-settings! initial-tab)))
 
@@ -48,10 +50,10 @@
       :style {:width "100%"
               :padding "7px 12px"
               :border (if active?
-                        "1px solid var(--theme-accent-30)"
+                        "1px solid var(--ui-nav-active-border)"
                         "1px solid transparent")
               :background (if active?
-                            "var(--theme-accent-20)"
+                            "var(--ui-nav-active-bg)"
                             "transparent")
               :color "var(--app-text-strong)"
               :opacity (if active? 1 0.8)
@@ -65,6 +67,7 @@
 
 (defn render-settings-content [current-tab]
   (case current-tab
+    :preferences (preferences/page)
     :profile (profile/page)
     :token (token/page)
     :shortcuts (hotkeys/page)

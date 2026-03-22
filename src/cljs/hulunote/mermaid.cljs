@@ -12,6 +12,9 @@
 (defonce ^:private loaded? (atom false))
 (defonce ^:private pending-renders (atom []))
 (defonce ^:private render-counter (atom 0))
+(defonce ^:private theme-listener-installed? (atom false))
+
+(declare render-diagram-body!)
 
 (defn- css-var
   ([var-name]
@@ -118,10 +121,10 @@
     (reset! css-injected? true)))
 
 (defn- init-mermaid! []
-  (when (and (exists? js/mermaid) (not @initialized?))
+  (when (exists? js/mermaid)
     (.initialize js/mermaid
       #js {:startOnLoad false
-           :theme "dark"
+           :theme "base"
            :themeVariables #js {:primaryColor (css-var "--mermaid-primary-color")
                                 :primaryTextColor (css-var "--mermaid-primary-text")
                                 :primaryBorderColor (css-var "--mermaid-border")
@@ -139,6 +142,21 @@
            :sequence #js {:useMaxWidth true}
            :gantt #js {:useMaxWidth true}})
     (reset! initialized? true)))
+
+(defn- rerender-all-diagrams! []
+  (when @loaded?
+    (reset! initialized? false)
+    (init-mermaid!)
+    (doseq [body-el (array-seq (.querySelectorAll js/document ".hulunote-mermaid-body[data-mermaid-source]"))]
+      (when-let [diagram-text (.getAttribute body-el "data-mermaid-source")]
+        (render-diagram-body! body-el diagram-text)))))
+
+(defn- ensure-theme-listener! []
+  (when-not @theme-listener-installed?
+    (.addEventListener js/window "hulunote:theme-change"
+      (fn [_]
+        (rerender-all-diagrams!)))
+    (reset! theme-listener-installed? true)))
 
 (defn- render-diagram-body!
   "Render mermaid diagram SVG into a body element."
@@ -198,6 +216,7 @@
      :on-save - fn called with new diagram text when edit is saved"
   [container diagram-text & [{:keys [on-save]}]]
   (ensure-css!)
+  (ensure-theme-listener!)
   (load-mermaid-script!)
   (let [wrapper (.createElement js/document "div")
         badge (.createElement js/document "div")
@@ -223,6 +242,7 @@
                     new-text (when textarea (str/trim (.-value textarea)))]
                 (when (and new-text (seq new-text))
                   (reset! current-text new-text)
+                  (.setAttribute body "data-mermaid-source" new-text)
                   (on-save new-text))
                 (reset! editing? false)
                 (set! (.-textContent edit-btn) "Edit")
@@ -240,6 +260,7 @@
 
     (.appendChild wrapper badge)
     (.appendChild wrapper body)
+    (.setAttribute body "data-mermaid-source" diagram-text)
     (set! (.-innerHTML container) "")
     (.appendChild container wrapper)
 

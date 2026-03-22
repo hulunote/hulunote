@@ -613,7 +613,7 @@
                {:name "keyboard_arrow_down"
                 :style {:width "12px"
                         :height "12px"
-                        :filter "brightness(0) invert(1)"
+                        :color "var(--theme-accent-text)"
                         :transition "transform 0.2s"
                         :transform (if menu-open? "rotate(180deg)" "rotate(0)")}})]
             ;; Dropdown menu
@@ -638,8 +638,7 @@
                 (icon/svg-icon
                   {:name "logout"
                    :style {:width "16px"
-                           :height "16px"
-                           :filter "brightness(0) saturate(100%) invert(57%) sepia(69%) saturate(3786%) hue-rotate(324deg) brightness(101%) contrast(101%)"}})
+                           :height "16px"}})
                 [:span "Logout"]]])]))]]
      
      ;; Main content

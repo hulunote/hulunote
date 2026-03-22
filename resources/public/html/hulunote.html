@@ -8,6 +8,24 @@
     <title>Hulunote: AI + Note Hippocampus — Your second brain</title>
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <script>
+      (function () {
+        try {
+          var themeMode = localStorage.getItem("hulunote-ui-theme");
+          themeMode = themeMode === "light" || themeMode === "dark" || themeMode === "auto"
+            ? themeMode
+            : "dark";
+          var theme = themeMode === "auto"
+            ? (window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches
+              ? "dark"
+              : "light")
+            : themeMode;
+          document.documentElement.setAttribute("data-theme", theme);
+          document.documentElement.setAttribute("data-theme-mode", themeMode);
+          document.documentElement.style.colorScheme = theme;
+        } catch (error) {}
+      })();
+    </script>
     <link rel="stylesheet" href="/css/tachyons.min.css"/>
     <link rel="stylesheet" href="/css/animate.min.css"/>
     <link rel="stylesheet" href="/css/hulunote.css"/>
