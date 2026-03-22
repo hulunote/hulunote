@@ -654,13 +654,6 @@
                         #(router/go-to-mcp-chat! database-name)
                         (= route-name :mcp-chat))
 
-          [:div {:style {:padding "8px 16px 4px 16px"}}
-           [:button.new-note-btn.sidebar-new-note-btn
-            {:style {:margin 0
-                     :width "100%"}
-             :on-click #(create-new-note! database-name)}
-            "New Note"]]
-
           [:div.sidebar-section-title "Shortcuts"]
 
           [:div.note-list
