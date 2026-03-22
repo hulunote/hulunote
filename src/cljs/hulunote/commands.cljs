@@ -130,11 +130,11 @@
    {:id "note.new"
     :title "New Note"
     :description "Create a new note in the current database."
-    :category :notes
-    :source :core
-    :customizable? true
-    :default-shortcut "Mod+N"
-    :scopes #{:global}
+   :category :notes
+   :source :core
+   :customizable? true
+    :default-shortcut "Mod+Alt+N"
+   :scopes #{:global}
     :allow-in-input? false
     :enabled? (fn [_]
                 (in-database-context?))
