@@ -190,28 +190,32 @@
 (.tool server
   "create_or_update_nav"
   "Create or update a navigation node in a note's outline"
-  #js {:note_id   (.describe (.string z) "UUID of the note")
-       :nav_id    (.describe (.string z) "UUID of the navigation node")
-       :content   (.describe (.string z) "Content of the navigation node")
-       :parent_id (.describe (.optional (.string z)) "UUID of the parent node (None for root level)")}
+  #js {:database_name (.describe (.string z) "Name of the database")
+       :note_id       (.describe (.string z) "UUID of the note")
+       :id            (.describe (.string z) "UUID of the navigation node")
+       :content       (.describe (.optional (.string z)) "Content of the navigation node (default: empty)")
+       :parid         (.describe (.optional (.string z)) "UUID of the parent node (omit for root level)")
+       :order         (.describe (.optional (.number z)) "Sort order (default: 0)")}
   (fn [params]
     (-> (make-hulunote-request "/hulunote/create-or-update-nav"
-          {:note-id   (.-note_id params)
-           :nav-id    (.-nav_id params)
-           :content   (.-content params)
-           :parent-id (.-parent_id params)})
+          (cond-> {:database-name (.-database_name params)
+                   :note-id       (.-note_id params)
+                   :id            (.-id params)
+                   :content       (or (.-content params) "")
+                   :order         (or (.-order params) 0)}
+            (.-parid params) (assoc :parid (.-parid params))))
         (.then (fn [result]
                  (let [data (get-data result)]
                    (if (.-error data)
                      (text-result (str "Failed to create/update navigation node: " (.-message data)))
-                     (let [parent-id   (.-parent_id params)
-                           parent-info (if parent-id
-                                         (str "under parent " parent-id)
+                     (let [parid      (.-parid params)
+                           parent-info (if parid
+                                         (str "under parent " parid)
                                          "at root level")]
                        (text-result
                          (str "Successfully created/updated navigation node "
-                              (.-nav_id params) " " parent-info
-                              "\nContent: " (.-content params)))))))))))
+                              (.-id params) " " parent-info
+                              "\nContent: " (or (.-content params) "")))))))))))
 
 ;; --- Tool: get_note_navigation ---
 (.tool server

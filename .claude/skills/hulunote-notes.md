@@ -14,9 +14,21 @@ The environment variable `HULUNOTE_API_TOKEN` must be set. If it's not set, ask 
 
 ## Core Concepts
 
-- **Database**: A workspace that contains notes. Identified by name (for creation) or UUID.
-- **Note**: A document within a database. Has a title, UUID, and a `root-nav-id` (the root of its outline tree).
-- **Navigation Node (Nav)**: An outline item within a note. Each nav has a UUID, content (text), and optional parent-id to form a tree hierarchy.
+- **Database**: A workspace that contains notes. Identified by name.
+- **Note**: A document within a database. Has a title, UUID (`id`), and a `root-nav-id` (the root of its outline tree).
+- **Navigation Node (Nav)**: An outline item within a note. Each has a UUID (`id`), content (text), and optional `parid` (parent id) forming a tree hierarchy.
+
+## API Field Names (CRITICAL)
+
+The `create-nav` command / `create_or_update_nav` API uses these exact field names:
+- `database-name` / `--database` — database name (required)
+- `note-id` / `--note-id` — note UUID (required)
+- `id` / `--id` — the nav node's own UUID v4 (auto-generated if omitted in CLI)
+- `content` / `--content` — text content (default: "")
+- `parid` / `--parid` — parent node UUID (omit for root level)
+- `order` / `--order` — sort order number (default: 0)
+
+**All IDs must be valid UUID v4**, e.g. `a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d`.
 
 ## Workflow: Writing an Outline Note
 
@@ -41,29 +53,24 @@ node hulunote-cli.js get-all-notes --database-id <database-uuid>
 node hulunote-cli.js get-navs --note-id <note-uuid>
 ```
 
-This returns all nav nodes with their IDs, content, and parent-id relationships. Use this to understand the existing structure before adding to it.
-
 ### Step 3: Add outline nodes
 
-Each outline item is a nav node. Use `--parent-id` to create hierarchy:
+Each outline item is a nav node. Use `--parid` to create hierarchy:
 
 ```bash
 # Add a top-level item (child of root)
-node hulunote-cli.js create-nav --note-id <note-id> --content "Chapter 1: Introduction" --parent-id <root-nav-id>
+node hulunote-cli.js create-nav --database "MyDB" --note-id <note-id> --content "Chapter 1: Introduction" --parid <root-nav-id>
 
-# The command returns the generated nav-id. Use it as parent for sub-items:
-node hulunote-cli.js create-nav --note-id <note-id> --content "1.1 Background" --parent-id <chapter1-nav-id>
-
-# Add another sub-item
-node hulunote-cli.js create-nav --note-id <note-id> --content "1.2 Motivation" --parent-id <chapter1-nav-id>
+# The command returns the generated id. Use it as parid for sub-items:
+node hulunote-cli.js create-nav --database "MyDB" --note-id <note-id> --content "1.1 Background" --parid <chapter1-id>
 ```
 
 ### Step 4: Update existing nodes
 
-To update content of an existing nav node, specify its `--nav-id`:
+To update content of an existing nav node, specify its `--id`:
 
 ```bash
-node hulunote-cli.js create-nav --note-id <note-id> --nav-id <existing-nav-id> --content "Updated content"
+node hulunote-cli.js create-nav --database "MyDB" --note-id <note-id> --id <existing-id> --content "Updated content" --parid <parent-id>
 ```
 
 ### Step 5: Update note title
@@ -72,43 +79,38 @@ node hulunote-cli.js create-nav --note-id <note-id> --nav-id <existing-nav-id> -
 node hulunote-cli.js update-note --note-id <note-id> --title "New Title"
 ```
 
-## Best Practices for Outline Writing
+## Best Practices
 
-1. **Always get the root-nav-id first** — When creating a new note, the response includes `root-nav-id`. All top-level outline items should use this as their `--parent-id`.
+1. **Always pass --database** — every `create-nav` call requires the database name.
 
-2. **Build top-down** — Create parent nodes first, then children. Save each returned `nav-id` to use as `--parent-id` for sub-items.
+2. **Always get the root-nav-id first** — When creating a new note, the response includes `root-nav-id`. All top-level outline items should use this as their `--parid`.
 
-3. **Use meaningful content** — Each nav node's content is a single outline entry. Keep it concise but informative.
+3. **Build top-down** — Create parent nodes first, then children. Save each returned `id` to use as `--parid` for sub-items.
 
-4. **Check before writing** — Run `get-navs` first to see what already exists. Avoid creating duplicate nodes.
+4. **IDs must be UUID v4** — The CLI auto-generates UUIDs when `--id` is omitted.
 
-5. **Batch efficiently** — When writing a multi-level outline, plan the full structure first, then create nodes in order (parents before children).
+5. **Check before writing** — Run `get-navs` first to see what already exists.
 
 ## Example: Create a Complete Outline
 
 ```bash
 # 1. Create the note
 node hulunote-cli.js create-note --database "Work" --title "Project Plan Q2"
-# Response: { "id": "note-uuid", "root-nav-id": "root-uuid", ... }
+# Response includes: "id": "note-uuid", "root-nav-id": "root-uuid"
 
-# 2. Add top-level sections (using root-nav-id as parent)
-node hulunote-cli.js create-nav --note-id note-uuid --content "Goals" --parent-id root-uuid
-# Response: { "nav-id": "goals-uuid", ... }
+# 2. Add top-level sections (using root-nav-id as parid)
+node hulunote-cli.js create-nav --database "Work" --note-id note-uuid --content "Goals" --parid root-uuid
+# Response: { "id": "goals-uuid", ... }
 
-node hulunote-cli.js create-nav --note-id note-uuid --content "Timeline" --parent-id root-uuid
-# Response: { "nav-id": "timeline-uuid", ... }
-
-node hulunote-cli.js create-nav --note-id note-uuid --content "Resources" --parent-id root-uuid
-# Response: { "nav-id": "resources-uuid", ... }
+node hulunote-cli.js create-nav --database "Work" --note-id note-uuid --content "Timeline" --parid root-uuid
+# Response: { "id": "timeline-uuid", ... }
 
 # 3. Add sub-items under Goals
-node hulunote-cli.js create-nav --note-id note-uuid --content "Ship v2.0 by June" --parent-id goals-uuid
-node hulunote-cli.js create-nav --note-id note-uuid --content "Reduce latency by 30%" --parent-id goals-uuid
+node hulunote-cli.js create-nav --database "Work" --note-id note-uuid --content "Ship v2.0 by June" --parid goals-uuid
 
 # 4. Add sub-items under Timeline
-node hulunote-cli.js create-nav --note-id note-uuid --content "April: Design phase" --parent-id timeline-uuid
-node hulunote-cli.js create-nav --note-id note-uuid --content "May: Implementation" --parent-id timeline-uuid
-node hulunote-cli.js create-nav --note-id note-uuid --content "June: Testing & release" --parent-id timeline-uuid
+node hulunote-cli.js create-nav --database "Work" --note-id note-uuid --content "April: Design phase" --parid timeline-uuid
+node hulunote-cli.js create-nav --database "Work" --note-id note-uuid --content "May: Implementation" --parid timeline-uuid
 ```
 
 ## Command Reference
@@ -119,6 +121,6 @@ node hulunote-cli.js create-nav --note-id note-uuid --content "June: Testing & r
 | `get-notes` | `--database-id` | `--page`, `--page-size` | List notes (paginated) |
 | `get-all-notes` | `--database-id` | | List all notes |
 | `update-note` | `--note-id` | `--title`, `--content` | Update note metadata |
-| `create-nav` | `--note-id`, `--content` | `--nav-id`, `--parent-id` | Create/update outline node |
+| `create-nav` | `--database`, `--note-id` | `--id`, `--content`, `--parid`, `--order` | Create/update outline node |
 | `get-navs` | `--note-id` | | Get note's outline tree |
 | `get-all-navs` | `--database-id` | `--page`, `--page-size` | List all nav nodes |

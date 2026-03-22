@@ -550,7 +550,7 @@ ipcMain.handle('chat:get-progress', () => {
 });
 
 // Send chat message (using createDeepAgent)
-ipcMain.handle('chat:send-message', async (event, { messages, useTools }) => {
+ipcMain.handle('chat:send-message', async (event, { messages, useTools, databaseName }) => {
   try {
     if (!openRouterClient) {
       const settings = await loadMcpSettings();
@@ -767,6 +767,7 @@ ipcMain.handle('chat:send-message', async (event, { messages, useTools }) => {
       llmClient: openRouterClient,
       model,
       mcpManager: (useTools && mcpManager) ? mcpManager : null,
+      databaseName: databaseName || null,
       subAgents,
       maxIterations: 20,
       onProgress

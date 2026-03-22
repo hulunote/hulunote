@@ -63,7 +63,7 @@
 ;; ==================== 发送消息 ====================
 
 (defn send-message! []
-  (let [{:keys [input messages use-tools? api-key-set?]} @chat-state]
+  (let [{:keys [input messages use-tools? api-key-set? database-name]} @chat-state]
     (when (and (not (str/blank? input)) api-key-set?)
       (let [user-message {:role "user" :content input}
             all-messages (conj messages user-message)]
@@ -76,7 +76,8 @@
         ;; 发送请求
 	        (go
 	          (when-let [ch (chat/send-message! {:messages all-messages
-	                                             :use-tools use-tools?})]
+	                                             :use-tools use-tools?
+	                                             :database-name database-name})]
 	            (let [raw (<! ch)
 	                  raw-progress-log (when (object? raw)
 	                                     (unchecked-get raw "progressLog"))
@@ -330,6 +331,11 @@
        (init-chat!)
        (when (mcp/mcp-available?)
          (mcp-state/init!))
+       ;; 把当前 database-name 存入 chat-state 供发送消息时使用
+       (let [db (first (:rum/args state))
+             db-name (get-current-database-name db)]
+         (when db-name
+           (swap! chat-state assoc :database-name db-name)))
        state)}
   rum/reactive
   [state db]

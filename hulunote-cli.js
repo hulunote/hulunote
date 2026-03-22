@@ -133,22 +133,25 @@ async function updateNote(args) {
 }
 
 async function createNav(args) {
+  const dbName = getRequiredArg(args, "--database", "Database name");
   const noteId = getRequiredArg(args, "--note-id", "Note UUID");
-  const content = getRequiredArg(args, "--content", "Node content");
-  const navId = getOptionalArg(args, "--nav-id", null) || randomUUID();
-  const parentId = getOptionalArg(args, "--parent-id", null);
+  const content = getOptionalArg(args, "--content", "");
+  const navId = getOptionalArg(args, "--id", null) || randomUUID();
+  const parid = getOptionalArg(args, "--parid", null);
+  const order = getOptionalArg(args, "--order", 0, Number);
 
   const payload = {
+    "database-name": dbName,
     "note-id": noteId,
-    "nav-id": navId,
+    id: navId,
     content: content,
+    order: order,
   };
-  if (parentId) payload["parent-id"] = parentId;
+  if (parid) payload.parid = parid;
 
   const result = await makeRequest("/hulunote/create-or-update-nav", payload);
   const data = getData(result);
-  // Include the nav-id in output so caller knows what was created
-  output({ "nav-id": navId, result: data });
+  output({ id: navId, result: data });
 }
 
 async function getNavs(args) {
@@ -246,10 +249,12 @@ Commands:
     --content <content>   New content (optional)
 
   create-nav            Create or update a navigation (outline) node
+    --database <name>     Database name (required)
     --note-id <uuid>      Note UUID (required)
-    --content <text>      Node content (required)
-    --nav-id <uuid>       Node UUID (auto-generated if omitted)
-    --parent-id <uuid>    Parent node UUID (root level if omitted)
+    --content <text>      Node content (default: "")
+    --id <uuid>           Node UUID (auto-generated if omitted)
+    --parid <uuid>        Parent node UUID (root level if omitted)
+    --order <n>           Sort order (default: 0)
 
   get-navs              Get all navigation nodes for a note
     --note-id <uuid>      Note UUID (required)
@@ -262,7 +267,7 @@ Commands:
 Examples:
   hulunote create-note --database "My Notes" --title "Daily Log"
   hulunote get-navs --note-id 550e8400-e29b-41d4-a716-446655440000
-  hulunote create-nav --note-id <id> --content "First item" --parent-id <root-nav-id>
+  hulunote create-nav --database "My Notes" --note-id <id> --content "First item" --parid <root-nav-id>
 `);
 }
 

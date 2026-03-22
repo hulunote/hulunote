@@ -27,6 +27,7 @@ function createDeepAgent({
   mcpManager,
   systemPrompt,
   middleware,
+  databaseName,
   subAgents = [],
   maxIterations = 20,
   onProgress
@@ -39,7 +40,7 @@ function createDeepAgent({
     stack = [];
 
     // 0. Hulunote outline-writing skill knowledge
-    stack.push(new HulunoteSkillMiddleware());
+    stack.push(new HulunoteSkillMiddleware({ databaseName }));
 
     // 1. MCP tools collection
     if (mcpManager) {

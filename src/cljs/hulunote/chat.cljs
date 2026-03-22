@@ -63,11 +63,12 @@
 
 (defn send-message!
   "发送聊天消息
-   params: {:messages [{:role :content}] :useTools bool}"
-  [{:keys [messages use-tools] :as params}]
+   params: {:messages [{:role :content}] :use-tools bool :database-name string}"
+  [{:keys [messages use-tools database-name] :as params}]
   (when (chat-available?)
     (let [js-params (clj->js {:messages messages
-                              :useTools (boolean use-tools)})]
+                              :useTools (boolean use-tools)
+                              :databaseName database-name})]
       (promise->chan (.sendMessage (.-chat js/window.electronAPI) js-params)))))
 
 (defn get-progress!
