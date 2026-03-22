@@ -58,10 +58,11 @@
   (let [{:keys [route-name params]} (db/get-route db)
         database-name (:database params)
         note-id (:note-id params)
-        [note-title] (when (and (= route-name :single-note) note-id)
+        [note-title] (when (and (#{:single-note :block-focus} route-name) note-id)
                        (single-note/get-note-by-id db note-id))
         page-title (case route-name
                      :single-note (or note-title "Page")
+                     :block-focus (or note-title "Page")
                      :diaries "Diaries"
                      :all-notes "All Notes"
                      :graph "Graph"
@@ -116,6 +117,7 @@
        :diaries (diaries/diaries-page db)
        :all-notes (all-notes/all-notes-page db)
        :single-note (single-note/single-note-page db)
+       :block-focus (single-note/single-note-page db)
        ;; Settings page (unified)
        :settings (settings/settings-page db)
        ;; MCP settings pages (redirect to unified settings)
