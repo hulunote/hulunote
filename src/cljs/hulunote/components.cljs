@@ -268,9 +268,7 @@
                     (navigate-to-note-by-title! title-str)))}
      [:span.link-style.blue "[["]
      [:span.link-title-style
-      {:style {:color "var(--theme-accent)"
-               :text-decoration "underline"
-               :text-decoration-style "dotted"}}
+      {:style {:color "var(--theme-accent)"}}
       title-str]
      [:span.link-style.blue "]]"]]))
 
@@ -290,9 +288,7 @@
                     (navigate-to-note-by-title! title-str)))}
      [:span.link-style.blue "#"]
      [:span.link-title-style
-      {:style {:color "var(--theme-accent)"
-               :text-decoration "underline"
-               :text-decoration-style "dotted"}}
+      {:style {:color "var(--theme-accent)"}}
       title-str]]))
 
 (declare parse-and-render)

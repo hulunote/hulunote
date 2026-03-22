@@ -1253,10 +1253,41 @@
   (let [nav (u/get-nav-sub-navs-sorted db nav-id)]
     (seq (:parid nav))))
 
+(defn show-empty-placeholder?
+  "Only show the empty-block placeholder for the first top-level block of the note."
+  [db nav-id note-id content]
+  (when (empty? content)
+    (let [nav (u/get-nav-by-id db nav-id)
+          root-nav-id (d/q '[:find ?root-nav-id .
+                             :in $ ?note-id
+                             :where
+                             [?note :hulunote-notes/id ?note-id]
+                             [?note :hulunote-notes/root-nav-id ?root-nav-id]]
+                        db note-id)
+          root-nav (when root-nav-id
+                     (u/get-nav-sub-navs-sorted db root-nav-id))
+          top-level-children (:parid root-nav)
+          first-child-id (:id (first top-level-children))
+          has-other-content? (some (fn [child]
+                                     (and (not= (:id child) nav-id)
+                                          (not (clojure.string/blank? (:content child)))))
+                                   top-level-children)]
+      (and root-nav-id
+           (= (:origin-parid nav) root-nav-id)
+           (= nav-id first-child-id)
+           (not has-other-content?)))))
+
 (rum/defc nav-bullet < rum/reactive
   "Bullet point component with expand/collapse functionality and context menu"
-  [db nav-id is-display note-id database-name content is-editing]
-  (let [has-child (has-children? db nav-id)]
+  [db nav-id is-display note-id database-name content is-editing & [{:keys [forced-has-children? collapsed? on-toggle]
+                                                                     :or {collapsed? (not is-display)}}]]
+  (let [has-child (if (some? forced-has-children?)
+                    forced-has-children?
+                    (has-children? db nav-id))
+        handle-toggle (or on-toggle
+                          (fn [e]
+                            (u/stop-click-bubble e)
+                            (toggle-nav-display! db nav-id is-display note-id database-name)))]
     [:span
      {:class (str "controls hulu-text-font " (when has-child "has-children"))
       :style {:align-items "center"
@@ -1299,15 +1330,13 @@
           :style {:font-size "9px"
                   :color "var(--text-muted)"
                   :transition "transform 0.15s ease, color 0.15s ease"
-                  :transform (if is-display "rotate(90deg)" "rotate(0deg)")
+                  :transform (if collapsed? "rotate(0deg)" "rotate(90deg)")
                   :display "inline-block"
                   :line-height "1"
                   :width "9px"
                   :background "transparent"
                   :text-align "center"}
-          :on-click (fn [e]
-                      (u/stop-click-bubble e)
-                      (toggle-nav-display! db nav-id is-display note-id database-name))}
+          :on-click handle-toggle}
          "▶"])]
      [:span
       {:class "controls customize-dot night-circular"
@@ -1318,7 +1347,7 @@
                :background-color (if is-editing "var(--theme-accent)" "var(--bullet-idle-color)")
                :box-shadow (cond
                              is-editing "0 0 0 2px var(--theme-accent-glow)"
-                             (and has-child (not is-display)) "0 0 0 2px var(--bullet-collapsed-glow)"
+                             (and has-child collapsed?) "0 0 0 3px var(--bullet-collapsed-glow)"
                              :else "none")
                :cursor "pointer"
                :display "block"
@@ -1431,9 +1460,11 @@
                     (reset! target-cursor-column nil)
                     (let [cursor-pos (estimate-cursor-pos-from-click e content)]
                       (start-editing! nav-id content cursor-pos)))}
-       ;; BUG FIX: Keep "Click to edit..." placeholder for empty content
-       (if (empty? content)
-         [:span {:style {:color "#666"}} "Click to edit..."]
+       ;; Keep a helpful placeholder for empty content blocks.
+       (if (show-empty-placeholder? @db/dsdb nav-id note-id content)
+         [:span {:style {:color "rgba(255,255,255,0.22)"
+                         :font-weight "400"}}
+          "Click here to start writing. Type '/' to see commands."]
          (comps/parse-and-render content {}))])))
 
 (rum/defc plugin-block-renderer
