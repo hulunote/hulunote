@@ -641,6 +641,11 @@
                         #(router/go-to-mcp-chat! database-name)
                         (= route-name :mcp-chat))
 
+          [:button.new-note-btn.sidebar-new-note-btn
+           {:on-click #(create-new-note! database-name)}
+           (icon/svg-icon {:name "add_large" :class "new-note-btn-icon"})
+           "New Note"]
+
           [:div.sidebar-section-title "Shortcuts"]
 
           [:div.note-list
