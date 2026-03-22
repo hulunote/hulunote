@@ -163,7 +163,7 @@
                  (.selectAll "line")
                  (.data links)
                  (.join "line")
-                 (.attr "stroke" "rgba(102, 126, 234, 0.3)")
+                 (.attr "stroke" "var(--graph-link)")
                  (.attr "stroke-width" 1))
 
         ;; Draw node groups
@@ -180,11 +180,11 @@
               (.attr "fill" (fn [d]
                               (let [lc (node-link-count d)]
                                 (cond
-                                  (> lc 5) "#667eea"
-                                  (> lc 2) "#764ba2"
-                                  (> lc 0) "#5a6b8a"
-                                  :else "#3d4455"))))
-              (.attr "stroke" "rgba(102, 126, 234, 0.5)")
+                                  (> lc 5) "var(--graph-node-hub)"
+                                  (> lc 2) "var(--graph-node-active)"
+                                  (> lc 0) "var(--graph-node-light)"
+                                  :else "var(--graph-node-isolated)"))))
+              (.attr "stroke" "var(--graph-link-strong)")
               (.attr "stroke-width" 1.5)
               (.style "filter" "url(#glow)"))
 
@@ -194,7 +194,7 @@
               (.attr "dy" (fn [d] (+ (node-radius (node-link-count d)) 14)))
               (.attr "text-anchor" "middle")
               (.style "font-size" "11px")
-              (.style "fill" "rgba(255,255,255,0.7)")
+              (.style "fill" "var(--ui-control-text)")
               (.style "pointer-events" "none")
               (.style "font-family" "-apple-system, BlinkMacSystemFont, sans-serif"))
 
@@ -228,12 +228,12 @@
                                       (.transition)
                                       (.duration 200)
                                       (.attr "stroke-width" 3)
-                                      (.attr "stroke" "#667eea"))
+                                      (.attr "stroke" "var(--graph-node-hub)"))
                                   (-> (d3/select (.-currentTarget event))
                                       (.select "text")
                                       (.transition)
                                       (.duration 200)
-                                      (.style "fill" "#fff")
+                                      (.style "fill" "var(--ui-accent-text)")
                                       (.style "font-size" "13px"))))
         _ (.on node "mouseout" (fn [event d]
                                  (-> (d3/select (.-currentTarget event))
@@ -241,12 +241,12 @@
                                      (.transition)
                                      (.duration 200)
                                      (.attr "stroke-width" 1.5)
-                                     (.attr "stroke" "rgba(102, 126, 234, 0.5)"))
+                                     (.attr "stroke" "var(--graph-link-strong)"))
                                  (-> (d3/select (.-currentTarget event))
                                      (.select "text")
                                      (.transition)
                                      (.duration 200)
-                                     (.style "fill" "rgba(255,255,255,0.7)")
+                                     (.style "fill" "var(--ui-control-text)")
                                      (.style "font-size" "11px"))))
 
         ;; Tick handler
@@ -295,7 +295,7 @@
   align-items: center;
   justify-content: center;
   height: 100%;
-  color: rgba(255, 255, 255, 0.4);
+  color: var(--ui-text-subtle);
   gap: 12px;
 }
 .graph-empty-icon {
@@ -311,18 +311,18 @@
   right: 16px;
   width: 280px;
   max-width: min(280px, calc(100vw - 72px));
-  background: rgba(46, 51, 64, 0.92);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: var(--ui-surface-topbar);
+  border: 1px solid var(--ui-divider);
   border-radius: 8px;
   padding: 12px 16px;
   box-sizing: border-box;
   font-size: 12px;
-  color: rgba(255, 255, 255, 0.6);
+  color: var(--ui-text-muted);
 }
 .graph-legend-title {
   font-weight: 600;
   margin-bottom: 8px;
-  color: rgba(255, 255, 255, 0.8);
+  color: var(--ui-text-secondary);
 }
 .graph-legend-item {
   display: flex;
@@ -348,9 +348,9 @@
   width: 34px;
   height: 34px;
   border-radius: 999px;
-  border: 1px solid rgba(255, 255, 255, 0.14);
-  background: rgba(46, 51, 64, 0.94);
-  color: rgba(255, 255, 255, 0.82);
+  border: 1px solid var(--ui-border-strong);
+  background: var(--ui-surface-topbar);
+  color: var(--ui-text-secondary);
   cursor: pointer;
   display: inline-flex;
   align-items: center;
@@ -360,15 +360,15 @@
   transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
 }
 .graph-help-btn:hover {
-  background: rgba(102, 126, 234, 0.22);
-  border-color: rgba(102, 126, 234, 0.42);
-  color: #fff;
+  background: var(--ui-accent-soft-strong);
+  border-color: var(--ui-border-accent-strong);
+  color: var(--ui-accent-text);
 }
 .graph-help-description {
   margin: 0 0 10px;
   font-size: 12px;
   line-height: 1.45;
-  color: rgba(255, 255, 255, 0.62);
+  color: var(--ui-control-text);
 }
 .graph-stats-card {
   position: absolute;
@@ -379,9 +379,9 @@
   gap: 18px;
   padding: 10px 14px;
   border-radius: 10px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  background: rgba(46, 51, 64, 0.92);
-  color: rgba(255, 255, 255, 0.62);
+  border: 1px solid var(--ui-divider);
+  background: var(--ui-surface-topbar);
+  color: var(--ui-control-text);
   box-sizing: border-box;
 }
 .graph-stat {
@@ -392,12 +392,12 @@
 .graph-stat-num {
   font-size: 15px;
   font-weight: 700;
-  color: var(--theme-accent);
+  color: var(--ui-accent);
   line-height: 1;
 }
 .graph-stat-label {
   font-size: 12px;
-  color: rgba(255, 255, 255, 0.62);
+  color: var(--ui-control-text);
   line-height: 1;
 }
 ")
@@ -471,16 +471,16 @@
                [:p.graph-help-description
                 "Node color indicates how many connections a note has in the graph."]
                [:div.graph-legend-item
-                [:div.graph-legend-dot {:style {:background "#667eea"}}]
+                [:div.graph-legend-dot {:style {:background "var(--graph-node-hub)"}}]
                 "Hub note (5+ connections)"]
                [:div.graph-legend-item
-                [:div.graph-legend-dot {:style {:background "#764ba2"}}]
+                [:div.graph-legend-dot {:style {:background "var(--graph-node-active)"}}]
                 "Active note (3-4 connections)"]
                [:div.graph-legend-item
-                [:div.graph-legend-dot {:style {:background "#5a6b8a"}}]
+                [:div.graph-legend-dot {:style {:background "var(--graph-node-light)"}}]
                 "Lightly connected (1-2 connections)"]
                [:div.graph-legend-item
-                [:div.graph-legend-dot {:style {:background "#3d4455"}}]
+                [:div.graph-legend-dot {:style {:background "var(--graph-node-isolated)"}}]
                 "Isolated (0 connections)"]])
             [:button.graph-help-btn
              {:type "button"

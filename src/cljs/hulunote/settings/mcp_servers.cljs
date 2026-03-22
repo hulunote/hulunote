@@ -17,7 +17,7 @@
                :padding-right "74px"
                :margin-bottom "24px"}}
       [:div
-       [:p {:style {:color "rgba(255,255,255,0.5)"
+       [:p {:style {:color "var(--app-text-soft)"
                     :margin 0
                     :font-size "14px"}}
         "Configure Model Context Protocol servers for AI integration"]]
@@ -26,8 +26,8 @@
         "Add Server")]
 
      (when-not (mcp/electron?)
-       [:div {:style {:background "rgba(250,140,22,0.1)"
-                      :border "1px solid rgba(250,140,22,0.3)"
+       [:div {:style {:background "var(--theme-warning-soft)"
+                      :border "1px solid var(--theme-warning-border)"
                       :border-radius "8px"
                       :padding "16px 20px"
                       :margin-bottom "24px"
@@ -37,10 +37,10 @@
         [:span {:style {:font-size "24px"}} "!"]
         [:div
          [:div {:style {:font-weight "600"
-                        :color "#fa8c16"
+                        :color "var(--theme-warning)"
                         :margin-bottom "4px"}}
           "MCP is only available in Hulunote PC App"]
-         [:div {:style {:color "rgba(250,140,22,0.8)"
+         [:div {:style {:color "var(--theme-warning-soft-text)"
                         :font-size "13px"}}
           "Please use the Hulunote desktop application to configure MCP servers."]]])
 

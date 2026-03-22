@@ -13,6 +13,17 @@
 (defonce ^:private pending-renders (atom []))
 (defonce ^:private render-counter (atom 0))
 
+(defn- css-var
+  ([var-name]
+   (css-var var-name ""))
+  ([var-name fallback]
+   (if-let [root (.-documentElement js/document)]
+     (let [value (-> (js/getComputedStyle root)
+                     (.getPropertyValue var-name)
+                     (str/trim))]
+       (if (str/blank? value) fallback value))
+     fallback)))
+
 (def ^:private mermaid-css
   "
 .hulunote-mermaid-wrapper {
@@ -20,18 +31,18 @@
   margin: 4px 0;
   border-radius: 6px;
   overflow: hidden;
-  border: 1px solid var(--theme-border, #333);
-  background: #1e2028;
+  border: 1px solid var(--code-block-border);
+  background: var(--mermaid-background);
 }
 .hulunote-mermaid-badge {
   display: flex;
   justify-content: space-between;
   align-items: center;
   padding: 4px 10px;
-  background: #1a1c24;
-  border-bottom: 1px solid #333;
+  background: var(--code-block-gutter-bg);
+  border-bottom: 1px solid var(--code-block-border);
   font-size: 11px;
-  color: #888;
+  color: var(--code-block-muted);
   font-family: -apple-system, BlinkMacSystemFont, sans-serif;
   user-select: none;
 }
@@ -39,7 +50,7 @@
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.5px;
-  color: #c792ea;
+  color: var(--mermaid-badge-accent);
 }
 .hulunote-mermaid-body {
   padding: 16px;
@@ -54,20 +65,20 @@
   height: auto;
 }
 .hulunote-mermaid-error {
-  color: #f07178;
+  color: var(--mermaid-error-text);
   font-size: 13px;
   padding: 8px;
   font-family: monospace;
   white-space: pre-wrap;
 }
 .hulunote-mermaid-loading {
-  color: rgba(255,255,255,0.4);
+  color: var(--mermaid-loading-text);
   font-size: 13px;
   padding: 8px;
 }
 .hulunote-mermaid-edit-btn {
   cursor: pointer;
-  color: #667eea;
+  color: var(--mermaid-primary-color);
   font-size: 11px;
   padding: 2px 8px;
   border-radius: 3px;
@@ -77,14 +88,14 @@
   font-weight: 500;
 }
 .hulunote-mermaid-edit-btn:hover {
-  border-color: #667eea;
-  background: rgba(102, 126, 234, 0.1);
+  border-color: var(--mermaid-primary-color);
+  background: var(--mermaid-button-hover-bg);
 }
 .hulunote-mermaid-editor {
   width: 100%;
   min-height: 120px;
-  background: #1e2028;
-  color: #e0e0e0;
+  background: var(--mermaid-background);
+  color: var(--code-block-text);
   border: none;
   padding: 12px;
   font-family: 'SF Mono', 'Fira Code', 'JetBrains Mono', Menlo, Monaco, monospace;
@@ -111,18 +122,18 @@
     (.initialize js/mermaid
       #js {:startOnLoad false
            :theme "dark"
-           :themeVariables #js {:primaryColor "#667eea"
-                                :primaryTextColor "#e0e0e0"
-                                :primaryBorderColor "#7c8bab"
-                                :lineColor "#7c8bab"
-                                :secondaryColor "#764ba2"
-                                :tertiaryColor "#2e3340"
-                                :background "#1e2028"
-                                :mainBkg "#2e3340"
-                                :nodeBorder "#667eea"
-                                :clusterBkg "#2e3340"
-                                :titleColor "#e0e0e0"
-                                :edgeLabelBackground "#2e3340"}
+           :themeVariables #js {:primaryColor (css-var "--mermaid-primary-color")
+                                :primaryTextColor (css-var "--mermaid-primary-text")
+                                :primaryBorderColor (css-var "--mermaid-border")
+                                :lineColor (css-var "--mermaid-border")
+                                :secondaryColor (css-var "--mermaid-secondary")
+                                :tertiaryColor (css-var "--mermaid-tertiary")
+                                :background (css-var "--mermaid-background")
+                                :mainBkg (css-var "--mermaid-main-bg")
+                                :nodeBorder (css-var "--mermaid-primary-color")
+                                :clusterBkg (css-var "--mermaid-main-bg")
+                                :titleColor (css-var "--mermaid-primary-text")
+                                :edgeLabelBackground (css-var "--mermaid-edge-label-bg")}
            :flowchart #js {:htmlLabels true
                            :curve "basis"}
            :sequence #js {:useMaxWidth true}

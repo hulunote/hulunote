@@ -49,11 +49,11 @@
               :padding "7px 12px"
               :border (if active?
                         "1px solid var(--theme-accent-30)"
-                        "1px solid rgba(255,255,255,0)")
+                        "1px solid transparent")
               :background (if active?
                             "var(--theme-accent-20)"
                             "transparent")
-              :color "#fff"
+              :color "var(--app-text-strong)"
               :opacity (if active? 1 0.8)
               :border-radius "8px"
               :cursor "pointer"
@@ -85,7 +85,7 @@
                  {:position "fixed"
                   :inset "0"
                   :z-index 240
-                  :background "rgba(10, 13, 20, 0.52)"
+                  :background "var(--app-modal-backdrop)"
                   :backdrop-filter "blur(5px)"}))
       :on-click (when on-close (fn [_] (on-close)))}
      [:div
@@ -95,7 +95,7 @@
                :background "var(--surface-panel)"
                :border "1px solid var(--surface-border-strong)"
                :border-radius "18px"
-               :box-shadow "0 24px 72px rgba(0,0,0,0.38)"
+               :box-shadow "var(--app-modal-shadow-large)"
                :overflow "hidden"
                :display "grid"
                :grid-template-columns "220px 1fr"}
@@ -113,7 +113,7 @@
                   :border "1px solid var(--surface-border)"
                   :border-radius "8px"
                   :background "transparent"
-                  :color "rgba(255,255,255,0.72)"
+                  :color "var(--app-text-secondary)"
                   :cursor "pointer"
                   :font-size "18px"
                   :line-height "1"
@@ -122,14 +122,14 @@
       [:div
        {:style {:padding "18px 14px"
                 :border-right "1px solid var(--surface-border)"
-                :background "rgba(255,255,255,0.02)"
+                :background "var(--app-panel-subtle-bg)"
                 :display "flex"
                 :flex-direction "column"
                 :gap "6px"}}
        [:div {:style {:padding "4px 8px 12px"}}
         [:div {:style {:font-size "18px"
                        :font-weight "700"
-                       :color "#fff"}}
+                       :color "var(--app-text-strong)"}}
          "Settings"]]
        (for [item settings-nav-items]
          (rum/with-key

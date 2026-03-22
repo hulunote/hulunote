@@ -475,10 +475,10 @@
        {:style {:position "fixed"
                 :left (str x "px")
                 :top (str y "px")
-                :background "#2a2f3a"
-                :border "1px solid #444"
+                :background "var(--surface-popover)"
+                :border "1px solid var(--surface-border-strong)"
                 :border-radius "6px"
-                :box-shadow "0 4px 12px rgba(0,0,0,0.3)"
+                :box-shadow "var(--app-shadow-popover-compact)"
                 :z-index 10000
                 :min-width "150px"
                 :padding "4px 0"}
@@ -486,9 +486,9 @@
        ;; Show note title and node info
        [:div.context-menu-header
         {:style {:padding "8px 12px"
-                 :color "#888"
+                 :color "var(--app-text-muted)"
                  :font-size "11px"
-                 :border-bottom "1px solid #444"
+                 :border-bottom "1px solid var(--surface-border-strong)"
                  :max-width "220px"
                  :overflow "hidden"
                  :text-overflow "ellipsis"
@@ -507,9 +507,9 @@
        [:div.context-menu-item
         {:style {:padding "8px 12px"
                  :cursor "pointer"
-                 :color "#fff"
+                 :color "var(--app-text-strong)"
                  :font-size "13px"}
-         :on-mouse-over #(set! (-> % .-target .-style .-background) "#3a4555")
+         :on-mouse-over #(set! (-> % .-target .-style .-background) "var(--surface-popover-hover)")
          :on-mouse-out #(set! (-> % .-target .-style .-background) "transparent")
          :on-click (fn [e]
                      (.stopPropagation e)
@@ -530,9 +530,9 @@
        [:div.context-menu-item
         {:style {:padding "8px 12px"
                  :cursor "pointer"
-                 :color "#fff"
+                 :color "var(--app-text-strong)"
                  :font-size "13px"}
-         :on-mouse-over #(set! (-> % .-target .-style .-background) "#3a4555")
+         :on-mouse-over #(set! (-> % .-target .-style .-background) "var(--surface-popover-hover)")
          :on-mouse-out #(set! (-> % .-target .-style .-background) "transparent")
          :on-click (fn [e]
                      (.stopPropagation e)
@@ -543,9 +543,9 @@
        [:div.context-menu-item
         {:style {:padding "8px 12px"
                  :cursor "pointer"
-                 :color "#ff6b6b"
+                 :color "var(--app-danger)"
                  :font-size "13px"}
-         :on-mouse-over #(set! (-> % .-target .-style .-background) "#3a4555")
+         :on-mouse-over #(set! (-> % .-target .-style .-background) "var(--surface-popover-hover)")
          :on-mouse-out #(set! (-> % .-target .-style .-background) "transparent")
          :on-click (fn [e]
                      (.stopPropagation e)
@@ -1520,7 +1520,7 @@
                       (start-editing! nav-id content cursor-pos)))}
        ;; Keep a helpful placeholder for empty content blocks.
        (if (show-empty-placeholder? @db/dsdb nav-id note-id content)
-         [:span {:style {:color "rgba(255,255,255,0.22)"
+         [:span {:style {:color "var(--app-text-placeholder)"
                          :font-weight "400"}}
           "Click here to start writing. Type '/' to see commands."]
          (comps/parse-and-render content {}))])))
@@ -1691,13 +1691,13 @@
                   :background "var(--surface-popover)"
                   :border "1px solid var(--surface-border-strong)"
                   :border-radius "8px"
-                  :box-shadow "0 8px 24px rgba(0,0,0,0.28)"
+                  :box-shadow "var(--app-shadow-popover)"
                   :z-index 10001
                   :padding "4px 0"}
           :on-mouse-down (fn [e] (.preventDefault e))}
          [:div.slash-menu-header
           {:style {:padding "6px 12px"
-                   :color "#888"
+                   :color "var(--app-text-muted)"
                    :font-size "11px"
                    :border-bottom "1px solid var(--surface-border-strong)"}}
           (if (empty? filter)
@@ -1705,7 +1705,7 @@
             (str "Filter: " filter))]
          (if (empty? cmds)
            [:div {:style {:padding "12px"
-                          :color "#666"
+                          :color "var(--app-text-faint)"
                           :font-size "12px"
                           :text-align "center"}}
             "No matching commands"]
@@ -1716,7 +1716,7 @@
                  :class (when (= idx selected-index) "slash-menu-item-selected")
                  :style {:padding "7px 12px"
                          :cursor "pointer"
-                         :color "#fff"
+                         :color "var(--app-text-strong)"
                          :font-size "13px"
                          :display "flex"
                          :align-items "center"
@@ -1752,13 +1752,13 @@
                 :background "var(--surface-popover)"
                 :border "1px solid var(--surface-border-strong)"
                 :border-radius "10px"
-                :box-shadow "0 10px 28px rgba(0,0,0,0.34)"
+                :box-shadow "var(--app-shadow-popover-strong)"
                 :z-index 10001
                 :padding "6px"}
         :on-mouse-down (fn [e] (.preventDefault e))}
        [:div
         {:style {:padding "8px 10px 10px"
-                 :color "rgba(255,255,255,0.58)"
+                 :color "var(--app-text-muted)"
                  :font-size "12px"}}
         (if (str/blank? query)
           "Search for a Page"
@@ -1766,7 +1766,7 @@
        (if (str/blank? query)
          [:div
           {:style {:padding "2px 10px 10px"
-                   :color "rgba(255,255,255,0.38)"
+                   :color "var(--app-text-faint)"
                    :font-size "12px"}}
           "Type to search page titles"]
          [:div
@@ -1776,7 +1776,7 @@
           (if (empty? results)
             [:div
              {:style {:padding "8px 10px 10px"
-                      :color "rgba(255,255,255,0.4)"
+                      :color "var(--app-text-subtle)"
                       :font-size "12px"}}
              "No matching pages"]
             (map-indexed
@@ -1791,7 +1791,7 @@
                           :cursor "pointer"
                           :font-size "13px"
                           :font-weight "500"
-                          :color "#fff"
+                          :color "var(--app-text-strong)"
                           :background (when (= idx selected-index)
                                         "var(--surface-hover)")}
                   :on-mouse-enter #(swap! page-link-menu-state assoc :selected-index idx)

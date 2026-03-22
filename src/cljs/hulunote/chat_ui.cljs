@@ -168,23 +168,23 @@
                :padding "12px 16px"
                :border-radius (if is-user "16px 16px 4px 16px" "16px 16px 16px 4px")
                :background (cond
-                             is-user "linear-gradient(135deg, #667eea 0%, #764ba2 100%)"
-                             is-error "rgba(255,77,79,0.1)"
-                             is-system "rgba(102,126,234,0.1)"
-                             :else "rgba(255,255,255,0.08)")
+                             is-user "var(--ui-accent-gradient)"
+                             is-error "var(--ui-danger-soft)"
+                             is-system "var(--ui-accent-soft)"
+                             :else "var(--ui-overlay-soft-stronger)")
                :color (cond
-                        is-user "#fff"
-                        is-error "#ff6b6b"
-                        is-system "#8da4ef"
-                        :else "#fdfeffc4")
+                        is-user "var(--ui-accent-text)"
+                        is-error "var(--ui-danger)"
+                        is-system "var(--ui-accent-text-soft)"
+                        :else "var(--ui-text-primary)")
                :white-space "pre-wrap"
                :word-break "break-word"
                :font-size (if is-system "12px" "14px")
                :font-family (when is-system "monospace")
                :line-height "1.5"
                :border (cond
-                         is-system "1px solid rgba(102,126,234,0.2)"
-                         is-error "1px solid rgba(255,77,79,0.2)"
+                         is-system "1px solid var(--ui-border-accent-soft)"
+                         is-error "1px solid var(--ui-border-danger)"
                          :else "none")}}
       content]]))
 
@@ -194,25 +194,25 @@
       [:div.modal-overlay
        {:style {:position "fixed"
                 :top 0 :left 0 :right 0 :bottom 0
-                :background "rgba(0,0,0,0.6)"
+                :background "var(--ui-overlay-modal-strong)"
                 :display "flex"
                 :align-items "center"
                 :justify-content "center"
                 :z-index 10000}
         :on-click #(swap! chat-state assoc :show-settings? false)}
        [:div.modal-content
-        {:style {:background "#2a2f3a"
+       {:style {:background "var(--ui-surface-modal)"
                  :border-radius "16px"
                  :padding "32px"
                  :min-width "450px"
-                 :border "1px solid rgba(255,255,255,0.1)"
-                 :box-shadow "0 8px 32px rgba(0,0,0,0.4)"}
+                 :border "1px solid var(--ui-border-subtle)"
+                 :box-shadow "var(--ui-shadow-modal)"}
          :on-click #(.stopPropagation %)}
 
         [:h2 {:style {:margin "0 0 24px 0"
                       :font-size "24px"
                       :font-weight "600"
-                      :color "#fdfeffc4"}}
+                      :color "var(--ui-text-primary)"}}
          "Chat Settings"]
 
         ;; API Key
@@ -221,7 +221,7 @@
                           :margin-bottom "8px"
                           :font-size "14px"
                           :font-weight "500"
-                          :color "rgba(255,255,255,0.6)"}}
+                          :color "var(--ui-text-muted)"}}
           "OpenRouter API Key"]
          [:input
           {:type "password"
@@ -230,20 +230,20 @@
            :on-change #(swap! chat-state assoc :api-key (.. % -target -value))
            :style {:width "100%"
                    :padding "12px 16px"
-                   :border "1px solid rgba(255,255,255,0.15)"
+                   :border "1px solid var(--ui-border-strong)"
                    :border-radius "8px"
                    :font-size "14px"
                    :outline "none"
                    :box-sizing "border-box"
-                   :background "#363b48"
-                   :color "#fdfeffc4"}}]
+                   :background "var(--ui-surface-modal-input)"
+                   :color "var(--ui-text-primary)"}}]
          [:div {:style {:font-size "12px"
-                        :color "rgba(255,255,255,0.4)"
+                        :color "var(--ui-text-subtle)"
                         :margin-top "6px"}}
           "Get your API key from "
           [:a {:href "https://openrouter.ai/keys"
                :target "_blank"
-               :style {:color "#667eea"}}
+               :style {:color "var(--ui-accent)"}}
            "openrouter.ai/keys"]]]
 
         ;; Model
@@ -252,25 +252,25 @@
                           :margin-bottom "8px"
                           :font-size "14px"
                           :font-weight "500"
-                          :color "rgba(255,255,255,0.6)"}}
+                          :color "var(--ui-text-muted)"}}
           "Model"
           (when models-loading?
             [:span {:style {:margin-left "8px"
                             :font-size "12px"
-                            :color "rgba(255,255,255,0.4)"}}
+                            :color "var(--ui-text-subtle)"}}
              "Loading models..."])]
          [:select
           {:value model
            :on-change #(swap! chat-state assoc :model (.. % -target -value))
            :style {:width "100%"
                    :padding "12px 16px"
-                   :border "1px solid rgba(255,255,255,0.15)"
+                   :border "1px solid var(--ui-border-strong)"
                    :border-radius "8px"
                    :font-size "14px"
                    :outline "none"
                    :box-sizing "border-box"
-                   :background "#363b48"
-                   :color "#fdfeffc4"}}
+                   :background "var(--ui-surface-modal-input)"
+                   :color "var(--ui-text-primary)"}}
           (if (seq available-models)
             ;; 动态模型列表
             (for [m available-models]
@@ -286,7 +286,7 @@
               [:option {:key "deepseek/deepseek-chat-v3-0324" :value "deepseek/deepseek-chat-v3-0324"} "DeepSeek V3"]))]
          (when (seq available-models)
            [:div {:style {:font-size "12px"
-                          :color "rgba(255,255,255,0.4)"
+                          :color "var(--ui-text-subtle)"
                           :margin-top "6px"}}
             (str (count available-models) " models available from OpenRouter")])]
 
@@ -295,27 +295,27 @@
                        :justify-content "flex-end"
                        :gap "12px"}}
          [:button.pointer
-          {:on-click #(swap! chat-state assoc :show-settings? false)
+         {:on-click #(swap! chat-state assoc :show-settings? false)
            :style {:padding "12px 24px"
-                   :border "1px solid rgba(255,255,255,0.2)"
+                   :border "1px solid var(--ui-border-control)"
                    :border-radius "8px"
                    :background "transparent"
                    :font-size "16px"
                    :font-weight "500"
-                   :color "rgba(255,255,255,0.7)"
+                   :color "var(--ui-control-text)"
                    :cursor "pointer"}}
           "Cancel"]
          [:button.pointer
           {:on-click #(do
                         (save-api-key! api-key)
                         (save-model! model))
-           :style {:padding "12px 24px"
+          :style {:padding "12px 24px"
                    :border "none"
                    :border-radius "8px"
-                   :background "linear-gradient(135deg, #667eea 0%, #764ba2 100%)"
+                   :background "var(--ui-accent-gradient)"
                    :font-size "16px"
                    :font-weight "600"
-                   :color "#fff"
+                   :color "var(--ui-accent-text)"
                    :cursor "pointer"}}
           "Save"]]]])))
 
@@ -368,28 +368,28 @@
                          :display "flex"
                          :align-items "center"
                          :gap "6px"
-                         :color "rgba(255,255,255,0.6)"}}
+                         :color "var(--ui-text-muted)"}}
            [:span {:style {:width "8px"
                            :height "8px"
                            :border-radius "50%"
-                           :background (if (pos? connected-count) "#52c41a" "#ff4d4f")}}]
+                           :background (if (pos? connected-count) "var(--ui-success)" "var(--ui-danger-strong)")}}]
            (str connected-count " MCP connected")]
           ;; Settings button
           [:button.pointer
            {:on-click #(open-settings!)
-            :style {:background "rgba(255,255,255,0.1)"
-                    :border "1px solid rgba(255,255,255,0.2)"
+            :style {:background "var(--ui-surface-hover)"
+                    :border "1px solid var(--ui-border-control)"
                     :padding "6px 14px"
                     :border-radius "6px"
-                    :color "rgba(255,255,255,0.7)"
+                    :color "var(--ui-control-text)"
                     :font-size "13px"
                     :cursor "pointer"}}
            "Settings"]]]
 
         ;; API Key warning
         (when-not api-key-set?
-          [:div {:style {:background "rgba(250,140,22,0.1)"
-                         :border "1px solid rgba(250,140,22,0.3)"
+          [:div {:style {:background "var(--ui-warning-soft)"
+                         :border "1px solid var(--ui-border-warning)"
                          :border-radius "8px"
                          :padding "16px 20px"
                          :margin-bottom "16px"
@@ -399,18 +399,18 @@
            [:span {:style {:font-size "24px"}} "⚠️"]
            [:div
             [:div {:style {:font-weight "600"
-                           :color "#fa8c16"}}
+                           :color "var(--ui-warning)"}}
              "API Key Required"]
-            [:div {:style {:color "rgba(250,140,22,0.8)"
+            [:div {:style {:color "var(--ui-warning-soft-text)"
                            :font-size "13px"}}
              "Please configure your OpenRouter API key in Settings to start chatting."]]])
 
         ;; Messages area
         [:div.messages-container
          {:style {:flex 1
-                  :background "rgba(255,255,255,0.03)"
+                  :background "var(--ui-surface-row-hover)"
                   :border-radius "12px"
-                  :border "1px solid rgba(255,255,255,0.08)"
+                  :border "1px solid var(--ui-surface-popover-hover)"
                   :padding "20px"
                   :margin-bottom "16px"
                   :min-height "300px"
@@ -418,7 +418,7 @@
          (if (empty? messages)
            [:div {:style {:text-align "center"
                           :padding "60px 20px"
-                          :color "rgba(255,255,255,0.4)"}}
+                          :color "var(--ui-text-subtle)"}}
             [:div {:style {:font-size "48px"
                            :margin-bottom "16px"}}
              "💬"]
@@ -438,9 +438,9 @@
                           :justify-content "flex-start"
                           :margin-top "12px"}}
             [:div {:style {:padding "12px 16px"
-                           :background "rgba(255,255,255,0.05)"
+                           :background "var(--ui-overlay-soft-strong)"
                            :border-radius "16px"
-                           :color "rgba(255,255,255,0.6)"
+                           :color "var(--ui-text-muted)"
                            :font-size "14px"
                            :display "flex"
                            :align-items "center"
@@ -449,7 +449,7 @@
                              :width "8px"
                              :height "8px"
                              :border-radius "50%"
-                             :background "#667eea"
+                             :background "var(--ui-accent)"
                              :animation "pulse 1.5s ease-in-out infinite"}}]
              "Thinking..."]])]
 
@@ -462,17 +462,17 @@
                         :flex-direction "column"
                         :gap "4px"}}
           [:label {:style {:font-size "11px"
-                           :color "rgba(255,255,255,0.4)"}}
+                           :color "var(--ui-text-subtle)"}}
            "Use MCP"]
           [:button.pointer
            {:on-click #(swap! chat-state update :use-tools? not)
-            :style {:padding "10px 12px"
+           :style {:padding "10px 12px"
                     :border (if use-tools?
-                              "1px solid rgba(102,126,234,0.5)"
-                              "1px solid rgba(255,255,255,0.15)")
+                              "1px solid var(--ui-border-accent-strong)"
+                              "1px solid var(--ui-border-strong)")
                     :border-radius "8px"
-                    :background (if use-tools? "rgba(102,126,234,0.15)" "transparent")
-                    :color (if use-tools? "#667eea" "rgba(255,255,255,0.4)")
+                    :background (if use-tools? "var(--ui-accent-soft-strong)" "transparent")
+                    :color (if use-tools? "var(--ui-accent)" "var(--ui-text-subtle)")
                     :font-size "16px"
                     :cursor "pointer"}}
            "🔧"]]
@@ -491,12 +491,12 @@
                            (send-message!))
            :style {:flex 1
                    :padding "14px 20px"
-                   :border "1px solid rgba(255,255,255,0.15)"
+                   :border "1px solid var(--ui-border-strong)"
                    :border-radius "12px"
                    :font-size "16px"
                    :outline "none"
-                   :background "#363b48"
-                   :color "#fdfeffc4"}}]
+                   :background "var(--ui-surface-modal-input)"
+                   :color "var(--ui-text-primary)"}}]
 
          ;; Send button
          [:button.pointer
@@ -506,9 +506,9 @@
                    :border "none"
                    :border-radius "12px"
                    :background (if (and (not (str/blank? input)) api-key-set? (not loading?))
-                                 "linear-gradient(135deg, #667eea 0%, #764ba2 100%)"
-                                 "rgba(255,255,255,0.1)")
-                   :color "#fff"
+                                 "var(--ui-accent-gradient)"
+                                 "var(--ui-surface-hover)")
+                   :color "var(--ui-accent-text)"
                    :font-size "16px"
                    :font-weight "600"
                    :cursor (if (and (not (str/blank? input)) api-key-set? (not loading?))
@@ -523,10 +523,10 @@
            [:button.pointer
             {:on-click clear-messages!
              :style {:padding "8px 16px"
-                     :border "1px solid rgba(255,255,255,0.15)"
+                     :border "1px solid var(--ui-border-strong)"
                      :border-radius "8px"
                      :background "transparent"
-                     :color "rgba(255,255,255,0.4)"
+                     :color "var(--ui-text-subtle)"
                      :font-size "13px"
                      :cursor "pointer"}}
             "Clear conversation"]])]]]

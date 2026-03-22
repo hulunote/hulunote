@@ -602,8 +602,8 @@
         ;; Today's Daily Note button
         [:button.daily-note-btn
          {:style {:width "100%"
-                  :background "linear-gradient(135deg, #667eea 0%, #764ba2 100%)"
-                  :color "#fff"
+                  :background "var(--theme-accent-gradient)"
+                  :color "var(--theme-accent-text)"
                   :border "none"
                   :border-radius "8px"
                   :padding "10px 16px"

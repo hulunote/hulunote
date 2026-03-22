@@ -74,7 +74,7 @@
           [:div.diaries-empty-state.flex.flex-column.items-center.justify-center
            [:div {:style {:font-size "24px" :margin-bottom "20px"}}
             "No notes yet"]
-           [:div {:style {:color "rgba(255,255,255,0.6)" :margin-bottom "30px"}}
+           [:div {:style {:color "var(--app-text-muted)" :margin-bottom "30px"}}
             "Create your first note to get started"]
            [:button.new-note-btn
             {:on-click #(sidebar/create-new-note! database-name)}
@@ -83,8 +83,8 @@
            ;; Add quick create today's note button
            [:button
             {:style {:margin-top "16px"
-                     :background "linear-gradient(135deg, #667eea 0%, #764ba2 100%)"
-                     :color "#fff"
+                     :background "var(--theme-accent-gradient)"
+                     :color "var(--theme-accent-text)"
                      :border "none"
                      :border-radius "8px"
                      :padding "12px 24px"

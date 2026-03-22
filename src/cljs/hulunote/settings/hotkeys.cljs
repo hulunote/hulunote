@@ -73,10 +73,10 @@
             :padding 0
             :border "1px solid var(--surface-border)"
             :border-radius "7px"
-            :background "rgba(255,255,255,0.02)"
+            :background "var(--app-panel-subtle-bg)"
             :color (if disabled?
-                     "rgba(255,255,255,0.24)"
-                     "rgba(255,255,255,0.72)")
+                     "var(--app-text-placeholder)"
+                     "var(--app-text-secondary)")
             :cursor (if disabled? "not-allowed" "pointer")
             :display "inline-flex"
             :align-items "center"
@@ -112,8 +112,8 @@
                         "1px solid var(--surface-border)")
               :background (if recording?
                             "var(--theme-accent-20)"
-                            "rgba(255,255,255,0.02)")
-              :color "#fff"
+                            "var(--app-panel-subtle-bg)")
+              :color "var(--app-text-strong)"
               :font-size "12px"
               :font-weight "600"
               :cursor "pointer"
@@ -141,11 +141,11 @@
               :align-items "center"
               :justify-content "space-between"
               :gap "20px"
-              :border-bottom "1px solid rgba(255,255,255,0.06)"}}
+              :border-bottom "1px solid var(--surface-popover-hover)"}}
      [:div {:style {:min-width 0}}
       [:div {:style {:font-size "14px"
                      :font-weight "600"
-                     :color "#fff"}}
+                     :color "var(--app-text-strong)"}}
        title]]
      [:div {:style {:display "flex"
                     :flex-direction "column"
@@ -173,12 +173,12 @@
       (cond
         error-message
         [:div {:style {:font-size "12px"
-                       :color "#ff9c9c"}}
+                       :color "var(--app-danger)"}}
          error-message]
 
         recording?
         [:div {:style {:font-size "12px"
-                       :color "rgba(255,255,255,0.36)"}}
+                       :color "var(--app-text-faint)"}}
          "Press a new shortcut or Esc to cancel"]
 
         :else nil)]]))
@@ -190,19 +190,19 @@
             :align-items "center"
             :justify-content "space-between"
             :gap "20px"
-            :border-bottom "1px solid rgba(255,255,255,0.06)"}}
+            :border-bottom "1px solid var(--surface-popover-hover)"}}
    [:div {:style {:min-width 0}}
     [:div {:style {:font-size "14px"
                    :font-weight "600"
-                   :color "#fff"}}
+                   :color "var(--app-text-strong)"}}
      (:title item)]]
    [:div {:style {:min-width "144px"
                   :min-height "34px"
                   :padding "0 12px"
                   :border-radius "8px"
                   :border "1px solid var(--surface-border)"
-                  :background "rgba(255,255,255,0.02)"
-                  :color "rgba(255,255,255,0.8)"
+                  :background "var(--app-panel-subtle-bg)"
+                  :color "var(--app-text-secondary)"
                   :font-size "12px"
                   :font-weight "600"
                   :display "inline-flex"
@@ -216,10 +216,10 @@
    [:div {:style {:font-size "15px"
                   :font-weight "800"
                   :letter-spacing "0.02em"
-                  :color "rgba(255,255,255,0.7)"
+                  :color "var(--app-control-text)"
                   :margin-bottom "8px"}}
     title]
-   [:div {:style {:border-top "2px solid rgba(255,255,255,0.12)"}}
+   [:div {:style {:border-top "2px solid var(--app-divider)"}}
     (for [item items]
       (rum/with-key
         (renderer item)

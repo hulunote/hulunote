@@ -1,25 +1,7 @@
 :root {
-    --font-color: #fdfeffc4;
-    --background-theme: #313541;
-    --surface-panel: #2e3340;
-    --surface-topbar: rgba(46, 51, 64, 0.94);
-    --surface-popover: #343949;
-    --surface-border: rgba(255, 255, 255, 0.1);
-    --surface-border-strong: rgba(255, 255, 255, 0.14);
-    --surface-control: #3d4455;
-    --surface-hover: rgba(255, 255, 255, 0.1);
-    --surface-hover-strong: #4a5568;
-    --surface-popover-hover: rgba(255, 255, 255, 0.08);
-    --surface-popover-danger-hover: rgba(255, 107, 107, 0.12);
+    /* Layout */
     --sidebar-width: 250px;
     --sidebar-collapsed-width: 0px;
-    /* UI design system tokens */
-    --color-primary: #667eea;
-    --color-primary-glow: rgba(102, 126, 234, 0.3);
-    --text-primary: #1a1a2e;
-    --text-secondary: #666666;
-    --text-muted: #999999;
-    --border-color: #e0e0e0;
     --space-xs: 8px;
     --space-sm: 12px;
     --space-md: 16px;
@@ -46,8 +28,342 @@
     --diary-entry-gap: 18px;
     --diary-entry-divider: rgba(151, 151, 151, 0.25);
     --app-topbar-height: 0px;
-    --markdown-highlight-bg: rgba(102, 126, 234, 0.3);
-    --markdown-highlight-color: var(--font-color);
+
+    /* Semantic application tokens */
+    --ui-bg-app: #2a354b;
+    --ui-bg-shell: #404655;
+    --ui-surface-panel: #2e3340;
+    --ui-surface-topbar: rgba(46, 51, 64, 0.94);
+    --ui-surface-popover: #343949;
+    --ui-surface-modal: #2a2f3a;
+    --ui-surface-modal-input: #363b48;
+    --ui-surface-control: #3d4455;
+    --ui-surface-hover: rgba(255, 255, 255, 0.1);
+    --ui-surface-hover-strong: #4a5568;
+    --ui-surface-popover-hover: rgba(255, 255, 255, 0.08);
+    --ui-surface-popover-danger-hover: rgba(255, 107, 107, 0.12);
+    --ui-surface-panel-subtle: rgba(255, 255, 255, 0.02);
+    --ui-surface-panel-soft: rgba(255, 255, 255, 0.05);
+    --ui-surface-panel-soft-hover: rgba(255, 255, 255, 0.1);
+    --ui-surface-control-soft: rgba(255, 255, 255, 0.06);
+    --ui-surface-control-strong: rgba(255, 255, 255, 0.08);
+    --ui-surface-row-hover: rgba(255, 255, 255, 0.03);
+    --ui-surface-glass: rgba(46, 51, 64, 0.88);
+    --ui-surface-glass-highlight: linear-gradient(135deg, rgba(102, 126, 234, 0.12), rgba(118, 75, 162, 0.08));
+    --ui-text-strong: rgba(255, 255, 255, 0.9);
+    --ui-text-primary: #fdfeffc4;
+    --ui-text-secondary: rgba(255, 255, 255, 0.78);
+    --ui-text-muted: rgba(255, 255, 255, 0.56);
+    --ui-text-soft: rgba(255, 255, 255, 0.5);
+    --ui-text-subtle: rgba(255, 255, 255, 0.42);
+    --ui-text-faint: rgba(255, 255, 255, 0.38);
+    --ui-text-placeholder: rgba(255, 255, 255, 0.22);
+    --ui-control-text: rgba(255, 255, 255, 0.7);
+    --ui-control-text-strong: rgba(255, 255, 255, 0.84);
+    --ui-control-text-soft: rgba(255, 255, 255, 0.45);
+    --ui-control-text-faint: rgba(255, 255, 255, 0.35);
+    --ui-border-subtle: rgba(255, 255, 255, 0.1);
+    --ui-border-strong: rgba(255, 255, 255, 0.14);
+    --ui-border-control: rgba(255, 255, 255, 0.2);
+    --ui-border-accent-soft: rgba(102, 126, 234, 0.2);
+    --ui-border-accent-strong: rgba(102, 126, 234, 0.5);
+    --ui-border-warning: rgba(250, 140, 22, 0.3);
+    --ui-border-success: rgba(82, 196, 26, 0.5);
+    --ui-border-danger: rgba(255, 77, 79, 0.3);
+    --ui-border-danger-strong: rgba(255, 77, 79, 0.5);
+    --ui-border-card-soft: rgba(255, 255, 255, 0.1);
+    --ui-border-card-header: rgba(255, 255, 255, 0.05);
+    --ui-divider: rgba(255, 255, 255, 0.1);
+    --ui-overlay-soft: rgba(255, 255, 255, 0.04);
+    --ui-overlay-soft-strong: rgba(255, 255, 255, 0.05);
+    --ui-overlay-soft-stronger: rgba(255, 255, 255, 0.08);
+    --ui-overlay-dim: rgba(0, 0, 0, 0.5);
+    --ui-overlay-dialog: rgba(9, 11, 18, 0.46);
+    --ui-overlay-modal: rgba(10, 13, 20, 0.52);
+    --ui-overlay-modal-strong: rgba(0, 0, 0, 0.6);
+    --ui-accent: #667eea;
+    --ui-accent-hover: #6f88f0;
+    --ui-accent-strong: #5570e2;
+    --ui-accent-text: #fff;
+    --ui-accent-text-soft: #8da4ef;
+    --ui-accent-glow: rgba(102, 126, 234, 0.3);
+    --ui-accent-soft: rgba(102, 126, 234, 0.1);
+    --ui-accent-soft-strong: rgba(102, 126, 234, 0.15);
+    --ui-accent-15: rgba(102, 126, 234, 0.15);
+    --ui-accent-20: rgba(102, 126, 234, 0.2);
+    --ui-accent-30: rgba(102, 126, 234, 0.3);
+    --ui-accent-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    --ui-accent-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+    --ui-success: #52c41a;
+    --ui-success-strong: #389e0d;
+    --ui-success-soft: rgba(82, 196, 26, 0.15);
+    --ui-success-gradient: linear-gradient(135deg, #52c41a 0%, #389e0d 100%);
+    --ui-warning: #fa8c16;
+    --ui-warning-soft: rgba(250, 140, 22, 0.1);
+    --ui-warning-soft-text: rgba(250, 140, 22, 0.8);
+    --ui-danger: #ff6b6b;
+    --ui-danger-strong: #ff4d4f;
+    --ui-danger-text: #ff8d8d;
+    --ui-danger-text-soft: #ffb0b0;
+    --ui-danger-soft: rgba(255, 77, 79, 0.1);
+    --ui-danger-bg-soft: rgba(255, 107, 107, 0.1);
+    --ui-danger-bg-strong: rgba(255, 107, 107, 0.16);
+    --ui-danger-bg-hover: rgba(255, 107, 107, 0.22);
+    --ui-danger-border-soft: rgba(255, 107, 107, 0.22);
+    --ui-outline-line: rgb(191, 204, 214);
+    --ui-outline-line-hover: #9FA9BA;
+    --ui-scrollbar-thumb: rgba(255, 255, 255, 0.15);
+    --ui-shadow-popover-compact: 0 4px 12px rgba(0, 0, 0, 0.3);
+    --ui-shadow-popover: 0 8px 24px rgba(0, 0, 0, 0.28);
+    --ui-shadow-popover-strong: 0 10px 28px rgba(0, 0, 0, 0.34);
+    --ui-shadow-modal: 0 8px 32px rgba(0, 0, 0, 0.4);
+    --ui-shadow-modal-large: 0 24px 72px rgba(0, 0, 0, 0.38);
+    --ui-shadow-dialog: 0 18px 60px rgba(0, 0, 0, 0.34), inset 0 1px 0 rgba(255, 255, 255, 0.03);
+    --ui-shadow-search-modal: 0 16px 48px rgba(0, 0, 0, 0.4);
+    --ui-shadow-sidebar-peek: 12px 0 32px rgba(0, 0, 0, 0.28);
+    --ui-shadow-glass: 0 6px 18px rgba(0, 0, 0, 0.16), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+    --ui-toast-text: #fdfeffc4;
+    --ui-markdown-highlight-bg: rgba(102, 126, 234, 0.3);
+    --ui-markdown-highlight-text: var(--ui-text-primary);
+
+    /* Compatibility aliases */
+    --font-color: var(--ui-text-primary);
+    --background-theme: var(--ui-bg-app);
+    --surface-panel: var(--ui-surface-panel);
+    --surface-topbar: var(--ui-surface-topbar);
+    --surface-popover: var(--ui-surface-popover);
+    --surface-border: var(--ui-border-subtle);
+    --surface-border-strong: var(--ui-border-strong);
+    --surface-control: var(--ui-surface-control);
+    --surface-hover: var(--ui-surface-hover);
+    --surface-hover-strong: var(--ui-surface-hover-strong);
+    --surface-popover-hover: var(--ui-surface-popover-hover);
+    --surface-popover-danger-hover: var(--ui-surface-popover-danger-hover);
+    --color-primary: var(--ui-accent);
+    --color-primary-glow: var(--ui-accent-glow);
+    --text-primary: var(--light-text-primary);
+    --text-secondary: var(--light-text-secondary);
+    --text-muted: var(--light-text-muted);
+    --border-color: var(--light-border);
+    --theme-accent: var(--ui-accent);
+    --theme-accent-glow: var(--ui-accent-glow);
+    --theme-accent-15: var(--ui-accent-15);
+    --theme-accent-20: var(--ui-accent-20);
+    --theme-accent-30: var(--ui-accent-30);
+    --theme-accent-hover: var(--ui-accent-hover);
+    --theme-accent-strong: var(--ui-accent-strong);
+    --theme-accent-soft: var(--ui-accent-soft);
+    --theme-accent-soft-strong: var(--ui-accent-soft-strong);
+    --theme-accent-border-soft: var(--ui-border-accent-soft);
+    --theme-accent-border-strong: var(--ui-border-accent-strong);
+    --theme-accent-text-soft: var(--ui-accent-text-soft);
+    --theme-accent-gradient: var(--ui-accent-gradient);
+    --theme-accent-text: var(--ui-accent-text);
+    --theme-accent-shadow: var(--ui-accent-shadow);
+    --theme-success: var(--ui-success);
+    --theme-success-strong: var(--ui-success-strong);
+    --theme-success-gradient: var(--ui-success-gradient);
+    --theme-success-soft: var(--ui-success-soft);
+    --theme-success-border: var(--ui-border-success);
+    --theme-warning: var(--ui-warning);
+    --theme-warning-soft: var(--ui-warning-soft);
+    --theme-warning-soft-text: var(--ui-warning-soft-text);
+    --theme-warning-border: var(--ui-border-warning);
+    --theme-error-soft: var(--ui-danger-soft);
+    --theme-error-border: var(--ui-border-danger);
+    --theme-error-border-strong: var(--ui-border-danger-strong);
+    --markdown-highlight-bg: var(--ui-markdown-highlight-bg);
+    --markdown-highlight-color: var(--ui-markdown-highlight-text);
+    --app-bg: var(--ui-bg-app);
+    --app-shell-bg: var(--ui-bg-shell);
+    --app-text-strong: var(--ui-text-strong);
+    --app-text-primary: var(--ui-text-primary);
+    --app-text-secondary: var(--ui-text-secondary);
+    --app-text-muted: var(--ui-text-muted);
+    --app-text-soft: var(--ui-text-soft);
+    --app-text-subtle: var(--ui-text-subtle);
+    --app-text-faint: var(--ui-text-faint);
+    --app-text-placeholder: var(--ui-text-placeholder);
+    --app-divider: var(--ui-divider);
+    --app-overlay-soft: var(--ui-overlay-soft);
+    --app-overlay-soft-strong: var(--ui-overlay-soft-strong);
+    --app-overlay-soft-stronger: var(--ui-overlay-soft-stronger);
+    --app-row-hover: var(--ui-surface-row-hover);
+    --app-outline-line-color: var(--ui-outline-line);
+    --app-outline-line-hover: var(--ui-outline-line-hover);
+    --app-danger: var(--ui-danger);
+    --app-danger-soft: var(--ui-danger-strong);
+    --app-modal-backdrop: var(--ui-overlay-modal);
+    --app-modal-backdrop-strong: var(--ui-overlay-modal-strong);
+    --app-modal-surface: var(--ui-surface-modal);
+    --app-modal-input-bg: var(--ui-surface-modal-input);
+    --app-modal-shadow: var(--ui-shadow-modal);
+    --app-modal-shadow-large: var(--ui-shadow-modal-large);
+    --app-panel-subtle-bg: var(--ui-surface-panel-subtle);
+    --app-panel-soft-bg: var(--ui-surface-panel-soft);
+    --app-panel-soft-bg-hover: var(--ui-surface-panel-soft-hover);
+    --app-control-bg: var(--ui-surface-hover);
+    --app-control-border: var(--ui-border-control);
+    --app-control-text: var(--ui-control-text);
+    --app-control-text-strong: var(--ui-control-text-strong);
+    --app-control-text-soft: var(--ui-control-text-soft);
+    --app-control-text-faint: var(--ui-control-text-faint);
+    --app-control-bg-soft: var(--ui-surface-control-soft);
+    --app-control-bg-strong: var(--ui-surface-control-strong);
+    --app-scrollbar-thumb: var(--ui-scrollbar-thumb);
+    --app-overlay-dim: var(--ui-overlay-dim);
+    --app-overlay-dialog: var(--ui-overlay-dialog);
+    --app-shadow-dialog: var(--ui-shadow-dialog);
+    --app-shadow-search-modal: var(--ui-shadow-search-modal);
+    --app-card-border-soft: var(--ui-border-card-soft);
+    --app-card-header-border: var(--ui-border-card-header);
+    --app-card-header-bg: var(--ui-surface-row-hover);
+    --app-glass-surface: var(--ui-surface-glass);
+    --app-glass-highlight: var(--ui-surface-glass-highlight);
+    --app-glass-shadow: var(--ui-shadow-glass);
+    --app-toast-text: var(--ui-toast-text);
+    --app-danger-bg-soft: var(--ui-danger-bg-soft);
+    --app-danger-bg-strong: var(--ui-danger-bg-strong);
+    --app-danger-bg-hover: var(--ui-danger-bg-hover);
+    --app-danger-border-soft: var(--ui-danger-border-soft);
+    --app-danger-text-soft: var(--ui-danger-text-soft);
+    --app-danger-text: var(--ui-danger-text);
+    --app-shadow-popover-compact: var(--ui-shadow-popover-compact);
+    --app-shadow-popover: var(--ui-shadow-popover);
+    --app-shadow-popover-strong: var(--ui-shadow-popover-strong);
+    --app-shadow-sidebar-peek: var(--ui-shadow-sidebar-peek);
+    --light-page-bg: #f8f9fa;
+    --light-surface: #fff;
+    --light-text-primary: #1a1a2e;
+    --light-text-secondary: #666;
+    --light-text-muted: #999;
+    --light-border: #e0e0e0;
+    --light-border-subtle: #eee;
+    --light-surface-hover: #f5f5f5;
+    --light-danger-hover: #fff1f0;
+    --light-shadow-card: 0 10px 40px rgba(0, 0, 0, 0.1);
+    --light-shadow-popover: 0 4px 12px rgba(0, 0, 0, 0.15);
+    --light-shadow-popover-strong: 0 8px 32px rgba(0, 0, 0, 0.2);
+    --light-shadow-soft: 0 2px 12px rgba(0, 0, 0, 0.08);
+    --light-shadow-primary: 0 4px 12px rgba(102, 126, 234, 0.4);
+    --light-overlay: rgba(0, 0, 0, 0.5);
+    --graph-node-hub: #667eea;
+    --graph-node-active: #764ba2;
+    --graph-node-light: #5a6b8a;
+    --graph-node-isolated: #3d4455;
+    --graph-link: rgba(102, 126, 234, 0.3);
+    --graph-link-strong: rgba(102, 126, 234, 0.5);
+    --home-bg-base: #0a0a1a;
+    --home-bg-section: linear-gradient(180deg, #141428 0%, #0d0d1a 100%);
+    --home-bg-section-reverse: linear-gradient(180deg, #0d0d1a 0%, #141428 100%);
+    --home-bg-focus: linear-gradient(180deg, #0d0d1a 0%, #0a0a16 50%, #0d0d1a 100%);
+    --home-bg-footer: #0a0a16;
+    --home-panel-gradient: linear-gradient(145deg, #1e1e30 0%, #16162a 100%);
+    --home-panel-gradient-alt: linear-gradient(145deg, #1a1a2e, #12122a);
+    --home-panel-shadow-subtle: 0 2px 12px rgba(0, 0, 0, 0.2);
+    --home-text-accent: #a5b4fc;
+    --home-text-purple: #c084fc;
+    --home-text-cyan: #4fd1c5;
+    --home-text-dim: rgba(255, 255, 255, 0.6);
+    --home-text-soft: rgba(255, 255, 255, 0.5);
+    --home-text-faint: rgba(255, 255, 255, 0.4);
+    --home-text-strong: rgba(255, 255, 255, 0.85);
+    --home-divider: rgba(255, 255, 255, 0.06);
+    --home-header-bg: rgba(10, 10, 26, 0.9);
+    --home-header-border: rgba(102, 126, 234, 0.15);
+    --home-grid-line: rgba(102, 126, 234, 0.03);
+    --home-hero-glow: radial-gradient(ellipse, rgba(102,126,234,0.12) 0%, rgba(118,75,162,0.06) 50%, transparent 70%);
+    --home-focus-glow: radial-gradient(circle, rgba(102,126,234,0.08) 0%, rgba(118,75,162,0.04) 35%, transparent 65%);
+    --home-visual-glow: radial-gradient(ellipse, rgba(79,209,197,0.06) 0%, rgba(102,126,234,0.04) 40%, transparent 70%);
+    --home-brain-gradient: linear-gradient(135deg, rgba(102, 126, 234, 0.12), rgba(118, 75, 162, 0.12));
+    --home-brain-shadow: 0 0 60px var(--ui-accent-15), 0 0 120px rgba(118, 75, 162, 0.08), inset 0 0 30px rgba(102, 126, 234, 0.05);
+    --home-accent-line: rgba(102, 126, 234, 0.3);
+    --home-accent-line-soft: rgba(102, 126, 234, 0.1);
+    --home-accent-line-faint: rgba(102, 126, 234, 0.05);
+    --home-accent-border: rgba(102, 126, 234, 0.25);
+    --home-accent-shadow: 0 4px 20px rgba(102, 126, 234, 0.4);
+    --home-accent-shadow-soft: 0 2px 12px rgba(102, 126, 234, 0.4);
+    --home-panel-shadow: 0 4px 30px rgba(0, 0, 0, 0.3);
+    --home-card-inset-shadow: inset 0 1px 0 rgba(102, 126, 234, 0.1);
+    --home-card-top-line: linear-gradient(90deg, transparent, rgba(102, 126, 234, 0.6), transparent);
+    --home-card-icon-glow: drop-shadow(0 0 8px rgba(102, 126, 234, 0.5));
+    --home-cyan-border: rgba(79, 209, 197, 0.2);
+    --home-cyan-border-soft: rgba(79, 209, 197, 0.15);
+    --home-cyan-line: rgba(79, 209, 197, 0.3);
+    --home-cyan-soft: rgba(79, 209, 197, 0.2);
+    --home-cyan-soft-text: rgba(79, 209, 197, 0.6);
+    --home-cyan-gradient: linear-gradient(135deg, #4fd1c5, #667eea);
+    --home-cyan-inset-shadow: inset 0 1px 0 rgba(79, 209, 197, 0.1);
+    --home-orange-border: rgba(255, 167, 38, 0.2);
+    --home-orange-border-soft: rgba(255, 167, 38, 0.15);
+    --home-orange-soft: rgba(255, 167, 38, 0.2);
+    --home-orange-gradient: linear-gradient(135deg, #ffa726, #ff7043);
+    --home-orange-inset-shadow: inset 0 1px 0 rgba(255, 167, 38, 0.1);
+    --home-purple-border: rgba(118, 75, 162, 0.15);
+    --home-purple-border-strong: rgba(118, 75, 162, 0.2);
+    --home-purple-line: rgba(118, 75, 162, 0.6);
+    --home-purple-shadow: drop-shadow(0 0 8px rgba(118, 75, 162, 0.5));
+    --home-purple-inset-shadow: inset 0 1px 0 rgba(118, 75, 162, 0.1);
+    --home-indigo-border: rgba(99, 102, 241, 0.2);
+    --home-indigo-line: rgba(99, 102, 241, 0.6);
+    --home-indigo-shadow: drop-shadow(0 0 8px rgba(99, 102, 241, 0.5));
+    --home-indigo-inset-shadow: inset 0 1px 0 rgba(99, 102, 241, 0.1);
+    --home-code-key: #82aaff;
+    --home-code-symbol: #89ddff;
+    --home-code-magenta: #c792ea;
+    --home-stroke: #7c8bab;
+    --home-orange: #ffa726;
+    --home-orange-strong: #ff7043;
+    --home-graph-link-secondary: rgba(118, 75, 162, 0.3);
+    --home-graph-link-secondary-soft: rgba(118, 75, 162, 0.2);
+    --home-graph-node-active-stroke: rgba(118, 75, 162, 0.5);
+    --home-graph-node-light-stroke: rgba(90, 107, 138, 0.5);
+    --home-graph-node-isolated-stroke: rgba(61, 68, 85, 0.5);
+    --home-mermaid-canvas-bg: #12122a;
+    --home-mermaid-node-ai-bg: rgba(102, 126, 234, 0.2);
+    --home-mermaid-node-ai-border: #667eea;
+    --home-mermaid-node-notes-bg: rgba(118, 75, 162, 0.2);
+    --home-mermaid-node-notes-border: #764ba2;
+    --home-mermaid-node-graph-bg: rgba(79, 209, 197, 0.2);
+    --home-mermaid-node-graph-border: #4fd1c5;
+    --home-mermaid-node-insights-bg: rgba(255, 167, 38, 0.2);
+    --home-mermaid-node-insights-border: #ffa726;
+    --home-mermaid-node-action-bg: rgba(102, 126, 234, 0.15);
+    --home-mermaid-node-action-border: #667eea;
+    --home-cta-grid: linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+    --home-cta-outline-border: rgba(255, 255, 255, 0.4);
+    --home-footer-link: rgba(165, 180, 252, 0.6);
+    --code-block-border: #333;
+    --code-block-bg: #1e2028;
+    --code-block-gutter-bg: #1a1c24;
+    --code-block-text: #e0e0e0;
+    --code-block-muted: #888;
+    --code-block-subtle: #555;
+    --code-block-cursor: #6c8dfa;
+    --code-block-selection: rgba(108, 141, 250, 0.2);
+    --code-block-selection-focused: rgba(108, 141, 250, 0.3);
+    --code-block-hover-bg: rgba(255, 255, 255, 0.05);
+    --code-block-keyword: #c792ea;
+    --code-block-def: #82aaff;
+    --code-block-variable: #e0e0e0;
+    --code-block-variable-2: #f07178;
+    --code-block-variable-3: #ffcb6b;
+    --code-block-operator: #89ddff;
+    --code-block-number: #f78c6c;
+    --code-block-string: #c3e88d;
+    --code-block-comment: #546e7a;
+    --mermaid-primary-color: #667eea;
+    --mermaid-primary-text: var(--code-block-text);
+    --mermaid-border: #7c8bab;
+    --mermaid-secondary: #764ba2;
+    --mermaid-tertiary: #2e3340;
+    --mermaid-background: var(--code-block-bg);
+    --mermaid-main-bg: #2e3340;
+    --mermaid-edge-label-bg: #2e3340;
+    --mermaid-badge-accent: var(--code-block-keyword);
+    --mermaid-loading-text: rgba(255, 255, 255, 0.4);
+    --mermaid-error-text: #f07178;
+    --mermaid-button-hover-bg: rgba(102, 126, 234, 0.1);
 }
 
 body {
@@ -56,37 +372,37 @@ body {
     font-size: 1rem;
     font-weight: 400;
     line-height: 1.5;
-    color: #fff;
+    color: var(--ui-accent-text);
     text-align: left;
-    background-color: #2a354b;
+    background-color: var(--ui-bg-app);
 }
 
 .night-center-boxBg {
-    background: #404655 !important;
+    background: var(--ui-bg-shell) !important;
 }
 
 .night-textColor-2 {
-    color: var(--font-color) !important;
+    color: var(--ui-text-primary) !important;
 }
 
 .night-outline-line {
     box-sizing: border-box;
-    border-right: 1px solid rgb(191, 204, 214);
+    border-right: 1px solid var(--ui-outline-line);
     bottom: 0px;
     transition: all 100ms ease-in 0s;
     top: 0px;
     width: 0;
     cursor: pointer;
     z-index: 10;
-    border-top-color: rgb(191, 204, 214);
-    border-bottom-color: rgb(191, 204, 214);
-    border-left-color: rgb(191, 204, 214);
+    border-top-color: var(--ui-outline-line);
+    border-bottom-color: var(--ui-outline-line);
+    border-left-color: var(--ui-outline-line);
     position: absolute;
     left: calc(var(--space-xs) + 1px);
 }
 
 div.content-box.outline-line:hover {
-    border-right: 2px solid #9FA9BA !important;
+    border-right: 2px solid var(--ui-outline-line-hover) !important;
     cursor: pointer !important;
 }
 
@@ -139,11 +455,11 @@ hulu-text-font {
 }
 
 .link-style {
-    color: #9644fc
+    color: var(--ui-accent)
 }
 
 .link-titlt-style {
-    color: #9644fc
+    color: var(--ui-accent)
 }
 
 .inner-wrapper {
@@ -155,7 +471,7 @@ hulu-text-font {
 }
 
 .td-navbar {
-    background: rgb(46 49 54);
+    background: var(--ui-surface-topbar);
     min-height: 50px;
     margin: 0;
     z-index: 32;
@@ -165,7 +481,7 @@ hulu-text-font {
 }
 
 .btn-login {
-    border: 1px solid rgba(255,255,255,.5);
+    border: 1px solid var(--ui-border-control);
     background: 0 0;
 }
 
@@ -174,7 +490,7 @@ hulu-text-font {
     height: 40px;
     border-radius: 3px;
     margin: 0 0 0 24px;
-    color: #fff;
+    color: var(--ui-text-strong);
     font-weight: 600;
     font-size: 16px;
     line-height: 20px;
@@ -202,8 +518,8 @@ hulu-text-font {
     width: 282px;
     height: 348px;
     margin: 0 0 40px;
-    background: #fff;
-    box-shadow: 0 2px 36px rgba(16,16,16,.1);
+    background: var(--light-surface);
+    box-shadow: var(--light-shadow-card);
     border-radius: 8px;
     z-index: 1;
 }
@@ -213,8 +529,8 @@ hulu-text-font {
     height: 150px;
     color: black;
     margin: 0 0 40px;
-    background: #fff;
-    box-shadow: 0 2px 36px rgba(16,16,16,.1);
+    background: var(--light-surface);
+    box-shadow: var(--light-shadow-card);
     border-radius: 8px;
     z-index: 1;
 }
@@ -224,8 +540,8 @@ hulu-text-font {
     height: 300px;
     color: black;
     margin: 0 0 40px;
-    background: #fff;
-    box-shadow: 0 2px 36px rgba(16,16,16,.1);
+    background: var(--light-surface);
+    box-shadow: var(--light-shadow-card);
     border-radius: 8px;
     z-index: 1;
 }
@@ -249,7 +565,7 @@ hulu-text-font {
     width: 234px;
     line-height: 18px;
     text-align: center;
-    color: #8a8ea0;
+    color: var(--light-text-secondary);
 }
 
 .submain-title {
@@ -257,7 +573,7 @@ hulu-text-font {
     font-family: Outfit,rubik medium,OpenSans,sans-serif,helvetica neue;
     font-weight: 700;
     line-height: 40px;
-    color: #fff;
+    color: var(--ui-accent-text);
     opacity: .5;
 }
 
@@ -336,7 +652,7 @@ hulu-text-font {
 .expand-icon {
     user-select: none;
     font-size: 8px;
-    color: #666;
+    color: var(--ui-text-soft);
     transition: transform 0.15s ease, opacity 0.12s ease;
     opacity: 0;
     visibility: hidden;
@@ -424,7 +740,7 @@ hulu-text-font {
 }
 
 .outline-line:hover {
-    border-right: 2px solid var(--theme-accent) !important;
+    border-right: 2px solid var(--ui-accent) !important;
 }
 
 .content-box {
@@ -434,8 +750,8 @@ hulu-text-font {
 
 .nav-item .tooltip {
     visibility: hidden;
-    background-color: #333;
-    color: #fff;
+    background-color: var(--ui-surface-panel);
+    color: var(--ui-text-strong);
     text-align: center;
     padding: 5px 10px;
     border-radius: 4px;
@@ -466,17 +782,17 @@ hulu-text-font {
 }
 
 .nav-action-btn {
-    background: rgba(100, 100, 100, 0.3);
+    background: var(--ui-surface-hover);
     border: none;
     border-radius: 3px;
     padding: 2px 6px;
     cursor: pointer;
     font-size: 12px;
-    color: #fff;
+    color: var(--ui-text-strong);
 }
 
 .nav-action-btn:hover {
-    background: rgba(100, 100, 100, 0.5);
+    background: var(--ui-border-control);
 }
 
 /* ==================== Context Menu ==================== */
@@ -536,11 +852,11 @@ hulu-text-font {
 
 .context-menu-item:hover,
 .menu-popover-item:hover {
-    background: var(--surface-popover-hover);
+    background: var(--ui-surface-popover-hover);
 }
 
 .context-menu-item:active {
-    background: var(--surface-hover-strong) !important;
+    background: var(--ui-surface-hover-strong) !important;
 }
 
 .context-menu-header {
@@ -548,7 +864,7 @@ hulu-text-font {
 }
 
 .menu-popover-item-danger:hover {
-    background: var(--surface-popover-danger-hover);
+    background: var(--ui-surface-popover-danger-hover);
 }
 
 /* ==================== Head Dot / Row Click ==================== */
@@ -561,7 +877,7 @@ hulu-text-font {
 }
 
 .head-dot:not(.is-editing):hover {
-    background: rgba(255, 255, 255, 0.03);
+    background: var(--ui-surface-row-hover);
 }
 
 .backlink-outline-node:not(.is-editing):hover {
@@ -603,7 +919,7 @@ hulu-text-font {
     bottom: 1px;
     height: 2px;
     border-radius: 2px;
-    background: var(--theme-accent);
+    background: var(--ui-accent);
     pointer-events: none;
 }
 
@@ -627,7 +943,7 @@ hulu-text-font {
 
 .daily-note-btn:hover {
     transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+    box-shadow: var(--ui-accent-shadow);
 }
 
 /* ==================== Page Layout ==================== */
@@ -647,8 +963,8 @@ hulu-text-font {
     top: var(--app-topbar-height);
     height: calc(100vh - var(--app-topbar-height));
     width: var(--sidebar-width);
-    background: var(--surface-panel);
-    border-right: 1px solid var(--surface-border);
+    background: var(--ui-surface-panel);
+    border-right: 1px solid var(--ui-border-subtle);
     transition: transform 0.3s ease;
     z-index: 100;
     display: flex;
@@ -663,7 +979,7 @@ hulu-text-font {
 
 .left-sidebar.collapsed.peek-open {
     transform: translateX(0);
-    box-shadow: 12px 0 32px rgba(0, 0, 0, 0.28);
+    box-shadow: var(--ui-shadow-sidebar-peek);
     z-index: 140;
 }
 
@@ -673,21 +989,21 @@ hulu-text-font {
     top: calc(var(--app-topbar-height) + 8px);
     width: 32px;
     height: 32px;
-    background: var(--surface-control);
-    border: 1px solid var(--surface-border-strong);
+    background: var(--ui-surface-control);
+    border: 1px solid var(--ui-border-strong);
     border-radius: 0 6px 6px 0;
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
-    color: #fff;
+    color: var(--ui-text-strong);
     font-size: 16px;
     z-index: 101;
     transition: left 0.3s ease, background 0.2s ease;
 }
 
 .sidebar-toggle-btn:hover {
-    background: var(--surface-hover-strong);
+    background: var(--ui-surface-hover-strong);
 }
 
 .sidebar-toggle-btn.collapsed {
@@ -697,7 +1013,7 @@ hulu-text-font {
 
 .sidebar-header {
     padding: 16px;
-    border-bottom: 1px solid var(--surface-border);
+    border-bottom: 1px solid var(--ui-border-subtle);
     display: flex;
     align-items: center;
     flex-shrink: 0;
@@ -706,7 +1022,7 @@ hulu-text-font {
 .sidebar-title {
     font-size: 16px;
     font-weight: 600;
-    color: #fff;
+    color: var(--ui-text-strong);
 }
 
 .sidebar-user-menu-anchor {
@@ -720,7 +1036,7 @@ hulu-text-font {
     border: 1px solid transparent;
     border-radius: 10px;
     background: transparent;
-    color: #fff;
+    color: var(--ui-text-strong);
     display: flex;
     align-items: center;
     gap: 12px;
@@ -730,8 +1046,8 @@ hulu-text-font {
 
 .sidebar-user-trigger:hover,
 .sidebar-user-trigger.active {
-    background: var(--surface-hover);
-    border-color: var(--surface-border-strong);
+    background: var(--ui-surface-hover);
+    border-color: var(--ui-border-strong);
 }
 
 .sidebar-user-trigger-topbar {
@@ -762,7 +1078,7 @@ hulu-text-font {
     height: 20px;
     border-radius: 999px;
     overflow: hidden;
-    background: rgba(255,255,255,0.18);
+    background: var(--ui-border-control);
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -770,7 +1086,7 @@ hulu-text-font {
 }
 
 .sidebar-user-avatar-fallback {
-    color: #fff;
+    color: var(--ui-text-strong);
     font-size: 12px;
     font-weight: 700;
 }
@@ -790,7 +1106,7 @@ hulu-text-font {
     white-space: nowrap;
     font-size: 13px;
     font-weight: 600;
-    color: #fff;
+    color: var(--ui-text-strong);
 }
 
 .sidebar-user-chevron {
@@ -837,9 +1153,9 @@ hulu-text-font {
 }
 
 .sidebar-user-menu-database-item.active {
-    background: var(--theme-accent-20);
-    border: 1px solid var(--theme-accent-30);
-    color: #fff;
+    background: var(--ui-accent-20);
+    border: 1px solid var(--ui-accent-30);
+    color: var(--ui-text-strong);
 }
 
 .sidebar-content {
@@ -859,7 +1175,7 @@ hulu-text-font {
     display: flex;
     align-items: center;
     cursor: pointer;
-    color: #fff;
+    color: var(--ui-text-strong);
     opacity: 0.8;
     border-radius: 8px;
     border: 1px solid transparent;
@@ -868,13 +1184,13 @@ hulu-text-font {
 }
 
 .sidebar-item:hover {
-    background: var(--surface-hover);
+    background: var(--ui-surface-hover);
     opacity: 1;
 }
 
 .sidebar-item.active {
-    background: var(--theme-accent-20);
-    border: 1px solid var(--theme-accent-30);
+    background: var(--ui-accent-20);
+    border: 1px solid var(--ui-accent-30);
     box-shadow: none;
     opacity: 1;
 }
@@ -912,8 +1228,8 @@ hulu-text-font {
     margin: 2px 8px;
     padding: 7px 12px;
     min-height: 34px;
-    background: var(--theme-accent);
-    color: #fff;
+    background: var(--ui-accent);
+    color: var(--ui-text-strong);
     border: none;
     border-radius: 8px;
     cursor: pointer;
@@ -932,7 +1248,7 @@ hulu-text-font {
 }
 
 .new-note-btn:hover {
-    background: var(--theme-accent-strong);
+    background: var(--ui-accent-strong);
 }
 
 .new-note-btn-icon {
@@ -947,9 +1263,9 @@ hulu-text-font {
 }
 
 .sidebar-new-note-btn {
-    background: var(--theme-accent-20);
-    border: 1px solid var(--theme-accent-30);
-    color: #fff;
+    background: var(--ui-accent-20);
+    border: 1px solid var(--ui-accent-30);
+    color: var(--ui-text-strong);
     border-radius: 8px;
     font-weight: 600;
     box-shadow: none;
@@ -957,8 +1273,8 @@ hulu-text-font {
 }
 
 .sidebar-new-note-btn:hover {
-    background: var(--theme-accent-20);
-    border-color: var(--theme-accent-30);
+    background: var(--ui-accent-20);
+    border-color: var(--ui-accent-30);
 }
 
 .sidebar-new-note-btn .new-note-btn-icon {
@@ -975,7 +1291,7 @@ hulu-text-font {
     margin: 2px 8px;
     padding: 8px 8px;
     cursor: pointer;
-    color: #fff;
+    color: var(--ui-text-strong);
     opacity: 0.7;
     font-size: 13px;
     white-space: nowrap;
@@ -986,12 +1302,12 @@ hulu-text-font {
 }
 
 .note-list-item:hover {
-    background: var(--surface-hover);
+    background: var(--ui-surface-hover);
     opacity: 1;
 }
 
 .note-list-item.active {
-    background: var(--theme-accent-15);
+    background: var(--ui-accent-15);
     opacity: 1;
 }
 
@@ -999,7 +1315,7 @@ hulu-text-font {
     margin-top: 16px;
     padding: 8px 16px;
     font-size: 11px;
-    color: rgba(255,255,255,0.4);
+    color: var(--ui-text-faint);
     letter-spacing: 0.5px;
 }
 
@@ -1012,7 +1328,7 @@ hulu-text-font {
     display: flex;
     align-items: center;
     gap: 12px;
-    color: rgba(255,255,255,0.9);
+    color: var(--ui-text-strong);
 }
 
 .sidebar-footer-brand-text {
@@ -1054,8 +1370,8 @@ hulu-text-font {
     grid-template-columns: auto 1fr auto;
     align-items: center;
     gap: 12px;
-    background: var(--surface-topbar);
-    border-bottom: 1px solid var(--surface-border);
+    background: var(--ui-surface-topbar);
+    border-bottom: 1px solid var(--ui-border-subtle);
     backdrop-filter: blur(8px);
 }
 
@@ -1084,7 +1400,7 @@ hulu-text-font {
 .app-topbar-brand-text {
     font-size: 16px;
     font-weight: 700;
-    color: #fff;
+    color: var(--ui-text-strong);
     letter-spacing: 0.4px;
     white-space: nowrap;
 }
@@ -1135,7 +1451,7 @@ hulu-text-font {
     padding: 0;
     font-size: 13px;
     font-weight: 600;
-    color: rgba(255, 255, 255, 0.9);
+    color: var(--ui-text-strong);
     background: transparent;
     border: none;
     white-space: nowrap;
@@ -1154,7 +1470,7 @@ hulu-text-font {
     border-radius: 6px;
     border: 1px solid transparent;
     background: transparent;
-    color: rgba(255, 255, 255, 0.82);
+    color: var(--ui-control-text-strong);
     cursor: pointer;
     display: inline-flex;
     align-items: center;
@@ -1172,15 +1488,15 @@ hulu-text-font {
 }
 
 .app-topbar-btn:hover {
-    background: var(--surface-hover);
-    border-color: var(--surface-border-strong);
-    color: #fff;
+    background: var(--ui-surface-hover);
+    border-color: var(--ui-border-strong);
+    color: var(--ui-text-strong);
 }
 
 .app-topbar-btn.active {
-    background: var(--theme-accent-20);
-    border-color: var(--theme-accent-30);
-    color: #fff;
+    background: var(--ui-accent-20);
+    border-color: var(--ui-accent-30);
+    color: var(--ui-text-strong);
 }
 
 .topbar-more-menu {
@@ -1219,7 +1535,7 @@ hulu-text-font {
     font-family: inherit;
     display: block;
     background: transparent !important;
-    color: #fdfeffc4 !important;
+    color: var(--ui-text-primary) !important;
     border: none !important;
     border-radius: 0;
     padding: 4px 0;
@@ -1228,7 +1544,7 @@ hulu-text-font {
     min-width: 0;
     box-sizing: border-box;
     box-shadow: none;
-    caret-color: var(--theme-accent);
+    caret-color: var(--ui-accent);
 }
 
 .note-title-input:focus {
@@ -1297,20 +1613,18 @@ hulu-text-font {
     max-width: 100%;
     padding: 10px 18px;
     border-radius: 12px;
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    border: 1px solid var(--ui-border-card-soft);
     background:
-        linear-gradient(135deg, rgba(102, 126, 234, 0.12), rgba(118, 75, 162, 0.08)),
-        rgba(46, 51, 64, 0.88);
-    box-shadow:
-        0 6px 18px rgba(0, 0, 0, 0.16),
-        inset 0 1px 0 rgba(255, 255, 255, 0.06);
+        var(--ui-surface-glass-highlight),
+        var(--ui-surface-glass);
+    box-shadow: var(--ui-shadow-glass);
     backdrop-filter: blur(18px);
     -webkit-backdrop-filter: blur(18px);
     animation: toast-flow 5000ms cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
 .toast-text {
-    color: #fdfeffc4;
+    color: var(--ui-toast-text);
     font-size: 14px;
     font-weight: 600;
     line-height: 1.35;
@@ -1347,7 +1661,7 @@ hulu-text-font {
     align-items: center;
     justify-content: center;
     padding: 24px;
-    background: rgba(9, 11, 18, 0.46);
+    background: var(--ui-overlay-dialog);
     backdrop-filter: blur(8px);
     -webkit-backdrop-filter: blur(8px);
 }
@@ -1355,11 +1669,9 @@ hulu-text-font {
 .confirm-dialog-card {
     width: min(100%, 460px);
     border-radius: 16px;
-    border: 1px solid var(--surface-border-strong);
-    background: var(--surface-popover);
-    box-shadow:
-        0 18px 60px rgba(0, 0, 0, 0.34),
-        inset 0 1px 0 rgba(255, 255, 255, 0.03);
+    border: 1px solid var(--ui-border-strong);
+    background: var(--ui-surface-popover);
+    box-shadow: var(--ui-shadow-dialog);
     padding: 24px 24px 18px;
     animation: confirm-dialog-in 180ms ease-out;
 }
@@ -1369,7 +1681,7 @@ hulu-text-font {
 }
 
 .confirm-dialog-title {
-    color: #fff;
+    color: var(--ui-text-strong);
     font-size: 17px;
     font-weight: 700;
     line-height: 1.3;
@@ -1377,12 +1689,12 @@ hulu-text-font {
 }
 
 .confirm-dialog-title.danger {
-    color: #fff;
+    color: var(--ui-text-strong);
 }
 
 .confirm-dialog-message {
     margin-top: 8px;
-    color: rgba(255, 255, 255, 0.58);
+    color: var(--ui-text-muted);
     font-size: 14px;
     line-height: 1.6;
     max-width: 360px;
@@ -1403,33 +1715,33 @@ hulu-text-font {
     cursor: pointer;
     font-size: 13px;
     font-weight: 600;
-    color: #fff;
-    background: var(--theme-accent);
+    color: var(--ui-text-strong);
+    background: var(--ui-accent);
     transition: background 0.15s ease, border-color 0.15s ease, transform 0.15s ease;
 }
 
 .confirm-dialog-btn:hover {
-    background: var(--theme-accent-hover);
+    background: var(--ui-accent-hover);
 }
 
 .confirm-dialog-btn-secondary {
-    color: rgba(255, 255, 255, 0.84);
-    background: rgba(255, 255, 255, 0.06);
-    border-color: var(--surface-border);
+    color: var(--ui-control-text-strong);
+    background: var(--ui-surface-control-soft);
+    border-color: var(--ui-border-subtle);
 }
 
 .confirm-dialog-btn-secondary:hover {
-    background: rgba(255, 255, 255, 0.1);
+    background: var(--ui-surface-hover);
 }
 
 .confirm-dialog-btn-danger {
-    background: rgba(255, 107, 107, 0.16);
-    border-color: rgba(255, 107, 107, 0.22);
-    color: #ffb0b0;
+    background: var(--ui-danger-bg-strong);
+    border-color: var(--ui-danger-border-soft);
+    color: var(--ui-danger-text-soft);
 }
 
 .confirm-dialog-btn-danger:hover {
-    background: rgba(255, 107, 107, 0.22);
+    background: var(--ui-danger-bg-hover);
 }
 
 @keyframes confirm-dialog-in {
@@ -1448,16 +1760,16 @@ hulu-text-font {
 .note-card {
     padding: 16px 20px;
     margin-bottom: 12px;
-    background: rgba(255,255,255,0.05);
+    background: var(--ui-surface-panel-soft);
     border-radius: 8px;
     cursor: pointer;
     transition: all 0.2s ease;
-    border: 1px solid rgba(255,255,255,0.1);
+    border: 1px solid var(--ui-border-card-soft);
 }
 
 .note-card:hover {
-    background: rgba(255,255,255,0.1);
-    border-color: var(--theme-accent-30);
+    background: var(--ui-surface-panel-soft-hover);
+    border-color: var(--ui-accent-30);
     transform: translateY(-1px);
 }
 
@@ -1469,7 +1781,7 @@ hulu-text-font {
 
 .note-card-meta {
     font-size: 12px;
-    color: rgba(255,255,255,0.5);
+    color: var(--ui-text-soft);
 }
 
 /* Pagination */
@@ -1483,8 +1795,8 @@ hulu-text-font {
 
 .pagination-btn {
     padding: 8px 16px;
-    background: var(--theme-accent);
-    color: #fff;
+    background: var(--ui-accent);
+    color: var(--ui-text-strong);
     border: none;
     border-radius: 4px;
     cursor: pointer;
@@ -1492,11 +1804,11 @@ hulu-text-font {
 }
 
 .pagination-btn:hover:not(:disabled) {
-    background: var(--theme-accent-strong);
+    background: var(--ui-accent-strong);
 }
 
 .pagination-btn:disabled {
-    background: var(--surface-control);
+    background: var(--ui-surface-control);
     cursor: not-allowed;
     opacity: 0.5;
 }
@@ -1504,20 +1816,20 @@ hulu-text-font {
 .pagination-num {
     padding: 8px 12px;
     background: transparent;
-    color: #fff;
-    border: 1px solid rgba(255,255,255,0.2);
+    color: var(--ui-text-strong);
+    border: 1px solid var(--ui-border-control);
     border-radius: 4px;
     cursor: pointer;
     transition: all 0.2s ease;
 }
 
 .pagination-num:hover {
-    background: var(--surface-hover);
+    background: var(--ui-surface-hover);
 }
 
 .pagination-num.active {
-    background: var(--theme-accent);
-    border-color: var(--theme-accent);
+    background: var(--ui-accent);
+    border-color: var(--ui-accent);
 }
 
 /* ==================== Mobile Responsive ==================== */
@@ -1595,24 +1907,24 @@ hulu-text-font {
 }
 
 .link-title-style {
-    color: var(--theme-accent) !important;
+    color: var(--ui-accent) !important;
     text-decoration: none;
     transition: all 0.15s ease;
 }
 
 .link-title-style:hover {
-    color: var(--theme-accent-hover) !important;
+    color: var(--ui-accent-hover) !important;
     text-decoration: none;
 }
 
 .link-style.blue {
-    color: #7c8bab !important;
+    color: var(--ui-text-secondary) !important;
     font-weight: 500;
 }
 
 /* Page link hover effect - highlight the brackets */
 .hulunote-note-link:hover .link-style.blue {
-    color: var(--theme-accent) !important;
+    color: var(--ui-accent) !important;
 }
 
 /* Hashtag specific styles */
@@ -1628,8 +1940,8 @@ hulu-text-font {
     top: var(--app-topbar-height);
     width: 420px;
     height: calc(100vh - var(--app-topbar-height));
-    background: var(--surface-panel);
-    border-left: 1px solid var(--surface-border);
+    background: var(--ui-surface-panel);
+    border-left: 1px solid var(--ui-border-subtle);
     z-index: 100;
     display: flex;
     flex-direction: column;
@@ -1651,28 +1963,28 @@ hulu-text-font {
     align-items: center;
     justify-content: space-between;
     padding: 12px 16px;
-    border-bottom: 1px solid var(--surface-border);
+    border-bottom: 1px solid var(--ui-border-subtle);
     flex-shrink: 0;
 }
 
 .right-sidebar-title {
     font-size: 14px;
     font-weight: 600;
-    color: rgba(255, 255, 255, 0.8);
+    color: var(--ui-text-secondary);
 }
 
 .right-sidebar-close {
     cursor: pointer;
     padding: 2px 8px;
-    color: rgba(255, 255, 255, 0.5);
+    color: var(--ui-text-soft);
     font-size: 18px;
     border-radius: 4px;
     transition: all 0.15s ease;
 }
 
 .right-sidebar-close:hover {
-    color: #fff;
-    background: var(--surface-hover);
+    color: var(--ui-text-strong);
+    background: var(--ui-surface-hover);
 }
 
 .right-sidebar-body {
@@ -1686,14 +1998,14 @@ hulu-text-font {
     display: flex;
     align-items: center;
     justify-content: center;
-    color: rgba(255, 255, 255, 0.55);
+    color: var(--ui-text-muted);
     font-size: 13px;
     line-height: 1.55;
     text-align: center;
 }
 
 .right-sidebar-note {
-    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    border-bottom: 1px solid var(--ui-overlay-soft-stronger);
 }
 
 .right-sidebar-note-header {
@@ -1701,8 +2013,8 @@ hulu-text-font {
     align-items: center;
     justify-content: space-between;
     padding: 10px 16px;
-    background: rgba(255, 255, 255, 0.03);
-    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    background: var(--ui-surface-row-hover);
+    border-bottom: 1px solid var(--ui-border-card-header);
     gap: 8px;
 }
 
@@ -1710,7 +2022,7 @@ hulu-text-font {
     flex: 1;
     font-size: 14px;
     font-weight: 600;
-    color: var(--theme-accent);
+    color: var(--ui-accent);
     cursor: pointer;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -1719,14 +2031,14 @@ hulu-text-font {
 }
 
 .right-sidebar-note-title:hover {
-    color: var(--theme-accent-hover);
+    color: var(--ui-accent-hover);
     text-decoration: underline;
 }
 
 .right-sidebar-note-close {
     cursor: pointer;
     padding: 2px 6px;
-    color: rgba(255, 255, 255, 0.4);
+    color: var(--ui-text-faint);
     font-size: 16px;
     border-radius: 4px;
     flex-shrink: 0;
@@ -1734,8 +2046,8 @@ hulu-text-font {
 }
 
 .right-sidebar-note-close:hover {
-    color: #ff6b6b;
-    background: rgba(255, 107, 107, 0.1);
+    color: var(--ui-danger);
+    background: var(--ui-danger-bg-soft);
 }
 
 .right-sidebar-note-content {
@@ -1789,7 +2101,7 @@ hulu-text-font {
 }
 
 .slash-menu::-webkit-scrollbar-thumb {
-    background: rgba(255, 255, 255, 0.15);
+    background: var(--ui-scrollbar-thumb);
     border-radius: 3px;
 }
 
@@ -1799,7 +2111,7 @@ hulu-text-font {
 
 .slash-menu-item:hover,
 .slash-menu-item-selected {
-    background: var(--surface-hover) !important;
+    background: var(--ui-surface-hover) !important;
 }
 
 .slash-menu-icon {
@@ -1820,7 +2132,7 @@ hulu-text-font {
     left: 0;
     right: 0;
     bottom: 0;
-    background: rgba(0, 0, 0, 0.5);
+    background: var(--ui-overlay-dim);
     z-index: 10002;
     display: flex;
     justify-content: center;
@@ -1836,10 +2148,10 @@ hulu-text-font {
 .search-modal {
     width: 560px;
     max-height: 420px;
-    background: var(--surface-popover);
-    border: 1px solid var(--surface-border-strong);
+    background: var(--ui-surface-popover);
+    border: 1px solid var(--ui-border-strong);
     border-radius: 12px;
-    box-shadow: 0 16px 48px rgba(0, 0, 0, 0.4);
+    box-shadow: var(--ui-shadow-search-modal);
     display: flex;
     flex-direction: column;
     overflow: hidden;
@@ -1861,7 +2173,7 @@ hulu-text-font {
     display: flex;
     align-items: center;
     padding: 12px 16px;
-    border-bottom: 1px solid var(--surface-border-strong);
+    border-bottom: 1px solid var(--ui-border-strong);
     gap: 10px;
 }
 
@@ -1877,19 +2189,19 @@ hulu-text-font {
     background: transparent;
     border: none;
     outline: none;
-    color: #fff;
+    color: var(--ui-text-strong);
     font-size: 15px;
     line-height: 1.4;
 }
 
 .search-modal-input::placeholder {
-    color: rgba(255, 255, 255, 0.35);
+    color: var(--ui-control-text-faint);
 }
 
 .search-modal-shortcut {
     font-size: 11px;
-    color: rgba(255, 255, 255, 0.35);
-    background: rgba(255, 255, 255, 0.08);
+    color: var(--ui-control-text-faint);
+    background: var(--ui-surface-control-strong);
     padding: 2px 6px;
     border-radius: 4px;
     flex-shrink: 0;
@@ -1910,13 +2222,13 @@ hulu-text-font {
 }
 
 .search-modal-results::-webkit-scrollbar-thumb {
-    background: rgba(255, 255, 255, 0.15);
+    background: var(--ui-scrollbar-thumb);
     border-radius: 3px;
 }
 
 .search-modal-hint {
     padding: 24px 16px;
-    color: rgba(255, 255, 255, 0.35);
+    color: var(--ui-control-text-faint);
     font-size: 13px;
     text-align: center;
 }
@@ -1933,7 +2245,7 @@ hulu-text-font {
 
 .search-modal-item:hover,
 .search-modal-item-selected {
-    background: var(--surface-hover);
+    background: var(--ui-surface-hover);
 }
 
 .search-modal-item-left {
@@ -1943,7 +2255,7 @@ hulu-text-font {
 
 .search-modal-item-title {
     font-size: 14px;
-    color: #fff;
+    color: var(--ui-text-strong);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -1951,7 +2263,7 @@ hulu-text-font {
 
 .search-modal-item-snippet {
     font-size: 12px;
-    color: rgba(255, 255, 255, 0.45);
+    color: var(--ui-control-text-soft);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -1960,8 +2272,8 @@ hulu-text-font {
 
 .search-modal-item-badge {
     font-size: 10px;
-    color: rgba(255, 255, 255, 0.45);
-    background: rgba(255, 255, 255, 0.08);
+    color: var(--ui-control-text-soft);
+    background: var(--ui-surface-control-strong);
     padding: 2px 6px;
     border-radius: 4px;
     flex-shrink: 0;

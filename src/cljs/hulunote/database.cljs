@@ -106,9 +106,9 @@
        {:style {:position "fixed"
                 :left (str x "px")
                 :top (str y "px")
-                :background "#fff"
+                :background "var(--light-surface)"
                 :border-radius "8px"
-                :box-shadow "0 4px 12px rgba(0,0,0,0.15)"
+                :box-shadow "var(--light-shadow-popover)"
                 :padding "8px 0"
                 :min-width "180px"
                 :z-index 10000}
@@ -122,7 +122,7 @@
                  :gap "8px"
                  :transition "background 0.2s"
                  :opacity (if importing 0.5 1)}
-         :on-mouse-enter #(set! (.. % -target -style -background) "#f5f5f5")
+         :on-mouse-enter #(set! (.. % -target -style -background) "var(--light-surface-hover)")
          :on-mouse-leave #(set! (.. % -target -style -background) "transparent")
          :on-click (fn [e]
                      (.stopPropagation e)
@@ -134,8 +134,8 @@
                            (when-let [input (.getElementById js/document "import-json-input")]
                              (.click input)))
                          100)))}
-        [:span {:style {:color "#667eea"}} "\uD83D\uDCE5"]
-        [:span {:style {:color "#333"}} (if importing "Importing..." "Import JSON")]]
+        [:span {:style {:color "var(--theme-accent)"}} "\uD83D\uDCE5"]
+        [:span {:style {:color "var(--light-text-primary)"}} (if importing "Importing..." "Import JSON")]]
 
        ;; Import ZIP option
        [:div.context-menu-item.pointer
@@ -145,7 +145,7 @@
                  :gap "8px"
                  :transition "background 0.2s"
                  :opacity (if importing 0.5 1)}
-         :on-mouse-enter #(set! (.. % -target -style -background) "#f5f5f5")
+         :on-mouse-enter #(set! (.. % -target -style -background) "var(--light-surface-hover)")
          :on-mouse-leave #(set! (.. % -target -style -background) "transparent")
          :on-click (fn [e]
                      (.stopPropagation e)
@@ -157,12 +157,12 @@
                            (when-let [input (.getElementById js/document "import-zip-input")]
                              (.click input)))
                          100)))}
-        [:span {:style {:color "#764ba2"}} "\uD83D\uDDDC\uFE0F"]
-        [:span {:style {:color "#333"}} (if importing "Importing..." "Import ZIP")]]
+        [:span {:style {:color "var(--graph-node-active)"}} "\uD83D\uDDDC\uFE0F"]
+        [:span {:style {:color "var(--light-text-primary)"}} (if importing "Importing..." "Import ZIP")]]
 
        ;; Divider
        [:div {:style {:height "1px"
-                      :background "#eee"
+                      :background "var(--light-border-subtle)"
                       :margin "4px 0"}}]
 
        ;; Rename Database option
@@ -172,7 +172,7 @@
                  :align-items "center"
                  :gap "8px"
                  :transition "background 0.2s"}
-         :on-mouse-enter #(set! (.. % -target -style -background) "#f5f5f5")
+         :on-mouse-enter #(set! (.. % -target -style -background) "var(--light-surface-hover)")
          :on-mouse-leave #(set! (.. % -target -style -background) "transparent")
          :on-click (fn [e]
                      (.stopPropagation e)
@@ -180,8 +180,8 @@
                                                  :database-id database-id
                                                  :database-name database-name})
                      (swap! context-menu-state assoc :visible false))}
-        [:span {:style {:color "#667eea"}} "✏️"]
-        [:span {:style {:color "#333"}} "Rename Database"]]
+        [:span {:style {:color "var(--theme-accent)"}} "✏️"]
+        [:span {:style {:color "var(--light-text-primary)"}} "Rename Database"]]
 
        ;; Set as default option
        [:div.context-menu-item.pointer
@@ -192,19 +192,19 @@
                  :transition "background 0.2s"
                  :opacity (if is-default 0.55 1)}
          :on-mouse-enter #(when-not is-default
-                            (set! (.. % -target -style -background) "#f5f5f5"))
+                            (set! (.. % -target -style -background) "var(--light-surface-hover)"))
          :on-mouse-leave #(set! (.. % -target -style -background) "transparent")
          :on-click (fn [e]
                      (.stopPropagation e)
                      (when-not is-default
                        (set-default-database! database-id database-name))
                      (swap! context-menu-state assoc :visible false))}
-        [:span {:style {:color "#f5a623"}} "★"]
-        [:span {:style {:color "#333"}} (if is-default "Default Database" "Set as Default")]]
+        [:span {:style {:color "var(--theme-warning)"}} "★"]
+        [:span {:style {:color "var(--light-text-primary)"}} (if is-default "Default Database" "Set as Default")]]
 
        ;; Divider
        [:div {:style {:height "1px"
-                      :background "#eee"
+                      :background "var(--light-border-subtle)"
                       :margin "4px 0"}}]
 
        ;; Delete Database option
@@ -214,7 +214,7 @@
                  :align-items "center"
                  :gap "8px"
                  :transition "background 0.2s"}
-         :on-mouse-enter #(set! (.. % -target -style -background) "#f5f5f5")
+         :on-mouse-enter #(set! (.. % -target -style -background) "var(--light-surface-hover)")
          :on-mouse-leave #(set! (.. % -target -style -background) "transparent")
          :on-click (fn [e]
                      (when (js/confirm (str "Are you sure you want to delete \"" database-name "\"? This action cannot be undone."))
@@ -228,8 +228,8 @@
                                       [[:db/retractEntity [:hulunote-databases/id database-id]]])
                                     (u/alert (str "Database \"" database-name "\" deleted successfully")))}]))
                      (swap! context-menu-state assoc :visible false))}
-        [:span {:style {:color "#ff4d4f"}} "\uD83D\uDDD1\uFE0F"]
-        [:span {:style {:color "#ff4d4f"}} "Delete Database"]]])))
+        [:span {:style {:color "var(--app-danger-soft)"}} "\uD83D\uDDD1\uFE0F"]
+        [:span {:style {:color "var(--app-danger-soft)"}} "Delete Database"]]])))
 
 ;; ==================== Create Modal Component ====================
 (rum/defc create-modal < rum/reactive []
@@ -241,30 +241,30 @@
                 :left 0
                 :right 0
                 :bottom 0
-                :background "rgba(0,0,0,0.5)"
+                :background "var(--light-overlay)"
                 :display "flex"
                 :align-items "center"
                 :justify-content "center"
                 :z-index 10000}
         :on-click #(swap! create-modal-state assoc :visible false)}
        [:div.modal-content
-        {:style {:background "#fff"
+        {:style {:background "var(--light-surface)"
                  :border-radius "16px"
                  :padding "32px"
                  :min-width "400px"
-                 :box-shadow "0 8px 32px rgba(0,0,0,0.2)"}
+                 :box-shadow "var(--light-shadow-popover-strong)"}
          :on-click #(.stopPropagation %)}
         [:h2 {:style {:margin "0 0 24px 0"
                       :font-size "24px"
                       :font-weight "600"
-                      :color "#1a1a2e"}}
+                      :color "var(--light-text-primary)"}}
          "Create New Database"]
         [:div {:style {:margin-bottom "24px"}}
          [:label {:style {:display "block"
                           :margin-bottom "8px"
                           :font-size "14px"
                           :font-weight "500"
-                          :color "#666"}}
+                          :color "var(--light-text-secondary)"}}
           "Database Name"]
          [:input
           {:type "text"
@@ -286,7 +286,7 @@
                                              (u/alert (str "Database \"" name "\" created successfully")))}])))))
            :style {:width "100%"
                    :padding "12px 16px"
-                   :border "2px solid #e0e0e0"
+                   :border "2px solid var(--light-border)"
                    :border-radius "8px"
                    :font-size "16px"
                    :outline "none"
@@ -297,12 +297,12 @@
          [:button.pointer
           {:on-click #(swap! create-modal-state assoc :visible false :database-name "")
            :style {:padding "12px 24px"
-                   :border "2px solid #e0e0e0"
+                   :border "2px solid var(--light-border)"
                    :border-radius "8px"
-                   :background "#fff"
+                   :background "var(--light-surface)"
                    :font-size "16px"
                    :font-weight "500"
-                   :color "#666"
+                   :color "var(--light-text-secondary)"
                    :cursor "pointer"}}
           "Cancel"]
          [:button.pointer
@@ -321,10 +321,10 @@
            :style {:padding "12px 24px"
                    :border "none"
                    :border-radius "8px"
-                   :background "linear-gradient(135deg, #667eea 0%, #764ba2 100%)"
+                   :background "var(--theme-accent-gradient)"
                    :font-size "16px"
                    :font-weight "600"
-                   :color "#fff"
+                   :color "var(--theme-accent-text)"
                    :cursor "pointer"}}
          "Create"]]]])))
 
@@ -337,7 +337,7 @@
                 :left 0
                 :right 0
                 :bottom 0
-                :background "rgba(0,0,0,0.5)"
+                :background "var(--light-overlay)"
                 :display "flex"
                 :align-items "center"
                 :justify-content "center"
@@ -346,23 +346,23 @@
                                                :database-id nil
                                                :database-name ""})}
        [:div.modal-content
-        {:style {:background "#fff"
+        {:style {:background "var(--light-surface)"
                  :border-radius "16px"
                  :padding "32px"
                  :min-width "400px"
-                 :box-shadow "0 8px 32px rgba(0,0,0,0.2)"}
+                 :box-shadow "var(--light-shadow-popover-strong)"}
          :on-click #(.stopPropagation %)}
         [:h2 {:style {:margin "0 0 24px 0"
                       :font-size "24px"
                       :font-weight "600"
-                      :color "#1a1a2e"}}
+                      :color "var(--light-text-primary)"}}
          "Rename Database"]
         [:div {:style {:margin-bottom "24px"}}
          [:label {:style {:display "block"
                           :margin-bottom "8px"
                           :font-size "14px"
                           :font-weight "500"
-                          :color "#666"}}
+                          :color "var(--light-text-secondary)"}}
           "Database Name"]
          [:input
           {:type "text"
@@ -386,7 +386,7 @@
                                              (u/alert (str "Database renamed to \"" name "\"")))}])))))
            :style {:width "100%"
                    :padding "12px 16px"
-                   :border "2px solid #e0e0e0"
+                   :border "2px solid var(--light-border)"
                    :border-radius "8px"
                    :font-size "16px"
                    :outline "none"
@@ -399,12 +399,12 @@
                                                   :database-id nil
                                                   :database-name ""})
            :style {:padding "12px 24px"
-                   :border "2px solid #e0e0e0"
+                   :border "2px solid var(--light-border)"
                    :border-radius "8px"
-                   :background "#fff"
+                   :background "var(--light-surface)"
                    :font-size "16px"
                    :font-weight "500"
-                   :color "#666"
+                   :color "var(--light-text-secondary)"
                    :cursor "pointer"}}
           "Cancel"]
          [:button.pointer
@@ -425,10 +425,10 @@
            :style {:padding "12px 24px"
                    :border "none"
                    :border-radius "8px"
-                   :background "linear-gradient(135deg, #667eea 0%, #764ba2 100%)"
+                   :background "var(--theme-accent-gradient)"
                    :font-size "16px"
                    :font-weight "600"
-                   :color "#fff"
+                   :color "var(--theme-accent-text)"
                    :cursor "pointer"}}
           "Save"]]]])))
 
@@ -446,13 +446,13 @@
                               :database-name name
                               :database-id database-id
                               :is-default (boolean is-default)))
-    :style {:background "#fff"
+    :style {:background "var(--light-surface)"
             :position "relative"
             :border-radius "12px"
             :padding "32px 24px"
             :box-shadow (if is-default
-                          "0 10px 30px rgba(102,126,234,0.08), 0 0 0 1px rgba(102,126,234,0.14)"
-                          "0 2px 12px rgba(0,0,0,0.08)")
+                          "0 10px 30px var(--theme-accent-15), 0 0 0 1px var(--theme-accent-20)"
+                          "var(--light-shadow-soft)")
             :transition "all 0.3s ease"
             :border "2px solid transparent"
             :min-width "200px"}}
@@ -461,15 +461,15 @@
       {:style {:position "absolute"
                :top "18px"
                :right "18px"
-               :padding "6px 12px"
-               :border-radius "999px"
-               :background "rgba(102, 126, 234, 0.08)"
-               :border "1px solid rgba(102, 126, 234, 0.16)"
-               :font-size "11px"
-               :font-weight "700"
-               :letter-spacing "0.02em"
-               :line-height "1"
-               :color "#5c6fdf"}}
+                :padding "6px 12px"
+                :border-radius "999px"
+                :background "var(--theme-accent-15)"
+                :border "1px solid var(--theme-accent-20)"
+                :font-size "11px"
+                :font-weight "700"
+                :letter-spacing "0.02em"
+                :line-height "1"
+               :color "var(--theme-accent-strong)"}}
       "Default"])
    [:div.flex.flex-column.items-center.w-100
     [:div {:style {:font-size "40px"
@@ -477,7 +477,7 @@
      "📚"]
     [:div {:style {:font-size "18px"
                    :font-weight "600"
-                   :color "#1a1a2e"
+                   :color "var(--light-text-primary)"
                    :text-align "center"
                    :word-break "break-word"}}
      name]]])
@@ -492,11 +492,11 @@
     "📝"]
    [:h3 {:style {:font-size "24px"
                  :font-weight "600"
-                 :color "#1a1a2e"
+                 :color "var(--light-text-primary)"
                  :margin "0 0 12px 0"}}
     "No Databases Yet"]
    [:p {:style {:font-size "16px"
-                :color "#666"
+                :color "var(--light-text-secondary)"
                 :margin "0 0 32px 0"}}
     (if (u/is-expired?)
       "Login to create your first note database"
@@ -504,8 +504,8 @@
    (if (u/is-expired?)
      [:button.pointer
       {:on-click #(router/switch-router! "/login")
-       :style {:background "linear-gradient(135deg, #667eea 0%, #764ba2 100%)"
-               :color "#fff"
+       :style {:background "var(--theme-accent-gradient)"
+               :color "var(--theme-accent-text)"
                :border "none"
                :padding "12px 28px"
                :border-radius "25px"
@@ -515,8 +515,8 @@
       "Login Now"]
      [:button.pointer
       {:on-click #(swap! create-modal-state assoc :visible true)
-       :style {:background "linear-gradient(135deg, #667eea 0%, #764ba2 100%)"
-               :color "#fff"
+       :style {:background "var(--theme-accent-gradient)"
+               :color "var(--theme-accent-text)"
                :border "none"
                :padding "12px 28px"
                :border-radius "25px"
@@ -546,7 +546,7 @@
         _ (rum/react user-menu-open?)]    ;; Subscribe to user menu state
     [:div.flex.flex-column
      {:style {:min-height "100vh"
-              :background "#f8f9fa"}
+              :background "var(--light-page-bg)"}
       :on-click (fn [_]
                   (swap! context-menu-state assoc :visible false)
                   (reset! user-menu-open? false))}
@@ -558,7 +558,7 @@
                :justify-content "space-between"
                :padding "0 32px"
                :height "60px"
-               :background "linear-gradient(135deg, #667eea 0%, #764ba2 100%)"}}
+               :background "var(--theme-accent-gradient)"}}
       [:div.flex.items-center
        [:img.pointer
         {:on-click #(router/switch-router! "/main")
@@ -569,14 +569,14 @@
         {:on-click #(router/switch-router! "/main")
          :style {:font-size "22px"
                  :font-weight "700"
-                 :color "#fff"}}
+                 :color "var(--theme-accent-text)"}}
         "HULUNOTE"]]
       [:div.flex.items-center
        (if (u/is-expired?)
          [:button.pointer
           {:on-click #(router/switch-router! "/login")
-           :style {:background "#fff"
-                   :color "#667eea"
+           :style {:background "var(--light-surface)"
+                   :color "var(--theme-accent)"
                    :border "none"
                    :padding "8px 20px"
                    :border-radius "20px"
@@ -597,17 +597,17 @@
               :style {:gap "8px"}}
              ;; Avatar circle
              [:div {:style {:width "32px" :height "32px" :border-radius "50%"
-                            :background "rgba(255,255,255,0.3)"
+                            :background "var(--app-control-bg)"
                             :display "flex" :align-items "center" :justify-content "center"
-                            :overflow "hidden" :border "2px solid rgba(255,255,255,0.5)"}}
+                            :overflow "hidden" :border "2px solid var(--app-control-border)"}} 
               (if avatar-url
                 [:img {:src (if (clojure.string/starts-with? (or avatar-url "") "http")
                               avatar-url
                               (str (http/http-uri "") avatar-url))
                        :style {:width "100%" :height "100%" :object-fit "cover"}}]
-                [:span {:style {:color "#fff" :font-size "14px" :font-weight "600"}}
+                [:span {:style {:color "var(--theme-accent-text)" :font-size "14px" :font-weight "600"}}
                  (-> (or username "U") first clojure.string/upper-case)])]
-             [:span {:style {:color "#fff" :font-weight "500"}} username]
+             [:span {:style {:color "var(--theme-accent-text)" :font-weight "500"}} username]
              ;; Dropdown arrow
              (icon/svg-icon
                {:name "keyboard_arrow_down"
@@ -619,16 +619,16 @@
             ;; Dropdown menu
             (when menu-open?
               [:div {:style {:position "absolute" :top "calc(100% + 8px)" :right 0
-                             :background "#fff" :border-radius "8px"
-                             :box-shadow "0 4px 16px rgba(0,0,0,0.15)"
+                             :background "var(--light-surface)" :border-radius "8px"
+                             :box-shadow "var(--light-shadow-popover)"
                              :min-width "180px" :z-index 10000
                              :padding "8px 0"
                              :overflow "hidden"}}
                ;; Logout
                [:div.pointer
                {:style {:padding "10px 16px" :display "flex" :align-items "center"
-                        :gap "10px" :transition "background 0.15s" :color "#ff4d4f"}
-                :on-mouse-enter #(set! (.. % -currentTarget -style -background) "#fff1f0")
+                        :gap "10px" :transition "background 0.15s" :color "var(--app-danger-soft)"}
+                :on-mouse-enter #(set! (.. % -currentTarget -style -background) "var(--light-danger-hover)")
                 :on-mouse-leave #(set! (.. % -currentTarget -style -background) "transparent")
                 :on-click (fn [e]
                             (.stopPropagation e)
@@ -657,10 +657,10 @@
        [:div.flex.flex-column
         [:h1 {:style {:font-size "32px"
                       :font-weight "700"
-                      :color "#1a1a2e"
+                      :color "var(--light-text-primary)"
                       :margin "0"}}
          "My Databases"]
-        [:div {:style {:color "#666"
+        [:div {:style {:color "var(--light-text-secondary)"
                        :font-size "14px"
                        :margin-top "8px"}}
          (str (count database-list) " database(s)")]]
@@ -668,9 +668,9 @@
        ;; Create button (only show when logged in)
        (when-not (u/is-expired?)
          [:button.pointer
-          {:on-click #(swap! create-modal-state assoc :visible true)
-           :style {:background "linear-gradient(135deg, #667eea 0%, #764ba2 100%)"
-                   :color "#fff"
+         {:on-click #(swap! create-modal-state assoc :visible true)
+           :style {:background "var(--theme-accent-gradient)"
+                   :color "var(--theme-accent-text)"
                    :border "none"
                    :padding "12px 24px"
                    :border-radius "25px"
@@ -680,7 +680,7 @@
                    :display "flex"
                    :align-items "center"
                    :gap "8px"
-                   :box-shadow "0 4px 12px rgba(102, 126, 234, 0.4)"
+                   :box-shadow "var(--light-shadow-primary)"
                    :transition "all 0.3s ease"}}
           [:span {:style {:font-size "20px"}} "+"]
           [:span "New Database"]])]
@@ -743,9 +743,9 @@
 
      ;; Footer
      [:div
-      {:style {:background "#1a1a2e"
+      {:style {:background "var(--light-text-primary)"
                :padding "24px 20px"
                :text-align "center"}}
-      [:div {:style {:color "rgba(255,255,255,0.5)"
+      [:div {:style {:color "var(--app-text-soft)"
                      :font-size "14px"}}
        "© 2026 Hulunote - MIT License"]]]))
