@@ -261,7 +261,7 @@
   [content]
   (boolean
     (and (string? content)
-         (re-matches #"(?s)\s*#?\[\[[^\]]+\]\]\s*" content))))
+         (re-matches #"\s*#?\[\[[^\]]+\]\]\s*" content))))
 
 (rum/defc backlink-nav-item < rum/reactive
   "Render a backlinked nav block and, when present, its child subtree.
