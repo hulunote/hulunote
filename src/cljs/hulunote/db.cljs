@@ -304,10 +304,12 @@
 
 (defn find-backlinks
   "Find all navs that reference the given note title via [[title]] or #title or #[[title]].
-   Returns a set of [nav-content nav-id source-note-id source-title parent-content]."
+   Returns a vector of backlink entries ordered by most recent reference first.
+   For backlinks we prefer nav created-at over updated-at, so later child edits
+   do not incorrectly bubble an older reference to the top."
   [conn title]
   (when (and title (not (empty? title)))
-    (->> (d/q '[:find ?nav-content ?nav-id ?source-note-id ?source-title ?parent-id
+    (->> (d/q '[:find ?nav-content ?nav-id ?source-note-id ?source-title ?parent-id ?updated-at ?created-at
                 :in $ ?title ?match-fn
                 :where
                 [?nav :content ?nav-content]
@@ -316,6 +318,8 @@
                 [?source :hulunote-notes/id ?source-note-id]
                 [?source :hulunote-notes/title ?source-title]
                 [?nav :origin-parid ?parent-id]
+                [(get-else $ ?nav :updated-at "") ?updated-at]
+                [(get-else $ ?nav :created-at "") ?created-at]
                 [(?match-fn ?nav-content ?title)]]
           conn title
           (fn [content title]
@@ -323,7 +327,7 @@
               (or (clojure.string/includes? content (str "[[" title "]]"))
                   (clojure.string/includes? content (str "#[[" title "]]"))
                   (clojure.string/includes? content (str "#" title))))))
-         (map (fn [[nav-content nav-id source-note-id source-title parent-id]]
+         (map (fn [[nav-content nav-id source-note-id source-title parent-id updated-at created-at]]
                 (let [parent-content (when parent-id
                                        (d/q '[:find ?parent-content .
                                               :in $ ?parent-id
@@ -334,26 +338,63 @@
                       parent-content (when (and (string? parent-content)
                                                 (not (clojure.string/blank? parent-content))
                                                 (not= parent-content "ROOT"))
-                                       parent-content)]
-                  [nav-content nav-id source-note-id source-title parent-content])))
-         set)))
+                                       parent-content)
+                      normalize-sort-date (fn [v]
+                                            (cond
+                                              (nil? v) nil
+                                              (and (string? v) (clojure.string/blank? v)) nil
+                                              (string? v) v
+                                              (instance? js/Date v) (.toISOString v)
+                                              :else (str v)))
+                      updated-at (normalize-sort-date updated-at)
+                      created-at (normalize-sort-date created-at)
+                      sort-date (or created-at updated-at "1970-01-01T00:00:00.000Z")]
+                  {:content nav-content
+                   :id nav-id
+                   :source-note-id source-note-id
+                   :source-title source-title
+                   :parent-content parent-content
+                   :updated-at updated-at
+                   :created-at created-at
+                   :sort-date sort-date})))
+         (sort-by :sort-date)
+         reverse
+         vec)))
 
 (defn group-backlinks-by-note
-  "Group backlink results by source note. Returns a map of
-   {source-note-id {:title source-title :navs [{:content ... :id ...}]}}"
+  "Group backlink results by source note.
+   Returns an ordered vector of [source-note-id {:title ... :navs ...}] sorted by the
+   latest backlink reference timestamp in each group, newest first. Navs inside each group are
+   also sorted newest first."
   [backlinks]
-  (reduce
-    (fn [acc [nav-content nav-id source-note-id source-title parent-content]]
-      (update acc source-note-id
-        (fn [existing]
-          {:title source-title
-           :note-id source-note-id
-           :navs (conj (or (:navs existing) [])
-                   {:content nav-content
-                    :id nav-id
-                    :parent-content parent-content})})))
-    {}
-    backlinks))
+  (->> backlinks
+       (reduce
+         (fn [acc {:keys [content id source-note-id source-title parent-content updated-at created-at sort-date] :as backlink}]
+           (update acc source-note-id
+             (fn [existing]
+               (let [existing-navs (or (:navs existing) [])
+                     next-navs (->> (conj existing-navs
+                                      {:content content
+                                       :id id
+                                       :parent-content parent-content
+                                       :updated-at updated-at
+                                       :created-at created-at
+                                       :sort-date sort-date})
+                                    (sort-by :sort-date)
+                                    reverse
+                                    vec)
+                     latest-sort-date (or (:latest-sort-date existing) sort-date)]
+                 {:title source-title
+                  :note-id source-note-id
+                  :latest-sort-date (if (pos? (compare latest-sort-date sort-date))
+                                      latest-sort-date
+                                      sort-date)
+                  :navs next-navs}))))
+         {})
+       (sort-by (fn [[_ {:keys [latest-sort-date]}]]
+                  latest-sort-date))
+       reverse
+       vec))
 
 (defn search-notes
   "Search notes by title and nav content. Returns up to `limit` results.

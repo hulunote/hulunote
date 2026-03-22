@@ -253,52 +253,70 @@
 ;; ==================== Backlinks (Linked References) ====================
 
 (defonce backlinks-collapsed? (atom {}))
+(defonce backlink-nav-collapsed? (atom {}))
 
-(rum/defc backlink-nav-item
-  "Render a single backlinked nav block using the same editor behavior as normal outline nodes"
+(defn pure-page-link-node?
+  "Return true when a block is essentially just a page reference like [[Page]]
+   or #[[Page]]. Used to decide whether backlink children should be expanded by default."
+  [content]
+  (boolean
+    (and (string? content)
+         (re-matches #"(?s)\s*#?\[\[[^\]]+\]\]\s*" content))))
+
+(rum/defc backlink-nav-item < rum/reactive
+  "Render a backlinked nav block and, when present, its child subtree.
+   Pure page-link blocks default to expanded children; sentence-style references default collapsed."
   [source-note-id database-name nav]
-  [:div.backlink-nav-item
-   (when-let [parent-content (:parent-content nav)]
-     [:div
-      {:style {:padding-left "29px"
-               :padding-bottom "4px"
-               :font-size "inherit"
-               :line-height "inherit"
-               :color "rgba(255,255,255,0.42)"}}
-      parent-content])
-   [:div {:class "head-dot flex backlink-outline-node"
-          :style {:padding-left "13px"
-                  :padding-top "5px"
-                  :padding-bottom "5px"
-                  :cursor "default"}}
-    [:span
-     {:class "controls hulu-text-font"
-      :style {:align-items "center"
-              :vertical-align "middle"
-              :width "26px"
-              :cursor "default"
-              :padding-left "0"
-              :justify-content "flex-start"
-              :display "flex"
-              :margin-right "10px"
-              :gap "7px"
-              :border-radius "8px"
-              :height "16px"}}
-     [:span
-      {:style {:width "9px"
-               :display "inline-flex"
-               :justify-content "center"}}]
-     [:span
-      {:class "controls customize-dot night-circular"
-       :style {:height "var(--bullet-size-idle)"
-               :width "var(--bullet-size-idle)"
-               :border-radius "50%"
-               :background-color "var(--bullet-idle-color)"
-               :box-shadow "none"
-               :cursor "default"
-               :display "block"
-               :vertical-align "middle"}}]]
-    (render/nav-content-editor (:id nav) (:content nav) source-note-id database-name)]])
+  (let [nav-tree (u/get-nav-sub-navs-sorted @db/dsdb (:id nav))
+        nav-id (:id nav-tree)
+        children (:parid nav-tree)
+        has-children? (seq children)
+        collapsed-map (rum/react backlink-nav-collapsed?)
+        editing-nav-id (rum/react render/editing-nav-id)
+        is-editing (= nav-id editing-nav-id)
+        default-collapsed? (and has-children?
+                                (not (pure-page-link-node? (:content nav-tree))))
+        collapsed? (if (contains? collapsed-map nav-id)
+                     (get collapsed-map nav-id)
+                     default-collapsed?)]
+    [:div.backlink-nav-item
+     (when-let [parent-content (:parent-content nav)]
+       [:div
+        {:style {:padding-left "29px"
+                 :padding-bottom "4px"
+                 :font-size "inherit"
+                 :line-height "inherit"
+                 :color "rgba(255,255,255,0.42)"}}
+        parent-content])
+     [:div {:class "head-dot flex backlink-outline-node"
+            :style {:padding-left "13px"
+                    :padding-top "5px"
+                    :padding-bottom "5px"
+                    :cursor "default"}}
+      (render/nav-bullet
+        @db/dsdb
+        nav-id
+        (not collapsed?)
+        source-note-id
+        database-name
+        (:content nav-tree)
+        is-editing
+        {:forced-has-children? has-children?
+         :collapsed? collapsed?
+         :on-toggle (fn [e]
+                      (u/stop-click-bubble e)
+                      (swap! backlink-nav-collapsed? assoc nav-id (not collapsed?)))})
+      (render/nav-content-editor nav-id (:content nav-tree) source-note-id database-name)]
+     (when (and has-children? (not collapsed?))
+       [:div.content-box
+        {:style {:margin-left "22px"
+                 :padding-left "0"
+                 :position "relative"}}
+        [:div.content-box.outline-line.night-outline-line]
+        (for [child children]
+          (rum/with-key
+            (backlink-nav-item source-note-id database-name child)
+            (:id child)))])]))
 
 (rum/defc backlink-note-group < rum/reactive
   "Render a group of backlinks from a single source note"
@@ -368,7 +386,7 @@
   [state db note-title note-id database-name]
   (let [backlinks (db/find-backlinks db note-title)
         ;; Filter out self-references
-        backlinks (remove (fn [[_ _ source-id _ _]] (= source-id note-id)) backlinks)
+        backlinks (remove (fn [{:keys [source-note-id]}] (= source-note-id note-id)) backlinks)
         grouped (db/group-backlinks-by-note backlinks)
         total-count (count backlinks)
         collapsed? (rum/react (::linked-references-collapsed? state))
@@ -403,7 +421,7 @@
          "\u25B6"]
         [:span {:style {:font-size "15px"
                         :font-weight "600"
-                        :color "rgba(255,255,255,0.7)"}}
+                        :color "rgba(255,255,255,0.5)"}}
          (str total-count " Linked References")]]
        ;; Grouped backlinks
        (when-not collapsed?

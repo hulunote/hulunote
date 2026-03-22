@@ -375,7 +375,6 @@ hulu-text-font {
     border: none !important;
     border-radius: 0 !important;
     padding: 0 !important;
-    padding-left: calc(var(--space-xs) / 8) !important;
     outline: none !important;
     width: 100% !important;
     min-width: 100px !important;
@@ -1592,15 +1591,13 @@ hulu-text-font {
 
 .link-title-style {
     color: var(--theme-accent) !important;
-    text-decoration: underline;
-    text-decoration-style: dotted;
-    text-underline-offset: 2px;
+    text-decoration: none;
     transition: all 0.15s ease;
 }
 
 .link-title-style:hover {
     color: var(--theme-accent-hover) !important;
-    text-decoration-style: solid;
+    text-decoration: none;
 }
 
 .link-style.blue {
