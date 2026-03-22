@@ -171,7 +171,11 @@ class HulunoteToolsMiddleware extends Middleware {
       title,
     });
     console.log('[HulunoteTools] create_note raw result:', JSON.stringify(result));
-    if (result.error) return JSON.stringify({ error: result.message });
+    if (result.error) {
+      const errMsg = result.error || result.message || 'Unknown error';
+      console.error('[HulunoteTools] create_note FAILED:', errMsg);
+      return `ERROR: Failed to create note - ${errMsg}. Do NOT proceed with create_or_update_nav calls. Tell the user the note creation failed.`;
+    }
 
     // Try multiple key formats (backend may use different formats)
     const noteId = result['hulunote-notes/id'] || result['id'] || result['note-id'] || result['noteId'];
@@ -213,7 +217,7 @@ class HulunoteToolsMiddleware extends Middleware {
     console.log('[HulunoteTools] create_nav payload:', JSON.stringify(payload));
     const result = await this._post('/hulunote/create-or-update-nav', payload);
     console.log('[HulunoteTools] create_nav result:', JSON.stringify(result));
-    if (result.error) return JSON.stringify({ error: result.message });
+    if (result.error) return JSON.stringify({ error: result.error || result.message || 'Unknown error' });
 
     // Notify frontend to update nav in DataScript
     try {
@@ -236,7 +240,7 @@ class HulunoteToolsMiddleware extends Middleware {
 
   async _getNavs({ note_id }) {
     const result = await this._post('/hulunote/get-note-navs', { 'note-id': note_id });
-    if (result.error) return JSON.stringify({ error: result.message });
+    if (result.error) return JSON.stringify({ error: result.error || result.message || 'Unknown error' });
     const nodes = result['nav-list'] || [];
     if (nodes.length === 0) return 'No nav nodes found';
     const lines = nodes.map(n =>
@@ -251,7 +255,7 @@ class HulunoteToolsMiddleware extends Middleware {
       page: page || 1,
       'page-size': page_size || 20,
     });
-    if (result.error) return JSON.stringify({ error: result.message });
+    if (result.error) return JSON.stringify({ error: result.error || result.message || 'Unknown error' });
     const notes = result['note-list'] || [];
     if (notes.length === 0) return 'No notes found';
     const lines = notes.map(n =>
@@ -264,7 +268,7 @@ class HulunoteToolsMiddleware extends Middleware {
     const result = await this._post('/hulunote/get-all-note-list', {
       'database-id': database_id,
     });
-    if (result.error) return JSON.stringify({ error: result.message });
+    if (result.error) return JSON.stringify({ error: result.error || result.message || 'Unknown error' });
     const notes = result['note-list'] || [];
     if (notes.length === 0) return 'No notes found';
     const lines = notes.map(n =>
@@ -278,7 +282,7 @@ class HulunoteToolsMiddleware extends Middleware {
       'note-id': note_id,
       title,
     });
-    if (result.error) return JSON.stringify({ error: result.message });
+    if (result.error) return JSON.stringify({ error: result.error || result.message || 'Unknown error' });
     return `Updated note ${note_id}, title: ${title}`;
   }
 }
