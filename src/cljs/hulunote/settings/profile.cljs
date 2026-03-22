@@ -2,6 +2,7 @@
   (:require [clojure.string :as str]
             [rum.core :as rum]
             [hulunote.http :as http]
+            [hulunote.icon :as icon]
             [hulunote.settings.shared :as shared]))
 
 (rum/defc page < rum/reactive []
@@ -29,8 +30,11 @@
                       :display "flex" :align-items "center" :justify-content "center"
                       :cursor "pointer" :border "2px solid #2a2f3a"}
               :on-click #(.click (.getElementById js/document "avatar-upload-input"))}
-        [:svg {:width "12" :height "12" :viewBox "0 0 24 24" :fill "#fff"}
-         [:path {:d "M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04a1 1 0 000-1.41l-2.34-2.34a1 1 0 00-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"}]]]]
+        (icon/svg-icon
+          {:name "edit"
+           :style {:width "12px"
+                   :height "12px"
+                   :filter "brightness(0) invert(1)"}})]]
       [:div
        [:div {:style {:font-size "14px" :color "rgba(255,255,255,0.5)" :margin-bottom "4px"}} "Profile Photo"]
        [:div {:style {:font-size "12px" :color "rgba(255,255,255,0.3)"}} "Click to upload (max 5MB)"]]]

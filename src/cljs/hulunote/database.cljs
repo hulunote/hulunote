@@ -1,6 +1,7 @@
 (ns hulunote.database
   (:require [datascript.core :as d]
             [hulunote.db :as db]
+            [hulunote.icon :as icon]
             [rum.core :as rum]
             [hulunote.util :as u]
             [hulunote.router :as router]
@@ -608,10 +609,13 @@
                  (-> (or username "U") first clojure.string/upper-case)])]
              [:span {:style {:color "#fff" :font-weight "500"}} username]
              ;; Dropdown arrow
-             [:svg {:width "12" :height "12" :viewBox "0 0 24 24" :fill "#fff"
-                    :style {:transition "transform 0.2s"
-                            :transform (if menu-open? "rotate(180deg)" "rotate(0)")}}
-              [:path {:d "M7 10l5 5 5-5z"}]]]
+             (icon/svg-icon
+               {:name "keyboard_arrow_down"
+                :style {:width "12px"
+                        :height "12px"
+                        :filter "brightness(0) invert(1)"
+                        :transition "transform 0.2s"
+                        :transform (if menu-open? "rotate(180deg)" "rotate(0)")}})]
             ;; Dropdown menu
             (when menu-open?
               [:div {:style {:position "absolute" :top "calc(100% + 8px)" :right 0
@@ -622,21 +626,20 @@
                              :overflow "hidden"}}
                ;; Logout
                [:div.pointer
-                {:style {:padding "10px 16px" :display "flex" :align-items "center"
-                         :gap "10px" :transition "background 0.15s" :color "#ff4d4f"}
-                 :on-mouse-enter #(set! (.. % -currentTarget -style -background) "#fff1f0")
-                 :on-mouse-leave #(set! (.. % -currentTarget -style -background) "transparent")
-                 :on-click (fn [e]
-                             (.stopPropagation e)
-                             (reset! user-menu-open? false)
-                             (reset! storage/jwt-auth {})
-                             (router/switch-router! "/login"))}
-                [:svg {:width "16" :height "16" :viewBox "0 0 24 24" :fill "none"
-                       :stroke "currentColor" :stroke-width "2"
-                       :stroke-linecap "round" :stroke-linejoin "round"}
-                 [:path {:d "M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"}]
-                 [:polyline {:points "16 17 21 12 16 7"}]
-                 [:line {:x1 "21" :y1 "12" :x2 "9" :y2 "12"}]]
+               {:style {:padding "10px 16px" :display "flex" :align-items "center"
+                        :gap "10px" :transition "background 0.15s" :color "#ff4d4f"}
+                :on-mouse-enter #(set! (.. % -currentTarget -style -background) "#fff1f0")
+                :on-mouse-leave #(set! (.. % -currentTarget -style -background) "transparent")
+                :on-click (fn [e]
+                            (.stopPropagation e)
+                            (reset! user-menu-open? false)
+                            (reset! storage/jwt-auth {})
+                            (router/switch-router! "/login"))}
+                (icon/svg-icon
+                  {:name "logout"
+                   :style {:width "16px"
+                           :height "16px"
+                           :filter "brightness(0) saturate(100%) invert(57%) sepia(69%) saturate(3786%) hue-rotate(324deg) brightness(101%) contrast(101%)"}})
                 [:span "Logout"]]])]))]]
      
      ;; Main content

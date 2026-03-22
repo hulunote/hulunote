@@ -205,6 +205,20 @@ font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubun
 | Narrow content | 800px |
 | Form cards | 400px |
 
+## 🔣 Icons
+
+Hulunote uses single SVG files for UI icons.
+
+- Source: prefer Material Symbols when adding new icons
+- Location: `resources/public/img/icons/`
+- Naming: lowercase with underscores, for example `search.svg`, `settings.svg`, `arrow_back.svg`
+- Usage: prefer local SVG files over icon fonts or runtime icon libraries
+- Keep icons simple and consistent: single-color, clean `viewBox`, no size in filename
+
+Notes:
+- Product logos and brand images are not part of this rule
+- Inline SVG is allowed only when the icon needs special animation or dynamic drawing
+
 ## 🌓 Section Backgrounds
 
 ### Light Sections

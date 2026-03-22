@@ -4,6 +4,7 @@
             [rum.core :as rum]
             [hulunote.db :as db]
             [hulunote.http :as http]
+            [hulunote.icon :as icon]
             [hulunote.menu :as menu]
             [hulunote.settings-state :as settings-state]
             [hulunote.storage :as storage]
@@ -292,65 +293,46 @@
    [:div.sidebar-item-text text]])
 
 (defn more-menu-icon []
-  [:svg {:width "16"
-         :height "16"
-         :viewBox "0 0 24 24"
-         :fill "none"
-         :stroke "currentColor"
-         :stroke-width "2"
-         :stroke-linecap "round"
-         :stroke-linejoin "round"}
-   [:circle {:cx "5" :cy "12" :r "1.5"}]
-   [:circle {:cx "12" :cy "12" :r "1.5"}]
-   [:circle {:cx "19" :cy "12" :r "1.5"}]])
+  (icon/svg-icon
+    {:name "more_horiz"
+     :style {:width "16px"
+             :height "16px"
+             :filter "brightness(0) invert(1)"}}))
 
 (defn star-menu-icon []
-  [:svg {:viewBox "0 0 24 24"
-         :fill "none"
-         :stroke "currentColor"
-         :stroke-width "1.8"
-         :stroke-linecap "round"
-         :stroke-linejoin "round"}
-   [:polygon {:points "12 3 14.9 8.8 21.3 9.7 16.6 14.2 17.7 20.5 12 17.5 6.3 20.5 7.4 14.2 2.7 9.7 9.1 8.8 12 3"}]])
+  (icon/svg-icon
+    {:name "star"
+     :style {:width "14px"
+             :height "14px"
+             :filter "brightness(0) invert(1)"}}))
 
 (defn star-menu-icon-filled []
-  [:svg {:viewBox "0 0 24 24"
-         :fill "currentColor"}
-   [:path {:d "M12 3l2.9 5.8 6.4.9-4.7 4.5 1.1 6.3L12 17.5 6.3 20.5l1.1-6.3-4.7-4.5 6.4-.9L12 3z"}]])
+  (icon/svg-icon
+    {:name "star"
+     :style {:width "14px"
+             :height "14px"
+             :filter "brightness(0) invert(1)"}}))
 
 (defn delete-menu-icon []
-  [:svg {:viewBox "0 0 24 24"
-         :fill "none"
-         :stroke "currentColor"
-         :stroke-width "1.8"
-         :stroke-linecap "round"
-         :stroke-linejoin "round"}
-   [:path {:d "M3 6h18"}]
-   [:path {:d "M8 6V4h8v2"}]
-   [:path {:d "M19 6l-1 14H6L5 6"}]
-   [:path {:d "M10 11v6"}]
-   [:path {:d "M14 11v6"}]])
+  (icon/svg-icon
+    {:name "delete"
+     :style {:width "14px"
+             :height "14px"
+             :filter "brightness(0) saturate(100%) invert(57%) sepia(69%) saturate(3786%) hue-rotate(324deg) brightness(101%) contrast(101%)"}}))
 
 (defn settings-menu-icon []
-  [:svg {:viewBox "0 0 24 24"
-         :fill "none"
-         :stroke "currentColor"
-         :stroke-width "1.8"
-         :stroke-linecap "round"
-         :stroke-linejoin "round"}
-   [:circle {:cx "12" :cy "12" :r "3"}]
-   [:path {:d "M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"}]])
+  (icon/svg-icon
+    {:name "settings"
+     :style {:width "14px"
+             :height "14px"
+             :filter "brightness(0) invert(1)"}}))
 
 (defn logout-menu-icon []
-  [:svg {:viewBox "0 0 24 24"
-         :fill "none"
-         :stroke "currentColor"
-         :stroke-width "1.8"
-         :stroke-linecap "round"
-         :stroke-linejoin "round"}
-   [:path {:d "M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"}]
-   [:polyline {:points "16 17 21 12 16 7"}]
-   [:line {:x1 "21" :y1 "12" :x2 "9" :y2 "12"}]])
+  (icon/svg-icon
+    {:name "logout"
+     :style {:width "14px"
+             :height "14px"
+             :filter "brightness(0) saturate(100%) invert(57%) sepia(69%) saturate(3786%) hue-rotate(324deg) brightness(101%) contrast(101%)"}}))
 
 (defn available-database-names
   [conn]
@@ -463,10 +445,9 @@
           (-> username first str/upper-case)])]
       [:span.sidebar-user-meta
        [:span.sidebar-user-database-name database-name]]
-      [:svg.sidebar-user-chevron
-       {:viewBox "0 0 24 24"
-        :fill "currentColor"}
-       [:path {:d "M7 10l5 5 5-5z"}]]]
+      (icon/svg-icon
+        {:name "keyboard_arrow_down"
+         :class "sidebar-user-chevron"})]
      (when menu-open?
        (into
          (menu/menu-popover
@@ -481,6 +462,12 @@
              (menu/menu-item
                {:class (str "sidebar-user-menu-database-item"
                             (when (= db-name database-name) " active"))
+                :icon (icon/svg-icon
+                        {:name "database"
+                         :style {:width "16px"
+                                 :height "16px"
+                                 :opacity 0.78
+                                 :filter "brightness(0) invert(1)"}})
                 :on-click (fn [_]
                             (if (= db-name database-name)
                               (hide-sidebar-user-menu!)
@@ -533,21 +520,21 @@
       :on-click toggle-sidebar!
       :on-mouse-enter open-sidebar-peek!
       :on-mouse-leave schedule-sidebar-peek-close!}
-     [:img.app-topbar-icon {:src (u/asset-path "/img/icons/dock_to_right.svg")}]]
+     (icon/svg-icon {:name "dock_to_right" :class "app-topbar-icon"})]
     [:button.app-topbar-btn
      {:title "Back"
       :on-click #(js/history.back)}
-     [:img.app-topbar-icon {:src (u/asset-path "/img/icons/arrow_back.svg")}]]
+     (icon/svg-icon {:name "arrow_back" :class "app-topbar-icon"})]
     [:button.app-topbar-btn
      {:title "Forward"
       :on-click #(js/history.forward)}
-     [:img.app-topbar-icon {:src (u/asset-path "/img/icons/arrow_forward.svg")}]]]
+     (icon/svg-icon {:name "arrow_forward" :class "app-topbar-icon"})]]
    [:div.app-topbar-center]
    [:div.app-topbar-right
    [:button.app-topbar-btn
      {:title "Search (Cmd+K)"
       :on-click #(show-search!)}
-     [:img.app-topbar-icon {:src (u/asset-path "/img/icons/search.svg")}]]
+     (icon/svg-icon {:name "search" :class "app-topbar-icon"})]
     (when (seq more-menu-items)
       [:div.topbar-more-menu-wrapper
        {:on-click u/stop-click-bubble}
@@ -586,7 +573,7 @@
                "Hide Right Sidebar"
                "Show Right Sidebar")
       :on-click #(db/toggle-right-sidebar-visibility!)}
-     [:img.app-topbar-icon {:src (u/asset-path "/img/icons/dock_to_left.svg")}]]]]))
+     (icon/svg-icon {:name "dock_to_left" :class "app-topbar-icon"})]]]))
 
 (rum/defc left-sidebar < rum/reactive
   [db database-name]
@@ -634,23 +621,23 @@
 
         [:div.sidebar-content
          [:div.sidebar-nav-primary
-          (sidebar-item [:img.sidebar-symbol-icon {:src (u/asset-path "/img/icons/calendar_month.svg")}] "Diaries"
+          (sidebar-item (icon/svg-icon {:name "calendar_month" :class "sidebar-symbol-icon"}) "Diaries"
                         #(router/go-to-diaries! database-name)
                         (= route-name :diaries))
 
-          (sidebar-item [:img.sidebar-symbol-icon {:src (u/asset-path "/img/icons/description.svg")}] "All Notes"
+          (sidebar-item (icon/svg-icon {:name "all_notes" :class "sidebar-symbol-icon"}) "All Notes"
                         #(router/go-to-all-notes! database-name)
                         (= route-name :all-notes))
 
-          (sidebar-item [:img.sidebar-symbol-icon {:src (u/asset-path "/img/icons/graph.svg")}] "Graph"
+          (sidebar-item (icon/svg-icon {:name "graph" :class "sidebar-symbol-icon"}) "Graph"
                         #(router/go-to-graph! database-name)
                         (= route-name :graph))
 
-          #_(sidebar-item [:img.sidebar-symbol-icon {:src (u/asset-path "/img/icons/tune.svg")}] "Settings"
+          #_(sidebar-item (icon/svg-icon {:name "tune" :class "sidebar-symbol-icon"}) "Settings"
                         #(router/go-to-settings! database-name)
                         (= route-name :settings))
 
-          (sidebar-item [:img.sidebar-symbol-icon {:src (u/asset-path "/img/icons/chat_bubble.svg")}] "AI Chat"
+          (sidebar-item (icon/svg-icon {:name "chat_bubble" :class "sidebar-symbol-icon"}) "AI Chat"
                         #(router/go-to-mcp-chat! database-name)
                         (= route-name :mcp-chat))
 
@@ -713,7 +700,7 @@
                       (hide-search!)))}
        [:div.search-modal
         [:div.search-modal-input-wrapper
-         [:img.search-modal-icon {:src (u/asset-path "/img/icons/search.svg")}]
+         (icon/svg-icon {:name "search" :class "search-modal-icon"})
          [:input.search-modal-input
           {:type "text"
            :placeholder "Search notes..."
