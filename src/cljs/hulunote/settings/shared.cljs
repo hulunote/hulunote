@@ -24,6 +24,7 @@
                                     :model "anthropic/claude-sonnet-4.6"
                                     :available-models []
                                     :models-loading? false
+                                    :saving? false
                                     :saved? false}))
 
 (def input-style
@@ -219,15 +220,22 @@
 
 (defn save-chat-settings! []
   (let [{:keys [api-key model]} @chat-settings-state]
-    (go
-      (when-let [ch (chat/set-api-key! api-key)]
-        (let [result (js->clj-safe (<! ch))]
-          (when (:success result)
-            (swap! chat-settings-state assoc :saved? true)
-            (js/setTimeout #(swap! chat-settings-state assoc :saved? false) 2000)))))
-    (go
-      (when-let [ch (chat/set-model! model)]
-        (js->clj-safe (<! ch))))))
+    (when-not (:saving? @chat-settings-state)
+      (swap! chat-settings-state assoc :saving? true :saved? false)
+      (go
+        (let [api-result (when-let [ch (chat/set-api-key! api-key)]
+                           (js->clj-safe (<! ch)))
+              model-result (when (and (:success api-result)
+                                      (chat/chat-available?))
+                             (when-let [ch (chat/set-model! model)]
+                               (js->clj-safe (<! ch))))
+              saved? (and (:success api-result)
+                          (or (nil? model-result) (:success model-result)))]
+          (swap! chat-settings-state assoc
+                 :saving? false
+                 :saved? (boolean saved?))
+          (when saved?
+            (js/setTimeout #(swap! chat-settings-state assoc :saved? false) 2000)))))))
 
 (defn init-profile! []
   (let [hulunote-info (:hulunote @storage/jwt-auth)]
