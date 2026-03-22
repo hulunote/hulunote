@@ -172,17 +172,17 @@
                  :height "30px"
                  :padding 0
                  :border-radius "8px"
-                 :border "1px solid rgba(255,255,255,0.12)"
+                 :border "1px solid var(--app-divider)"
                  :background (if (zero? selected-count)
-                               "rgba(255,255,255,0.04)"
-                               "rgba(255,107,107,0.14)")
+                               "var(--app-overlay-soft)"
+                               "var(--theme-error-soft)")
                  :color (if (zero? selected-count)
-                          "rgba(255,255,255,0.35)"
-                          "#ff9b9b")
+                          "var(--app-text-faint)"
+                          "var(--app-danger)")
                  :cursor (if (zero? selected-count) "not-allowed" "pointer")}}
         (trash-icon (if (zero? selected-count)
-                      "rgba(255,255,255,0.35)"
-                      "#ff9b9b"))]]
+                      "var(--app-text-faint)"
+                      "var(--app-danger)"))]]
       [:div
        {:style {:grid-column "3 / span 2"
                 :display "flex"
@@ -197,8 +197,8 @@
                  :height "32px"
                  :padding "0 10px"
                  :border-radius "8px"
-                 :background "rgba(255,255,255,0.06)"
-                 :border "1px solid rgba(255,255,255,0.1)"}}
+                 :background "var(--app-overlay-soft-stronger)"
+                 :border "1px solid var(--app-divider)"}}
         [:img {:src (u/asset-path "/img/icons/search.svg")
                :width "15px"
                :height "15px"
@@ -213,7 +213,7 @@
                   :border "none"
                   :outline "none"
                   :padding 0
-                  :color "rgba(255,255,255,0.72)"
+                  :color "var(--app-text-secondary)"
                   :font-size "13px"}}]]
        [:button
         {:title "Calendar"
@@ -224,8 +224,8 @@
                  :height "32px"
                  :padding 0
                  :border-radius "8px"
-                 :border "1px solid rgba(255,255,255,0.1)"
-                 :background "rgba(255,255,255,0.04)"
+                 :border "1px solid var(--app-divider)"
+                 :background "var(--app-overlay-soft)"
                  :cursor "default"}}
         [:img {:src (u/asset-path "/img/icons/calendar_month.svg")
                :width "16px"
@@ -239,14 +239,14 @@
                :gap "0"
                :min-height "44px"
                :padding "0 14px"
-               :background "rgba(47, 53, 66, 0.95)"
+               :background "var(--surface-topbar)"
                :backdrop-filter "blur(8px)"
-               :border "1px solid rgba(255,255,255,0.08)"
+               :border "1px solid var(--surface-popover-hover)"
                :border-radius "10px"
                :font-size "12px"
                :font-weight "700"
                :letter-spacing "0.02em"
-               :color "rgba(255,255,255,0.68)"
+               :color "var(--app-control-text)"
                :text-transform "uppercase"}}
       [:div {:style {:display "flex" :justify-content "center"}}
        [:input {:type "checkbox"
@@ -275,8 +275,8 @@
         {:disabled (= page 1)
          :on-click #(go-to-page! (dec page))
          :style {:padding "8px 16px"
-                 :background (if (= page 1) "#3d4455" "var(--theme-accent)")
-                 :color "#fff"
+                 :background (if (= page 1) "var(--surface-control)" "var(--theme-accent)")
+                 :color "var(--theme-accent-text)"
                  :border "none"
                  :border-radius "4px"
                  :cursor (if (= page 1) "not-allowed" "pointer")
@@ -291,8 +291,8 @@
             :on-click #(go-to-page! p)
             :style {:padding "8px 12px"
                     :background (if (= p page) "var(--theme-accent)" "transparent")
-                    :color "#fff"
-                    :border (if (= p page) "none" "1px solid rgba(255,255,255,0.2)")
+                    :color "var(--theme-accent-text)"
+                    :border (if (= p page) "none" "1px solid var(--app-control-border)")
                     :border-radius "4px"
                     :cursor "pointer"}}
            p])]
@@ -302,8 +302,8 @@
         {:disabled (= page pages)
          :on-click #(go-to-page! (inc page))
          :style {:padding "8px 16px"
-                 :background (if (= page pages) "#3d4455" "var(--theme-accent)")
-                 :color "#fff"
+                 :background (if (= page pages) "var(--surface-control)" "var(--theme-accent)")
+                 :color "var(--theme-accent-text)"
                  :border "none"
                  :border-radius "4px"
                  :cursor (if (= page pages) "not-allowed" "pointer")
@@ -314,7 +314,7 @@
   [selected-note-ids {:keys [note-id note-title root-nav-id updated-at created-at]} database-name]
   (let [selected (rum/react selected-note-ids)
         checked? (contains? selected note-id)]
-    [:div.note-card
+   [:div.note-card
    {:style {:display "grid"
             :grid-template-columns "44px minmax(0, 1fr) 140px 140px"
             :align-items "center"
@@ -323,14 +323,14 @@
             :min-height "56px"
             :margin-bottom "8px"
             :background (if checked?
-                          "rgba(102,126,234,0.12)"
-                          "rgba(255,255,255,0.04)")
+                          "var(--theme-accent-soft-strong)"
+                          "var(--app-overlay-soft)")
             :border-radius "10px"
             :cursor "default"
             :transition "all 0.2s ease"
             :border (if checked?
-                      "1px solid rgba(102,126,234,0.35)"
-                      "1px solid rgba(255,255,255,0.08)")}}
+                      "1px solid var(--theme-accent-border-strong)"
+                      "1px solid var(--surface-popover-hover)")}}
      [:div {:style {:display "flex" :justify-content "center"}}
       [:input {:type "checkbox"
                :checked checked?
@@ -359,10 +359,10 @@
                       (router/go-to-note! database-name note-id)))}
        note-title]]
      [:div {:style {:font-size "13px"
-                    :color "rgba(255,255,255,0.72)"}}
+                    :color "var(--app-text-secondary)"}}
       (format-note-date updated-at)]
      [:div {:style {:font-size "13px"
-                    :color "rgba(255,255,255,0.58)"}}
+                    :color "var(--app-text-muted)"}}
       (format-note-date created-at)]]))
 
 (rum/defcs all-notes-page < rum/reactive

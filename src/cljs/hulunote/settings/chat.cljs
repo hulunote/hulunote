@@ -8,8 +8,8 @@
         (rum/react shared/chat-settings-state)]
     [:div {:style {:padding "24px 0"}}
      (when-not (chat/chat-available?)
-       [:div {:style {:background "rgba(250,140,22,0.1)"
-                      :border "1px solid rgba(250,140,22,0.3)"
+       [:div {:style {:background "var(--theme-warning-soft)"
+                      :border "1px solid var(--theme-warning-border)"
                       :border-radius "8px"
                       :padding "16px 20px"
                       :margin-bottom "24px"
@@ -19,10 +19,10 @@
         [:span {:style {:font-size "24px"}} "!"]
         [:div
          [:div {:style {:font-weight "600"
-                        :color "#fa8c16"
+                        :color "var(--theme-warning)"
                         :margin-bottom "4px"}}
           "Chat is only available in Hulunote PC App"]
-         [:div {:style {:color "rgba(250,140,22,0.8)"
+         [:div {:style {:color "var(--theme-warning-soft-text)"
                         :font-size "13px"}}
           "Please use the Hulunote desktop application to configure chat settings."]]])
 
@@ -35,12 +35,12 @@
         :on-change #(swap! shared/chat-settings-state assoc :api-key (.. % -target -value))
         :style shared/input-style}]
       [:div {:style {:font-size "12px"
-                     :color "rgba(255,255,255,0.3)"
+                     :color "var(--app-text-faint)"
                      :margin-top "6px"}}
        "Get your API key from "
        [:a {:href "https://openrouter.ai/keys"
             :target "_blank"
-            :style {:color "#667eea"}}
+            :style {:color "var(--theme-accent)"}}
         "openrouter.ai/keys"]]]
 
      [:div {:style {:margin-bottom "24px"}}
@@ -49,7 +49,7 @@
        (when models-loading?
          [:span {:style {:margin-left "8px"
                          :font-size "12px"
-                         :color "rgba(255,255,255,0.3)"}}
+                         :color "var(--app-text-faint)"}}
           "Loading models..."])]
       [:select
        {:value model
@@ -68,7 +68,7 @@
            [:option {:key "deepseek/deepseek-chat-v3-0324" :value "deepseek/deepseek-chat-v3-0324"} "DeepSeek V3"]))]
       (when (seq available-models)
         [:div {:style {:font-size "12px"
-                       :color "rgba(255,255,255,0.3)"
+                       :color "var(--app-text-faint)"
                        :margin-top "6px"}}
          (str (count available-models) " models available from OpenRouter")])]
 

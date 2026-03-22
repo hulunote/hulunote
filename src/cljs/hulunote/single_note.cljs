@@ -81,7 +81,7 @@
               :font-size "15px"
               :line-height "1.5"}}
      [:span
-      {:style {:color "rgba(255,255,255,0.56)"
+      {:style {:color "var(--app-text-muted)"
                :cursor "pointer"
                :font-weight "500"}
        :on-click #(router/go-to-note! database-name note-id)}
@@ -89,10 +89,10 @@
     (mapcat
       (fn [[_ {:keys [id content]}]]
         [[:span {:key (str "sep-" id)
-                 :style {:color "rgba(255,255,255,0.24)"}} "›"]
+                 :style {:color "var(--app-text-placeholder)"}} "›"]
          [:span
           {:key (str "crumb-" id)
-           :style {:color "rgba(255,255,255,0.50)"
+           :style {:color "var(--app-text-soft)"
                    :cursor "pointer"}
            :on-click #(router/go-to-block-focus! database-name note-id id)}
           (block-label content)]])
@@ -271,7 +271,7 @@
                  :top (str y "px")
                  :min-width "180px"
                  :border-radius "6px"
-                 :box-shadow "0 4px 12px rgba(0,0,0,0.3)"
+                 :box-shadow "var(--ui-shadow-popover-compact)"
                  :padding "4px 0"}
          :on-mouse-leave hide-title-menu!}
         (menu/menu-header note-title)
@@ -295,7 +295,7 @@
           "Copy as Markdown")
         (menu/menu-item
           {:danger? true
-           :style {:color "#ff6b6b"}
+           :style {:color "var(--app-danger)"}
            :on-click (fn [e]
                        (.stopPropagation e)
                        (confirm-and-delete-note! note-id note-title database-name)
@@ -359,11 +359,11 @@
     [:div.backlink-nav-item
      (when-let [parent-content (:parent-content nav)]
        [:div
-        {:style {:padding-left "29px"
+       {:style {:padding-left "29px"
                  :padding-bottom "4px"
                  :font-size "inherit"
                  :line-height "inherit"
-                 :color "rgba(255,255,255,0.42)"}}
+                 :color "var(--app-text-subtle)"}}
         parent-content])
      [:div {:class "head-dot flex backlink-outline-node"
             :style {:padding-left "13px"
@@ -415,7 +415,7 @@
                    (swap! backlinks-collapsed? update source-note-id not))}
       ;; Collapse/expand indicator
       [:span {:style {:font-size "10px"
-                      :color "rgba(255,255,255,0.4)"
+                      :color "var(--app-text-faint)"
                       :transition "transform 0.15s"
                       :display "inline-block"
                       :cursor "pointer"
@@ -426,7 +426,7 @@
               :style {:font-weight "500"
                       :font-size "inherit"
                       :line-height "inherit"
-                      :color "rgba(255,255,255,0.78)"} 
+                      :color "var(--app-text-secondary)"} 
               :on-click (fn [e]
                           (u/stop-click-bubble e)
                           (if (.-shiftKey e)
@@ -444,7 +444,7 @@
                       :align-items "center"
                       :font-size "11px"
                       :line-height "1"
-                      :color "rgba(255,255,255,0.4)"
+                      :color "var(--app-text-faint)"
                       :margin-left "4px"}}
        (str (count navs))]]
      ;; Nav content blocks
@@ -480,7 +480,7 @@
                  :gap "8px"
                  :margin-bottom "16px"
                  :padding-bottom "12px"
-                 :border-bottom "1px solid rgba(255,255,255,0.1)"
+                 :border-bottom "1px solid var(--app-divider)"
                  :cursor "pointer"}
          :on-mouse-enter #(reset! (::linked-references-header-hovered? state) true)
          :on-mouse-leave #(reset! (::linked-references-header-hovered? state) false)
@@ -489,7 +489,7 @@
                      (swap! (::linked-references-collapsed? state) not))}
         [:span
          {:style {:font-size "10px"
-                  :color "rgba(255,255,255,0.42)"
+                  :color "var(--app-text-subtle)"
                   :transition "transform 0.15s ease, opacity 0.15s ease"
                   :display "inline-block"
                   :width "10px"
@@ -498,7 +498,7 @@
          "\u25B6"]
         [:span {:style {:font-size "15px"
                         :font-weight "600"
-                        :color "rgba(255,255,255,0.5)"}}
+                        :color "var(--app-text-soft)"}}
          (str total-count " Linked References")]]
        ;; Grouped backlinks
        (when-not collapsed?
@@ -559,8 +559,8 @@
                    {:style {:margin-bottom "20px"
                             :padding "10px 14px"
                             :border-radius "10px"
-                            :background "rgba(255,255,255,0.04)"
-                            :color "rgba(255,255,255,0.56)"
+                            :background "var(--app-overlay-soft)"
+                            :color "var(--app-text-muted)"
                             :font-size "14px"}}
                    "Focused block no longer exists. Showing the full note."]
                   (note-page-content db database note-id note-title root-nav-id)])
@@ -571,13 +571,13 @@
            {:style {:height "50vh"}}
            [:div {:style {:font-size "18px" :margin-bottom "16px"}}
             "Note not found"]
-           [:div {:style {:color "rgba(255,255,255,0.5)" :margin-bottom "20px"}}
+           [:div {:style {:color "var(--app-text-soft)" :margin-bottom "20px"}}
             (str "Note ID: " note-id)]
            [:button
             {:on-click #(router/go-to-diaries! database)
              :style {:background "var(--theme-accent)"
                      :border "none"
-                     :color "#fff"
+                     :color "var(--theme-accent-text)"
                      :padding "10px 20px"
                      :border-radius "6px"
                      :cursor "pointer"}}

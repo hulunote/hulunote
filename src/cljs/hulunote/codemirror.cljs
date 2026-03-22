@@ -32,13 +32,13 @@
   margin: 4px 0;
   border-radius: 6px;
   overflow: hidden;
-  border: 1px solid var(--theme-border, #333);
+  border: 1px solid var(--code-block-border);
   font-size: 13px;
   line-height: 1.5;
 }
 .hulunote-cm-wrapper .CodeMirror {
-  background: #1e2028 !important;
-  color: #e0e0e0 !important;
+  background: var(--code-block-bg) !important;
+  color: var(--code-block-text) !important;
   height: auto;
   font-family: 'SF Mono', 'Fira Code', 'JetBrains Mono', Menlo, Monaco, monospace;
   font-size: 13px;
@@ -49,54 +49,54 @@
   padding: 8px 0;
 }
 .hulunote-cm-wrapper .CodeMirror-gutters {
-  background: #1a1c24 !important;
-  border-right: 1px solid #333 !important;
+  background: var(--code-block-gutter-bg) !important;
+  border-right: 1px solid var(--code-block-border) !important;
 }
 .hulunote-cm-wrapper .CodeMirror-linenumber {
-  color: #555 !important;
+  color: var(--code-block-subtle) !important;
   padding: 0 8px 0 4px;
 }
 .hulunote-cm-wrapper .CodeMirror-cursor {
-  border-left-color: #6c8dfa !important;
+  border-left-color: var(--code-block-cursor) !important;
 }
 .hulunote-cm-wrapper .CodeMirror-selected {
-  background: rgba(108, 141, 250, 0.2) !important;
+  background: var(--code-block-selection) !important;
 }
 .hulunote-cm-wrapper .CodeMirror-focused .CodeMirror-selected {
-  background: rgba(108, 141, 250, 0.3) !important;
+  background: var(--code-block-selection-focused) !important;
 }
 /* Syntax highlighting — dark theme */
-.hulunote-cm-wrapper .cm-keyword   { color: #c792ea !important; }
-.hulunote-cm-wrapper .cm-def       { color: #82aaff !important; }
-.hulunote-cm-wrapper .cm-variable  { color: #e0e0e0 !important; }
-.hulunote-cm-wrapper .cm-variable-2 { color: #f07178 !important; }
-.hulunote-cm-wrapper .cm-variable-3 { color: #ffcb6b !important; }
-.hulunote-cm-wrapper .cm-type      { color: #ffcb6b !important; }
-.hulunote-cm-wrapper .cm-operator  { color: #89ddff !important; }
-.hulunote-cm-wrapper .cm-number    { color: #f78c6c !important; }
-.hulunote-cm-wrapper .cm-string    { color: #c3e88d !important; }
-.hulunote-cm-wrapper .cm-string-2  { color: #c3e88d !important; }
-.hulunote-cm-wrapper .cm-comment   { color: #546e7a !important; font-style: italic; }
-.hulunote-cm-wrapper .cm-atom      { color: #f78c6c !important; }
-.hulunote-cm-wrapper .cm-meta      { color: #ffcb6b !important; }
-.hulunote-cm-wrapper .cm-tag       { color: #f07178 !important; }
-.hulunote-cm-wrapper .cm-attribute { color: #c792ea !important; }
-.hulunote-cm-wrapper .cm-property  { color: #82aaff !important; }
-.hulunote-cm-wrapper .cm-qualifier { color: #c792ea !important; }
-.hulunote-cm-wrapper .cm-builtin   { color: #ffcb6b !important; }
-.hulunote-cm-wrapper .cm-bracket   { color: #89ddff !important; }
-.hulunote-cm-wrapper .cm-header    { color: #82aaff !important; font-weight: bold; }
-.hulunote-cm-wrapper .cm-link      { color: #c3e88d !important; }
+.hulunote-cm-wrapper .cm-keyword   { color: var(--code-block-keyword) !important; }
+.hulunote-cm-wrapper .cm-def       { color: var(--code-block-def) !important; }
+.hulunote-cm-wrapper .cm-variable  { color: var(--code-block-variable) !important; }
+.hulunote-cm-wrapper .cm-variable-2 { color: var(--code-block-variable-2) !important; }
+.hulunote-cm-wrapper .cm-variable-3 { color: var(--code-block-variable-3) !important; }
+.hulunote-cm-wrapper .cm-type      { color: var(--code-block-variable-3) !important; }
+.hulunote-cm-wrapper .cm-operator  { color: var(--code-block-operator) !important; }
+.hulunote-cm-wrapper .cm-number    { color: var(--code-block-number) !important; }
+.hulunote-cm-wrapper .cm-string    { color: var(--code-block-string) !important; }
+.hulunote-cm-wrapper .cm-string-2  { color: var(--code-block-string) !important; }
+.hulunote-cm-wrapper .cm-comment   { color: var(--code-block-comment) !important; font-style: italic; }
+.hulunote-cm-wrapper .cm-atom      { color: var(--code-block-number) !important; }
+.hulunote-cm-wrapper .cm-meta      { color: var(--code-block-variable-3) !important; }
+.hulunote-cm-wrapper .cm-tag       { color: var(--code-block-variable-2) !important; }
+.hulunote-cm-wrapper .cm-attribute { color: var(--code-block-keyword) !important; }
+.hulunote-cm-wrapper .cm-property  { color: var(--code-block-def) !important; }
+.hulunote-cm-wrapper .cm-qualifier { color: var(--code-block-keyword) !important; }
+.hulunote-cm-wrapper .cm-builtin   { color: var(--code-block-variable-3) !important; }
+.hulunote-cm-wrapper .cm-bracket   { color: var(--code-block-operator) !important; }
+.hulunote-cm-wrapper .cm-header    { color: var(--code-block-def) !important; font-weight: bold; }
+.hulunote-cm-wrapper .cm-link      { color: var(--code-block-string) !important; }
 /* Language badge */
 .hulunote-cm-lang-badge {
   display: flex;
   justify-content: space-between;
   align-items: center;
   padding: 4px 10px;
-  background: #1a1c24;
-  border-bottom: 1px solid #333;
+  background: var(--code-block-gutter-bg);
+  border-bottom: 1px solid var(--code-block-border);
   font-size: 11px;
-  color: #888;
+  color: var(--code-block-muted);
   font-family: -apple-system, BlinkMacSystemFont, sans-serif;
   user-select: none;
 }
@@ -107,7 +107,7 @@
 }
 .hulunote-cm-lang-select {
   background: transparent;
-  color: #888;
+  color: var(--code-block-muted);
   border: 1px solid transparent;
   font-size: 11px;
   font-weight: 600;
@@ -120,15 +120,15 @@
   border-radius: 3px;
 }
 .hulunote-cm-lang-select:hover {
-  border-color: #555;
-  background: rgba(255,255,255,0.05);
+  border-color: var(--code-block-subtle);
+  background: var(--code-block-hover-bg);
 }
 .hulunote-cm-lang-select:focus {
-  border-color: #667eea;
+  border-color: var(--mermaid-primary-color);
 }
 .hulunote-cm-lang-select option {
-  background: #1a1c24;
-  color: #e0e0e0;
+  background: var(--code-block-gutter-bg);
+  color: var(--code-block-text);
 }
 ")
 

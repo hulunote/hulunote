@@ -1,18 +1,18 @@
 (ns hulunote.menu)
 
 (def default-popover-style
-  {:background "var(--surface-popover)"
-   :border "1px solid var(--surface-border-strong)"
+  {:background "var(--ui-surface-popover)"
+   :border "1px solid var(--ui-border-strong)"
    :border-radius "8px"
-   :box-shadow "0 8px 24px rgba(0,0,0,0.28)"
+   :box-shadow "var(--ui-shadow-popover)"
    :z-index 10000
    :padding "6px 0"})
 
 (def default-header-style
   {:padding "8px 12px"
-   :color "#888"
+   :color "var(--ui-text-subtle)"
    :font-size "11px"
-   :border-bottom "1px solid var(--surface-border-strong)"
+   :border-bottom "1px solid var(--ui-border-strong)"
    :overflow "hidden"
    :text-overflow "ellipsis"
    :white-space "nowrap"})
@@ -20,14 +20,14 @@
 (def default-item-style
   {:padding "7px 12px"
    :cursor "pointer"
-   :color "#fff"
+   :color "var(--ui-text-strong)"
    :font-size "12px"
    :display "flex"
    :align-items "center"
    :gap "10px"})
 
 (def danger-item-style
-  {:color "#ff8d8d"})
+  {:color "var(--ui-danger-text)"})
 
 (defn menu-popover
   [{:keys [class style on-click on-mouse-leave]} & children]

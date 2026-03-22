@@ -29,27 +29,27 @@
 (def input-style
   {:width "100%"
    :padding "12px 16px"
-   :border "1px solid rgba(255,255,255,0.15)"
+   :border "1px solid var(--surface-border-strong)"
    :border-radius "8px"
    :font-size "14px"
    :outline "none"
    :box-sizing "border-box"
-   :background "#363b48"
-   :color "#fdfeffc4"})
+   :background "var(--app-modal-input-bg)"
+   :color "var(--app-text-primary)"})
 
 (def label-style
   {:display "block"
    :margin-bottom "8px"
    :font-size "14px"
    :font-weight "500"
-   :color "rgba(255,255,255,0.6)"})
+   :color "var(--app-text-muted)"})
 
 (def section-style
-  {:background "rgba(255,255,255,0.04)"
+  {:background "var(--app-overlay-soft)"
    :border-radius "12px"
    :padding "20px"
    :margin-bottom "24px"
-   :border "1px solid rgba(255,255,255,0.06)"})
+   :border "1px solid var(--surface-popover-hover)"})
 
 (def button-base-style
   {:min-height "38px"
@@ -68,25 +68,25 @@
   (merge button-base-style
          {:border "1px solid var(--theme-accent-30)"
           :background "var(--theme-accent-20)"
-          :color "#fff"}))
+          :color "var(--theme-accent-text)"}))
 
 (def btn-success-style
   (merge button-base-style
-         {:border "1px solid rgba(82,196,26,0.35)"
-          :background "rgba(82,196,26,0.18)"
-          :color "#d7ffd1"}))
+         {:border "1px solid var(--theme-success-border)"
+          :background "var(--theme-success-soft)"
+          :color "var(--theme-accent-text)"}))
 
 (def btn-secondary-style
   (merge button-base-style
          {:border "1px solid var(--surface-border)"
-          :background "rgba(255,255,255,0.02)"
-          :color "rgba(255,255,255,0.86)"}))
+          :background "var(--app-panel-subtle-bg)"
+          :color "var(--app-text-strong)"}))
 
 (def btn-disabled-style
   (merge button-base-style
-         {:border "1px solid rgba(255,255,255,0.08)"
-          :background "rgba(255,255,255,0.05)"
-          :color "rgba(255,255,255,0.35)"
+         {:border "1px solid var(--surface-popover-hover)"
+          :background "var(--app-overlay-soft-strong)"
+          :color "var(--app-text-faint)"
           :cursor "not-allowed"}))
 
 (rum/defc action-button

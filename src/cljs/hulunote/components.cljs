@@ -182,7 +182,7 @@
     {:on-click #(router/switch-router! "/")
      :style {:font-size "18px"
              :font-weight "600"
-             :color "#fff"}}
+             :color "var(--ui-text-strong)"}}
     "HULUNOTE"]])
 
 (declare show-whatsapp-qrcode)

@@ -11,10 +11,10 @@
      [:div {:style {:display "flex" :align-items "center" :gap "20px" :margin-bottom "32px"}}
       [:div {:style {:position "relative"}}
        [:div {:style {:width "80px" :height "80px" :border-radius "50%"
-                      :background "linear-gradient(135deg, #667eea 0%, #764ba2 100%)"
+                      :background "var(--theme-accent-gradient)"
                       :display "flex" :align-items "center" :justify-content "center"
                       :overflow "hidden" :cursor "pointer"
-                      :border "3px solid rgba(255,255,255,0.2)"}
+                      :border "3px solid var(--app-control-border)"}
               :on-click #(.click (.getElementById js/document "avatar-upload-input"))}
         (if avatar
           [:img {:src (if (str/starts-with? (or avatar "") "http")
@@ -22,13 +22,13 @@
                         avatar
                         (str (http/http-uri "") avatar))
                  :style {:width "100%" :height "100%" :object-fit "cover"}}]
-          [:span {:style {:color "#fff" :font-size "32px" :font-weight "600"}}
+          [:span {:style {:color "var(--theme-accent-text)" :font-size "32px" :font-weight "600"}}
            (-> (or nickname "U") first str str/upper-case)])]
        [:div {:style {:position "absolute" :bottom "0" :right "0"
-                      :background "#667eea" :border-radius "50%"
+                      :background "var(--theme-accent)" :border-radius "50%"
                       :width "24px" :height "24px"
                       :display "flex" :align-items "center" :justify-content "center"
-                      :cursor "pointer" :border "2px solid #2a2f3a"}
+                      :cursor "pointer" :border "2px solid var(--app-modal-surface)"}
               :on-click #(.click (.getElementById js/document "avatar-upload-input"))}
         (icon/svg-icon
           {:name "edit"
@@ -36,8 +36,8 @@
                    :height "12px"
                    :filter "brightness(0) invert(1)"}})]]
       [:div
-       [:div {:style {:font-size "14px" :color "rgba(255,255,255,0.5)" :margin-bottom "4px"}} "Profile Photo"]
-       [:div {:style {:font-size "12px" :color "rgba(255,255,255,0.3)"}} "Click to upload (max 5MB)"]]]
+       [:div {:style {:font-size "14px" :color "var(--app-text-soft)" :margin-bottom "4px"}} "Profile Photo"]
+       [:div {:style {:font-size "12px" :color "var(--app-text-faint)"}} "Click to upload (max 5MB)"]]]
 
      [:input {:id "avatar-upload-input"
               :type "file"

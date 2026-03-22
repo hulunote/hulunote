@@ -50,26 +50,26 @@
       [:div.modal-overlay
        {:style {:position "fixed"
                 :top 0 :left 0 :right 0 :bottom 0
-                :background "rgba(0,0,0,0.6)"
+                :background "var(--app-modal-backdrop-strong)"
                 :display "flex"
                 :align-items "center"
                 :justify-content "center"
                 :z-index 10000}
         :on-click #(swap! ui-state assoc :show-add-form false)}
        [:div.modal-content
-        {:style {:background "#2a2f3a"
+        {:style {:background "var(--app-modal-surface)"
                  :border-radius "16px"
                  :padding "32px"
                  :min-width "500px"
                  :max-width "600px"
-                 :border "1px solid rgba(255,255,255,0.1)"
-                 :box-shadow "0 8px 32px rgba(0,0,0,0.4)"}
+                 :border "1px solid var(--surface-border)"
+                 :box-shadow "var(--app-modal-shadow)"}
          :on-click #(.stopPropagation %)}
 
         [:h2 {:style {:margin "0 0 24px 0"
                       :font-size "24px"
                       :font-weight "600"
-                      :color "#fdfeffc4"}}
+                      :color "var(--app-text-primary)"}}
          "Add MCP Server"]
 
         ;; Server Name
@@ -78,7 +78,7 @@
                           :margin-bottom "8px"
                           :font-size "14px"
                           :font-weight "500"
-                          :color "rgba(255,255,255,0.6)"}}
+                          :color "var(--app-text-muted)"}}
           "Server Name *"]
          [:input
           {:type "text"
@@ -87,13 +87,13 @@
            :on-change #(swap! ui-state assoc-in [:form-data :name] (.. % -target -value))
            :style {:width "100%"
                    :padding "12px 16px"
-                   :border "1px solid rgba(255,255,255,0.15)"
+                   :border "1px solid var(--surface-border-strong)"
                    :border-radius "8px"
                    :font-size "16px"
                    :outline "none"
                    :box-sizing "border-box"
-                   :background "#363b48"
-                   :color "#fdfeffc4"}}]]
+                   :background "var(--app-modal-input-bg)"
+                   :color "var(--app-text-primary)"}}]]
 
         ;; Command
         [:div {:style {:margin-bottom "20px"}}
@@ -101,7 +101,7 @@
                           :margin-bottom "8px"
                           :font-size "14px"
                           :font-weight "500"
-                          :color "rgba(255,255,255,0.6)"}}
+                          :color "var(--app-text-muted)"}}
           "Command *"]
          [:input
           {:type "text"
@@ -110,13 +110,13 @@
            :on-change #(swap! ui-state assoc-in [:form-data :command] (.. % -target -value))
            :style {:width "100%"
                    :padding "12px 16px"
-                   :border "1px solid rgba(255,255,255,0.15)"
+                   :border "1px solid var(--surface-border-strong)"
                    :border-radius "8px"
                    :font-size "16px"
                    :outline "none"
                    :box-sizing "border-box"
-                   :background "#363b48"
-                   :color "#fdfeffc4"}}]]
+                   :background "var(--app-modal-input-bg)"
+                   :color "var(--app-text-primary)"}}]]
 
         ;; Arguments
         [:div {:style {:margin-bottom "20px"}}
@@ -124,7 +124,7 @@
                           :margin-bottom "8px"
                           :font-size "14px"
                           :font-weight "500"
-                          :color "rgba(255,255,255,0.6)"}}
+                          :color "var(--app-text-muted)"}}
           "Arguments (space separated)"]
          [:input
           {:type "text"
@@ -133,13 +133,13 @@
            :on-change #(swap! ui-state assoc-in [:form-data :args] (.. % -target -value))
            :style {:width "100%"
                    :padding "12px 16px"
-                   :border "1px solid rgba(255,255,255,0.15)"
+                   :border "1px solid var(--surface-border-strong)"
                    :border-radius "8px"
                    :font-size "16px"
                    :outline "none"
                    :box-sizing "border-box"
-                   :background "#363b48"
-                   :color "#fdfeffc4"}}]]
+                   :background "var(--app-modal-input-bg)"
+                   :color "var(--app-text-primary)"}}]]
 
         ;; Environment Variables
         [:div {:style {:margin-bottom "24px"}}
@@ -147,7 +147,7 @@
                           :margin-bottom "8px"
                           :font-size "14px"
                           :font-weight "500"
-                          :color "rgba(255,255,255,0.6)"}}
+                          :color "var(--app-text-muted)"}}
           "Environment Variables (KEY=VALUE, one per line)"]
          [:textarea
           {:placeholder "GITHUB_TOKEN=xxx\nAPI_KEY=yyy"
@@ -155,7 +155,7 @@
            :on-change #(swap! ui-state assoc-in [:form-data :env] (.. % -target -value))
            :style {:width "100%"
                    :padding "12px 16px"
-                   :border "1px solid rgba(255,255,255,0.15)"
+                   :border "1px solid var(--surface-border-strong)"
                    :border-radius "8px"
                    :font-size "14px"
                    :font-family "monospace"
@@ -163,25 +163,25 @@
                    :min-height "80px"
                    :resize "vertical"
                    :box-sizing "border-box"
-                   :background "#363b48"
-                   :color "#fdfeffc4"}}]]
+                   :background "var(--app-modal-input-bg)"
+                   :color "var(--app-text-primary)"}}]]
 
         ;; Buttons
         [:div {:style {:display "flex"
                        :justify-content "flex-end"
                        :gap "12px"}}
          [:button.pointer
-          {:on-click #(do
+         {:on-click #(do
                         (swap! ui-state assoc
                                :show-add-form false
                                :form-data {:name "" :command "" :args "" :env ""}))
            :style {:padding "12px 24px"
-                   :border "1px solid rgba(255,255,255,0.2)"
+                   :border "1px solid var(--app-control-border)"
                    :border-radius "8px"
                    :background "transparent"
                    :font-size "16px"
                    :font-weight "500"
-                   :color "rgba(255,255,255,0.7)"
+                   :color "var(--app-control-text)"
                    :cursor "pointer"}}
           "Cancel"]
          [:button.pointer
@@ -201,10 +201,10 @@
            :style {:padding "12px 24px"
                    :border "none"
                    :border-radius "8px"
-                   :background "linear-gradient(135deg, #667eea 0%, #764ba2 100%)"
+                   :background "var(--theme-accent-gradient)"
                    :font-size "16px"
                    :font-weight "600"
-                   :color "#fff"
+                   :color "var(--theme-accent-text)"
                    :cursor "pointer"}}
           "Add Server"]]]])))
 
@@ -215,12 +215,12 @@
   (let [{:keys [name command args connected]} server
         {:keys [loading?]} (rum/react mcp-state/mcp-state)]
     [:div.server-card
-     {:style {:background "rgba(255,255,255,0.05)"
+     {:style {:background "var(--app-overlay-soft-strong)"
               :border-radius "12px"
               :padding "20px"
               :border (if connected
-                        "1px solid rgba(82, 196, 26, 0.5)"
-                        "1px solid rgba(255,255,255,0.1)")}}
+                        "1px solid var(--theme-success-border)"
+                        "1px solid var(--app-divider)")}}
 
      ;; Header
      [:div {:style {:display "flex"
@@ -233,7 +233,7 @@
                       :margin-bottom "4px"}}
         name]
        [:div {:style {:font-size "12px"
-                      :color "rgba(255,255,255,0.4)"
+                      :color "var(--app-text-subtle)"
                       :font-family "monospace"}}
         (str command " " (str/join " " args))]]
 
@@ -242,8 +242,8 @@
                      :border-radius "12px"
                      :font-size "12px"
                      :font-weight "500"
-                     :background (if connected "rgba(82,196,26,0.15)" "rgba(250,140,22,0.15)")
-                     :color (if connected "#52c41a" "#fa8c16")}}
+                     :background (if connected "var(--theme-success-soft)" "var(--theme-warning-soft)")
+                     :color (if connected "var(--theme-success)" "var(--theme-warning)")}}
        (if connected "Connected" "Disconnected")]]
 
      ;; Actions
@@ -258,12 +258,12 @@
            :disabled loading?
            :style {:flex 1
                    :padding "8px 16px"
-                   :border "1px solid rgba(255,77,79,0.5)"
+                   :border "1px solid var(--theme-error-border-strong)"
                    :border-radius "6px"
                    :background "transparent"
                    :font-size "14px"
                    :font-weight "500"
-                   :color "#ff4d4f"
+                   :color "var(--app-danger-soft)"
                    :cursor (if loading? "not-allowed" "pointer")
                    :opacity (if loading? 0.6 1)}}
           "Disconnect"]
@@ -275,10 +275,10 @@
                    :padding "8px 16px"
                    :border "none"
                    :border-radius "6px"
-                   :background "linear-gradient(135deg, #667eea 0%, #764ba2 100%)"
+                   :background "var(--theme-accent-gradient)"
                    :font-size "14px"
                    :font-weight "500"
-                   :color "#fff"
+                   :color "var(--theme-accent-text)"
                    :cursor "pointer"}}
           "Tools"]]
 
@@ -290,10 +290,10 @@
                   :padding "8px 16px"
                   :border "none"
                   :border-radius "6px"
-                  :background "linear-gradient(135deg, #52c41a 0%, #389e0d 100%)"
+                  :background "var(--theme-success-gradient)"
                   :font-size "14px"
                   :font-weight "500"
-                  :color "#fff"
+                  :color "var(--theme-accent-text)"
                   :cursor (if loading? "not-allowed" "pointer")
                   :opacity (if loading? 0.6 1)}}
          "Connect"])
@@ -303,11 +303,11 @@
        {:on-click #(when (js/confirm (str "Are you sure you want to delete \"" name "\"?"))
                      (mcp-state/remove-server! name nil))
         :style {:padding "8px 12px"
-                :border "1px solid rgba(255,77,79,0.5)"
+                :border "1px solid var(--theme-error-border-strong)"
                 :border-radius "6px"
                 :background "transparent"
                 :font-size "14px"
-                :color "#ff4d4f"
+                :color "var(--app-danger-soft)"
                 :cursor "pointer"}}
        "Delete"]]]))
 
@@ -319,26 +319,26 @@
     [:div
      ;; Error message
      (when error
-       [:div {:style {:background "rgba(255,77,79,0.1)"
-                      :border "1px solid rgba(255,77,79,0.3)"
+       [:div {:style {:background "var(--theme-error-soft)"
+                      :border "1px solid var(--theme-error-border)"
                       :border-radius "8px"
                       :padding "12px 16px"
                       :margin-bottom "20px"
-                      :color "#ff6b6b"}}
+                      :color "var(--app-danger)"}}
         error])
 
      ;; Loading indicator
      (when loading?
        [:div {:style {:text-align "center"
                       :padding "20px"
-                      :color "rgba(255,255,255,0.6)"}}
+                      :color "var(--app-text-muted)"}}
         "Loading..."])
 
      ;; Server grid
      (if (empty? servers)
        [:div {:style {:text-align "center"
                       :padding "60px 20px"
-                      :color "rgba(255,255,255,0.4)"}}
+                      :color "var(--app-text-subtle)"}}
         [:div {:style {:font-size "48px"
                        :margin-bottom "16px"}}
          "🔌"]
@@ -359,10 +359,10 @@
   [client-id tool]
   (let [{:keys [name description inputSchema]} tool]
     [:div.tool-item
-     {:style {:background "rgba(255,255,255,0.05)"
+     {:style {:background "var(--app-overlay-soft-strong)"
               :border-radius "8px"
               :padding "16px"
-              :border "1px solid rgba(255,255,255,0.1)"
+              :border "1px solid var(--app-divider)"
               :cursor "pointer"
               :transition "all 0.2s"}
       :on-click #(swap! ui-state assoc
@@ -375,7 +375,7 @@
       name]
      (when description
        [:div {:style {:font-size "13px"
-                      :color "rgba(255,255,255,0.5)"
+                      :color "var(--app-text-soft)"
                       :line-height "1.4"}}
         description])]))
 
@@ -395,19 +395,19 @@
         [:button.pointer
          {:on-click #(mcp-state/load-tools! selected-server nil)
           :style {:padding "6px 12px"
-                  :border "1px solid rgba(255,255,255,0.2)"
+                  :border "1px solid var(--app-control-border)"
                   :border-radius "6px"
                   :background "transparent"
                   :font-size "13px"
-                  :color "rgba(255,255,255,0.7)"
+                  :color "var(--app-control-text)"
                   :cursor "pointer"}}
          "Refresh"]]
 
        (if (empty? client-tools)
          [:div {:style {:text-align "center"
                         :padding "40px"
-                        :color "rgba(255,255,255,0.4)"
-                        :background "rgba(255,255,255,0.03)"
+                        :color "var(--app-text-subtle)"
+                        :background "var(--app-row-hover)"
                         :border-radius "8px"}}
           "No tools available. Click Refresh to load tools."]
          [:div {:style {:display "grid"
@@ -429,33 +429,33 @@
         [:div.modal-overlay
          {:style {:position "fixed"
                   :top 0 :left 0 :right 0 :bottom 0
-                  :background "rgba(0,0,0,0.6)"
+                  :background "var(--app-modal-backdrop-strong)"
                   :display "flex"
                   :align-items "center"
                   :justify-content "center"
                   :z-index 10000}
           :on-click #(swap! ui-state assoc :show-tool-modal false)}
          [:div.modal-content
-          {:style {:background "#2a2f3a"
+          {:style {:background "var(--app-modal-surface)"
                    :border-radius "16px"
                    :padding "32px"
                    :min-width "500px"
                    :max-width "700px"
                    :max-height "80vh"
                    :overflow-y "auto"
-                   :border "1px solid rgba(255,255,255,0.1)"
-                   :box-shadow "0 8px 32px rgba(0,0,0,0.4)"}
+                   :border "1px solid var(--surface-border)"
+                   :box-shadow "var(--app-modal-shadow)"}
            :on-click #(.stopPropagation %)}
 
           [:h2 {:style {:margin "0 0 8px 0"
                         :font-size "24px"
                         :font-weight "600"
-                        :color "#fdfeffc4"}}
+                        :color "var(--app-text-primary)"}}
            (str "Execute: " name)]
 
           (when description
             [:p {:style {:margin "0 0 24px 0"
-                         :color "rgba(255,255,255,0.5)"
+                         :color "var(--app-text-soft)"
                          :font-size "14px"}}
              description])
 
@@ -471,11 +471,11 @@
                                    :margin-bottom "8px"
                                    :font-size "14px"
                                    :font-weight "500"
-                                   :color "rgba(255,255,255,0.6)"}}
+                                   :color "var(--app-text-muted)"}}
                    (str prop-name (when is-required " *"))]
                   (when-let [desc (:description prop-schema)]
                     [:div {:style {:font-size "12px"
-                                   :color "rgba(255,255,255,0.4)"
+                                   :color "var(--app-text-subtle)"
                                    :margin-bottom "6px"}}
                      desc])
                   [:input
@@ -485,27 +485,27 @@
                     :on-change #(swap! ui-state assoc-in [:tool-args prop-key] (.. % -target -value))
                     :style {:width "100%"
                             :padding "12px 16px"
-                            :border "1px solid rgba(255,255,255,0.15)"
+                            :border "1px solid var(--surface-border-strong)"
                             :border-radius "8px"
                             :font-size "14px"
                             :outline "none"
                             :box-sizing "border-box"
-                            :background "#363b48"
-                            :color "#fdfeffc4"}}]]))])
+                            :background "var(--app-modal-input-bg)"
+                            :color "var(--app-text-primary)"}}]]))])
 
           ;; Buttons
           [:div {:style {:display "flex"
                          :justify-content "flex-end"
                          :gap "12px"}}
            [:button.pointer
-            {:on-click #(swap! ui-state assoc :show-tool-modal false)
+           {:on-click #(swap! ui-state assoc :show-tool-modal false)
              :style {:padding "12px 24px"
-                     :border "1px solid rgba(255,255,255,0.2)"
+                     :border "1px solid var(--app-control-border)"
                      :border-radius "8px"
                      :background "transparent"
                      :font-size "16px"
                      :font-weight "500"
-                     :color "rgba(255,255,255,0.7)"
+                     :color "var(--app-control-text)"
                      :cursor "pointer"}}
             "Cancel"]
            [:button.pointer
@@ -520,10 +520,10 @@
              :style {:padding "12px 24px"
                      :border "none"
                      :border-radius "8px"
-                     :background "linear-gradient(135deg, #667eea 0%, #764ba2 100%)"
+                     :background "var(--theme-accent-gradient)"
                      :font-size "16px"
                      :font-weight "600"
-                     :color "#fff"
+                     :color "var(--theme-accent-text)"
                      :cursor "pointer"}}
             "Execute"]]]]))))
 
@@ -573,15 +573,15 @@
                         :font-weight "600"
                         :margin "0 0 8px 0"}}
            "MCP Server Settings"]
-          [:p {:style {:color "rgba(255,255,255,0.6)"
+          [:p {:style {:color "var(--app-text-muted)"
                        :margin 0
                        :font-size "14px"}}
            "Configure Model Context Protocol servers for AI integration"]]
 
          [:button.pointer
           {:on-click #(swap! ui-state assoc :show-add-form true)
-           :style {:background "linear-gradient(135deg, #667eea 0%, #764ba2 100%)"
-                   :color "#fff"
+           :style {:background "var(--theme-accent-gradient)"
+                   :color "var(--theme-accent-text)"
                    :border "none"
                    :padding "10px 20px"
                    :border-radius "8px"
@@ -596,8 +596,8 @@
 
         ;; Not in Electron warning
         (when-not (mcp/electron?)
-          [:div {:style {:background "rgba(250,140,22,0.1)"
-                         :border "1px solid rgba(250,140,22,0.3)"
+          [:div {:style {:background "var(--theme-warning-soft)"
+                         :border "1px solid var(--theme-warning-border)"
                          :border-radius "8px"
                          :padding "16px 20px"
                          :margin-bottom "24px"
@@ -607,10 +607,10 @@
            [:span {:style {:font-size "24px"}} "⚠️"]
            [:div
             [:div {:style {:font-weight "600"
-                           :color "#fa8c16"
+                           :color "var(--theme-warning)"
                            :margin-bottom "4px"}}
              "MCP is only available in Hulunote PC App"]
-            [:div {:style {:color "rgba(250,140,22,0.8)"
+            [:div {:style {:color "var(--theme-warning-soft-text)"
                            :font-size "13px"}}
              "Please use the Hulunote desktop application to configure MCP servers."]]])
 

@@ -57,13 +57,13 @@
    [:label {:style {:display "block"
                     :font-size "14px"
                     :font-weight "600"
-                    :color "#1a1a2e"
+                    :color "var(--light-text-primary)"
                     :margin-bottom "8px"}}
     label]
    [:input {:style {:width "100%"
                     :padding "12px 16px"
                     :font-size "15px"
-                    :border "2px solid #e0e0e0"
+                    :border "2px solid var(--light-border)"
                     :border-radius "10px"
                     :outline "none"
                     :transition "border-color 0.3s, box-shadow 0.3s"
@@ -74,25 +74,25 @@
             :id id
             :on-change on-change
             :on-key-down on-key-down
-            :on-focus #(set! (.. % -target -style -borderColor) "#667eea")
-            :on-blur #(set! (.. % -target -style -borderColor) "#e0e0e0")}]])
+            :on-focus #(set! (.. % -target -style -borderColor) "var(--ui-accent)")
+            :on-blur #(set! (.. % -target -style -borderColor) "var(--light-border)")}]])
 
 ;; Primary button component
 (rum/defc primary-button [text on-click & [{:keys [id]}]]
   [:button.pointer
    {:id id
     :on-click on-click
-    :style {:width "100%"
+   :style {:width "100%"
             :padding "14px"
             :font-size "16px"
             :font-weight "600"
-            :color "#fff"
-            :background "linear-gradient(135deg, #667eea 0%, #764ba2 100%)"
+            :color "var(--ui-accent-text)"
+            :background "var(--ui-accent-gradient)"
             :border "none"
             :border-radius "10px"
             :cursor "pointer"
             :transition "transform 0.2s, box-shadow 0.2s"
-            :box-shadow "0 4px 15px rgba(102, 126, 234, 0.4)"}}
+            :box-shadow "var(--light-shadow-primary)"}}
    text])
 
 ;; Secondary button component
@@ -103,9 +103,9 @@
             :padding "14px"
             :font-size "16px"
             :font-weight "600"
-            :color "#667eea"
-            :background "#fff"
-            :border "2px solid #667eea"
+            :color "var(--ui-accent)"
+            :background "var(--light-surface)"
+            :border "2px solid var(--ui-accent)"
             :border-radius "10px"
             :cursor "pointer"
             :transition "background 0.2s"}}
@@ -115,7 +115,7 @@
 (rum/defc link-button [text on-click]
   [:span.pointer
    {:on-click on-click
-    :style {:color "#667eea"
+    :style {:color "var(--ui-accent)"
             :font-weight "600"
             :text-decoration "none"
             :cursor "pointer"}}
@@ -142,7 +142,7 @@
         registration-code (::registration-code state)]
     [:div.flex.flex-column
      {:style {:min-height "100vh"
-              :background "#f8f9fa"}}
+              :background "var(--light-page-bg)"}}
 
      ;; Header
      [:div
@@ -151,17 +151,17 @@
                :justify-content "space-between"
                :padding "0 32px"
                :height "60px"
-               :background "linear-gradient(135deg, #667eea 0%, #764ba2 100%)"}}
+               :background "var(--ui-accent-gradient)"}}
       [:div.flex.items-center.pointer
        {:on-click #(router/switch-router! "/main")}
        [:img
         {:width "36px"
          :style {:border-radius "50%"}
          :src (u/asset-path "/img/hulunote.webp")}]
-       [:div.pl3
+        [:div.pl3
         {:style {:font-size "22px"
                  :font-weight "700"
-                 :color "#fff"}}
+                 :color "var(--ui-accent-text)"}}
         "HULUNOTE"]]]
 
      ;; Main Content
@@ -171,12 +171,12 @@
 
       ;; Login Card
       [:div
-       {:style {:background "#fff"
+       {:style {:background "var(--light-surface)"
                 :border-radius "16px"
                 :padding "40px"
                 :width "100%"
                 :max-width "400px"
-                :box-shadow "0 10px 40px rgba(0,0,0,0.1)"}}
+                :box-shadow "var(--light-shadow-card)"}}
 
        ;; Logo & Title
        [:div.flex.flex-column.items-center
@@ -186,11 +186,11 @@
          (if @is-signup "✨" "👋")]
         [:h1 {:style {:font-size "28px"
                       :font-weight "700"
-                      :color "#1a1a2e"
+                      :color "var(--light-text-primary)"
                       :margin "0 0 8px 0"}}
          (if @is-signup "Create Account" "Welcome Back")]
         [:p {:style {:font-size "14px"
-                     :color "#666"
+                     :color "var(--light-text-secondary)"
                      :margin "0"}}
          (if @is-signup
            "Start your note-taking journey"
@@ -242,19 +242,19 @@
         {:style {:margin-bottom "24px"}}
         [:div {:style {:flex "1"
                        :height "1px"
-                       :background "#e0e0e0"}}]
+                       :background "var(--light-border)"}}]
         [:span {:style {:padding "0 16px"
-                        :color "#999"
+                        :color "var(--light-text-muted)"
                         :font-size "14px"}}
          "or"]
         [:div {:style {:flex "1"
                        :height "1px"
-                       :background "#e0e0e0"}}]]
+                       :background "var(--light-border)"}}]]
 
        ;; Toggle Login/Signup
        [:div.flex.justify-center
         {:style {:font-size "14px"
-                 :color "#666"}}
+                 :color "var(--light-text-secondary)"}}
         (if @is-signup
           [:span "Already have an account? "
            (link-button "Sign In" #(reset! is-signup false))]
@@ -263,9 +263,9 @@
 
      ;; Footer
      [:div
-      {:style {:background "#1a1a2e"
+      {:style {:background "var(--light-text-primary)"
                :padding "24px 20px"
                :text-align "center"}}
-      [:div {:style {:color "rgba(255,255,255,0.5)"
+      [:div {:style {:color "var(--ui-text-soft)"
                      :font-size "14px"}}
        "© 2026  Hulunote - MIT License"]]]))
