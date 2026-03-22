@@ -53,11 +53,50 @@
 (rum/defc not-found-component []
   [:div "not-found page"])
 
+(defn app-window-title
+  [db]
+  (let [{:keys [route-name params]} (db/get-route db)
+        database-name (:database params)
+        note-id (:note-id params)
+        [note-title] (when (and (= route-name :single-note) note-id)
+                       (single-note/get-note-by-id db note-id))
+        page-title (case route-name
+                     :single-note (or note-title "Page")
+                     :diaries "Diaries"
+                     :all-notes "All Notes"
+                     :graph "Graph"
+                     :mcp-chat "AI Chat"
+                     :mcp-chat-global "AI Chat"
+                     :mcp-settings "Settings"
+                     :mcp-settings-global "Settings"
+                     :settings "Settings"
+                     :database "Databases"
+                     :login "Login"
+                     :main "Hulunote"
+                     :home "Hulunote"
+                     :show "Page"
+                     :price "Price"
+                     :download "Download"
+                     "Hulunote")]
+    (cond
+      (and (seq database-name) (seq page-title)) (str database-name " - " page-title)
+      (seq page-title) page-title
+      :else "Hulunote")))
+
+(defonce last-electron-window-title (atom nil))
+
 (rum/defc app < rum/reactive
   [conn]
   (let [db (rum/react conn)
-        {:keys [route-name params]} (db/get-route db)
+        {:keys [route-name]} (db/get-route db)
         right-sidebar-open? (rum/react db/right-sidebar-open?)]
+    (when (and (u/is-electron?)
+               (exists? js/window.electronAPI)
+               (.-setWindowTitle js/window.electronAPI))
+      (let [title (app-window-title db)]
+        (when (not= @last-electron-window-title title)
+          (reset! last-electron-window-title title)
+          (.setWindowTitle js/window.electronAPI title))))
     [:div
      {:class (when right-sidebar-open? "right-sidebar-active")
       :on-click (fn [e]

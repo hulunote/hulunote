@@ -79,6 +79,14 @@ function createWindow() {
   createMenu();
 }
 
+ipcMain.handle('hulunote:set-window-title', async (event, title) => {
+  if (mainWindow && !mainWindow.isDestroyed()) {
+    mainWindow.setTitle(title || 'Hulunote');
+    return true;
+  }
+  return false;
+});
+
 function createMenu() {
   const template = [
     {

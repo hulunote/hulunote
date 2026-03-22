@@ -21,6 +21,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
 
   // ============= Auth =============
   setAuthToken: (token) => ipcRenderer.invoke('hulunote:set-auth-token', token),
+  setWindowTitle: (title) => ipcRenderer.invoke('hulunote:set-window-title', title),
 
   // ============= MCP Configuration =============
   mcp: {
