@@ -1,5 +1,5 @@
 (ns hulunote.chat-ui
-  "MCP Chat UI 组件"
+  "AI Chat UI 组件"
   (:require [rum.core :as rum]
             [hulunote.chat :as chat]
             [hulunote.mcp :as mcp]
@@ -346,7 +346,7 @@
         database-name (get-current-database-name db)
         sidebar-collapsed? (rum/react sidebar/sidebar-collapsed?)]
     [:div.night-center-boxBg.night-textColor-2
-     (sidebar/app-top-bar {:title "MCP Chat"})
+     (sidebar/app-top-bar {:title "AI Chat"})
      [:div.page-wrapper
       ;; Left sidebar
       (sidebar/left-sidebar db database-name)
@@ -367,7 +367,7 @@
          [:h1 {:style {:font-size "24px"
                        :font-weight "600"
                        :margin 0}}
-          "MCP Chat"]
+          "AI Chat"]
          [:div.flex.items-center {:style {:gap "12px"}}
           ;; MCP status
           [:div {:style {:font-size "13px"

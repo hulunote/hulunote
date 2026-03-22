@@ -10,7 +10,7 @@ class OpenRouterClient {
         'Authorization': `Bearer ${apiKey}`,
         'Content-Type': 'application/json',
         'HTTP-Referer': 'https://github.com/hulunote/hulunote',
-        'X-Title': 'Hulunote MCP Chat'
+        'X-Title': 'Hulunote AI Chat'
       }
     });
   }
