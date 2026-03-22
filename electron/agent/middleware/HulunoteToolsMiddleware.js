@@ -12,10 +12,15 @@ class HulunoteToolsMiddleware extends Middleware {
     super();
     this.token = token || '';
     this.apiBase = (apiBase || 'https://www.hulunote.top').replace(/\/+$/, '');
+    this.onNoteEvent = null; // callback for note/nav creation events
   }
 
   setToken(token) {
     this.token = token;
+  }
+
+  setOnNoteEvent(callback) {
+    this.onNoteEvent = callback;
   }
 
   // ==================== HTTP ====================
@@ -165,10 +170,35 @@ class HulunoteToolsMiddleware extends Middleware {
       'database-name': database_name,
       title,
     });
+    console.log('[HulunoteTools] create_note raw result:', JSON.stringify(result));
     if (result.error) return JSON.stringify({ error: result.message });
-    const noteId = result['hulunote-notes/id'];
-    const rootNavId = result['hulunote-notes/root-nav-id'];
-    const dbId = result['hulunote-notes/database-id'];
+
+    // Try multiple key formats (backend may use different formats)
+    const noteId = result['hulunote-notes/id'] || result['id'] || result['note-id'] || result['noteId'];
+    const rootNavId = result['hulunote-notes/root-nav-id'] || result['root-nav-id'] || result['rootNavId'];
+    const dbId = result['hulunote-notes/database-id'] || result['database-id'] || result['databaseId'];
+
+    if (!noteId || !rootNavId) {
+      console.error('[HulunoteTools] create_note: missing noteId or rootNavId. Keys:', Object.keys(result));
+      return `Error: Note creation response missing required fields.\nResponse keys: ${Object.keys(result).join(', ')}\nFull response: ${JSON.stringify(result).slice(0, 500)}`;
+    }
+
+    // Notify frontend to open note in right sidebar
+    try {
+      if (this.onNoteEvent) {
+        this.onNoteEvent({
+          type: 'note_created',
+          noteId,
+          rootNavId,
+          databaseId: dbId,
+          databaseName: database_name,
+          title,
+        });
+      }
+    } catch (e) {
+      console.error('[HulunoteTools] onNoteEvent error:', e);
+    }
+
     return `Successfully created note!\nTitle: ${title}\nNote ID: ${noteId}\nDatabase ID: ${dbId}\nRoot Nav ID: ${rootNavId}`;
   }
 
@@ -180,8 +210,27 @@ class HulunoteToolsMiddleware extends Middleware {
       order: order || 0,
     };
     if (parid) payload.parid = parid;
+    console.log('[HulunoteTools] create_nav payload:', JSON.stringify(payload));
     const result = await this._post('/hulunote/create-or-update-nav', payload);
+    console.log('[HulunoteTools] create_nav result:', JSON.stringify(result));
     if (result.error) return JSON.stringify({ error: result.message });
+
+    // Notify frontend to update nav in DataScript
+    try {
+      if (this.onNoteEvent) {
+        this.onNoteEvent({
+          type: 'nav_created',
+          noteId: note_id,
+          navId: id,
+          content: content || '',
+          parid: parid || '',
+          order: order || 0,
+        });
+      }
+    } catch (e) {
+      console.error('[HulunoteTools] onNoteEvent error:', e);
+    }
+
     return `Created nav node ${id} under parent ${parid || 'root'}\nContent: ${content || ''}`;
   }
 

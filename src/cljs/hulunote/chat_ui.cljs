@@ -1,6 +1,7 @@
 (ns hulunote.chat-ui
   "AI Chat UI 组件"
   (:require [rum.core :as rum]
+            [datascript.core :as d]
             [hulunote.chat :as chat]
             [hulunote.mcp :as mcp]
             [hulunote.mcp-state :as mcp-state]
@@ -39,6 +40,74 @@
 (defn clear-messages! []
   (swap! chat-state assoc :messages []))
 
+;; ==================== AI Note Events (right sidebar) ====================
+
+(defonce note-event-listener-registered? (atom false))
+
+(defn handle-note-event!
+  "Handle note/nav creation events from AI agent.
+   Opens created notes in the right sidebar and updates DataScript in real-time."
+  [event-data]
+  (let [event-type (.-type event-data)]
+    (prn "[chat-ui] note event:" event-type)
+    (cond
+      (= event-type "note_created")
+      (let [note-id (.-noteId event-data)
+            root-nav-id (.-rootNavId event-data)
+            database-name (.-databaseName event-data)
+            title (.-title event-data)]
+        (prn "[chat-ui] note_created - opening in right sidebar:" title)
+        ;; Add note to local DataScript
+        (d/transact! db/dsdb
+          [{:hulunote-notes/id note-id
+            :hulunote-notes/title title
+            :hulunote-notes/root-nav-id root-nav-id
+            :hulunote-notes/database-id database-name
+            :hulunote-notes/is-delete false
+            :hulunote-notes/is-public false
+            :hulunote-notes/is-shortcut false
+            :hulunote-notes/updated-at (.toISOString (js/Date.))}])
+        ;; Add root nav to DataScript
+        (d/transact! db/dsdb
+          [{:id root-nav-id
+            :content "ROOT"
+            :hulunote-note note-id
+            :same-deep-order 0
+            :is-display true
+            :origin-parid db/root-id}])
+        ;; Open the note in the right sidebar (not navigating away from AI Chat)
+        (db/open-note-in-right-sidebar! note-id title root-nav-id database-name))
+
+      (= event-type "nav_created")
+      (let [note-id (.-noteId event-data)
+            nav-id (.-navId event-data)
+            content (.-content event-data)
+            parid (.-parid event-data)
+            order (.-order event-data)]
+        (prn "[chat-ui] nav_created - updating DataScript:" nav-id)
+        ;; Add/update nav node in DataScript for real-time sidebar rendering
+        (d/transact! db/dsdb
+          [{:id nav-id
+            :content (or content "")
+            :hulunote-note note-id
+            :same-deep-order (or order 0)
+            :is-display true
+            :origin-parid parid}])
+        ;; Also register the parent-child relationship
+        (d/transact! db/dsdb
+          [[:db/add [:id parid] :parid [:id nav-id]]])))))
+
+(defn register-note-event-listener!
+  "Register a global window callback for note events from the AI agent.
+   Uses window.__hulunoteNoteEvent which is called via executeJavaScript from main process."
+  []
+  (when-not @note-event-listener-registered?
+    (prn "[chat-ui] Registering note event listener on window.__hulunoteNoteEvent")
+    (set! (.-__hulunoteNoteEvent js/window)
+      (fn [event-data]
+        (handle-note-event! event-data)))
+    (reset! note-event-listener-registered? true)))
+
 ;; ==================== 初始化 ====================
 
 (defn init-chat! []
@@ -58,7 +127,8 @@
         (let [result (js->clj-safe (<! ch))]
           (when (:success result)
             (swap! chat-state assoc :model (:model result))))))
-))
+    ;; Register note event listener for right sidebar updates
+    (register-note-event-listener!)))
 
 ;; ==================== 发送消息 ====================
 
@@ -344,7 +414,8 @@
         {:keys [servers connected-clients]} (rum/react mcp-state/mcp-state)
         connected-count (count connected-clients)
         database-name (get-current-database-name db)
-        sidebar-collapsed? (rum/react sidebar/sidebar-collapsed?)]
+        sidebar-collapsed? (rum/react sidebar/sidebar-collapsed?)
+        right-sidebar-open? (rum/react db/right-sidebar-open?)]
     [:div.night-center-boxBg.night-textColor-2
      (sidebar/app-top-bar {:title "AI Chat"})
      [:div.page-wrapper
@@ -352,7 +423,8 @@
       (sidebar/left-sidebar db database-name)
       ;; Main content area
       [:div.main-content-area
-       {:class (when sidebar-collapsed? "sidebar-collapsed")}
+       {:class (str (when sidebar-collapsed? "sidebar-collapsed")
+                    (when right-sidebar-open? " right-sidebar-open"))}
        [:div.flex.flex-column
         {:style {:padding "20px"
                  :max-width "900px"
