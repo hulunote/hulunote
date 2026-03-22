@@ -1,6 +1,7 @@
 (ns hulunote.all-notes
   (:require [datascript.core :as d]
             [rum.core :as rum]
+            [hulunote.icon :as icon]
             [hulunote.util :as u]
             [hulunote.db :as db]
             [hulunote.sidebar :as sidebar]
@@ -199,11 +200,12 @@
                  :border-radius "8px"
                  :background "var(--app-overlay-soft-stronger)"
                  :border "1px solid var(--app-divider)"}}
-        [:img {:src (u/asset-path "/img/icons/search.svg")
-               :width "15px"
-               :height "15px"
-               :style {:opacity 0.72
-                       :filter "invert(1) brightness(0.82)"}}]
+        (icon/svg-icon
+          {:name "search"
+           :style {:width "15px"
+                   :height "15px"
+                   :opacity 0.72
+                   :color "var(--app-text-secondary)"}})
         [:input
          {:type "text"
           :placeholder "Search All Pages"
@@ -227,11 +229,13 @@
                  :border "1px solid var(--app-divider)"
                  :background "var(--app-overlay-soft)"
                  :cursor "default"}}
-        [:img {:src (u/asset-path "/img/icons/calendar_month.svg")
-               :width "16px"
-               :height "16px"
-               :style {:opacity 0.78
-                       :filter "invert(1) brightness(0.82)"}}]]]]
+        (icon/svg-icon
+          {:name "calendar_month"
+           :style {:width "16px"
+                   :height "16px"
+                   :opacity 0.78
+                   :color "var(--app-text-secondary)"}})]]
+      ]
      [:div
       {:style {:display "grid"
                :grid-template-columns "44px minmax(0, 1fr) 140px 140px"

@@ -86,8 +86,7 @@
      {:name icon-name
       :style {:width "16px"
               :height "16px"
-              :opacity (if disabled? 0.24 0.72)
-              :filter "brightness(0) invert(1)"}})])
+              :opacity (if disabled? 0.24 0.72)}})])
 
 (rum/defc shortcut-button < rum/reactive [command]
   (let [{:keys [id]} command

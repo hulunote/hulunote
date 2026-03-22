@@ -245,4 +245,4 @@
     (mcp-state/init!))
   (init-chat-settings!)
   (load-chat-models!)
-  (set-tab! (or initial-tab :profile)))
+  (set-tab! (or initial-tab :preferences)))

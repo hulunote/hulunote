@@ -1,4 +1,6 @@
 :root {
+    color-scheme: dark;
+
     /* Layout */
     --sidebar-width: 250px;
     --sidebar-collapsed-width: 0px;
@@ -38,6 +40,8 @@
     --ui-surface-modal: #2a2f3a;
     --ui-surface-modal-input: #363b48;
     --ui-surface-control: #3d4455;
+    --ui-sidebar-bg: var(--ui-surface-panel);
+    --ui-content-bg: var(--ui-bg-shell);
     --ui-surface-hover: rgba(255, 255, 255, 0.1);
     --ui-surface-hover-strong: #4a5568;
     --ui-surface-popover-hover: rgba(255, 255, 255, 0.08);
@@ -92,6 +96,9 @@
     --ui-accent-15: rgba(102, 126, 234, 0.15);
     --ui-accent-20: rgba(102, 126, 234, 0.2);
     --ui-accent-30: rgba(102, 126, 234, 0.3);
+    --ui-nav-hover-bg: var(--ui-accent-15);
+    --ui-nav-active-bg: var(--ui-accent-20);
+    --ui-nav-active-border: transparent;
     --ui-accent-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     --ui-accent-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
     --ui-success: #52c41a;
@@ -141,10 +148,10 @@
     --surface-popover-danger-hover: var(--ui-surface-popover-danger-hover);
     --color-primary: var(--ui-accent);
     --color-primary-glow: var(--ui-accent-glow);
-    --text-primary: var(--light-text-primary);
-    --text-secondary: var(--light-text-secondary);
-    --text-muted: var(--light-text-muted);
-    --border-color: var(--light-border);
+    --text-primary: var(--ui-text-primary);
+    --text-secondary: var(--ui-text-secondary);
+    --text-muted: var(--ui-text-muted);
+    --border-color: var(--ui-border-subtle);
     --theme-accent: var(--ui-accent);
     --theme-accent-glow: var(--ui-accent-glow);
     --theme-accent-15: var(--ui-accent-15);
@@ -366,15 +373,280 @@
     --mermaid-button-hover-bg: rgba(102, 126, 234, 0.1);
 }
 
+:root[data-theme="light"] {
+    color-scheme: light;
+    --bullet-idle-color: #6b7280;
+    --bullet-collapsed-glow: rgba(107, 114, 128, 0.18);
+    --diary-entry-divider: rgba(148, 163, 184, 0.32);
+    --ui-bg-app: rgb(255, 255, 255);
+    --ui-bg-shell: rgb(246, 246, 246);
+    --ui-surface-panel: #ffffff;
+    --ui-surface-topbar: rgb(246, 246, 246);
+    --ui-surface-popover: #ffffff;
+    --ui-surface-modal: #ffffff;
+    --ui-surface-modal-input: #f8fafc;
+    --ui-surface-control: #f1f5f9;
+    --ui-sidebar-bg: rgb(246, 246, 246);
+    --ui-content-bg: rgb(255, 255, 255);
+    --ui-surface-hover: rgb(241, 241, 241);
+    --ui-surface-hover-strong: #e2e8f0;
+    --ui-surface-popover-hover: rgba(15, 23, 42, 0.05);
+    --ui-surface-popover-danger-hover: rgba(239, 68, 68, 0.1);
+    --ui-surface-panel-subtle: rgba(148, 163, 184, 0.08);
+    --ui-surface-panel-soft: rgba(148, 163, 184, 0.1);
+    --ui-surface-panel-soft-hover: rgba(148, 163, 184, 0.16);
+    --ui-surface-control-soft: rgba(148, 163, 184, 0.12);
+    --ui-surface-control-strong: rgba(148, 163, 184, 0.16);
+    --ui-surface-row-hover: rgba(15, 23, 42, 0.035);
+    --ui-surface-glass: rgba(255, 255, 255, 0.78);
+    --ui-surface-glass-highlight: linear-gradient(135deg, rgba(79, 70, 229, 0.1), rgba(14, 165, 233, 0.08));
+    --ui-text-strong: #0f172a;
+    --ui-text-primary: rgba(15, 23, 42, 0.92);
+    --ui-text-secondary: rgba(30, 41, 59, 0.8);
+    --ui-text-muted: rgba(51, 65, 85, 0.72);
+    --ui-text-soft: rgba(71, 85, 105, 0.68);
+    --ui-text-subtle: rgba(100, 116, 139, 0.78);
+    --ui-text-faint: rgba(100, 116, 139, 0.6);
+    --ui-text-placeholder: rgba(100, 116, 139, 0.46);
+    --ui-control-text: rgba(30, 41, 59, 0.82);
+    --ui-control-text-strong: rgba(15, 23, 42, 0.9);
+    --ui-control-text-soft: rgba(71, 85, 105, 0.68);
+    --ui-control-text-faint: rgba(100, 116, 139, 0.58);
+    --ui-border-subtle: rgba(148, 163, 184, 0.26);
+    --ui-border-strong: rgba(148, 163, 184, 0.4);
+    --ui-border-control: rgba(148, 163, 184, 0.46);
+    --ui-border-accent-soft: rgba(79, 70, 229, 0.22);
+    --ui-border-accent-strong: rgba(79, 70, 229, 0.48);
+    --ui-border-warning: rgba(217, 119, 6, 0.28);
+    --ui-border-success: rgba(34, 197, 94, 0.28);
+    --ui-border-danger: rgba(239, 68, 68, 0.26);
+    --ui-border-danger-strong: rgba(239, 68, 68, 0.42);
+    --ui-border-card-soft: rgba(148, 163, 184, 0.22);
+    --ui-border-card-header: rgba(148, 163, 184, 0.18);
+    --ui-divider: rgba(148, 163, 184, 0.22);
+    --ui-overlay-soft: rgba(148, 163, 184, 0.08);
+    --ui-overlay-soft-strong: rgba(148, 163, 184, 0.12);
+    --ui-overlay-soft-stronger: rgba(148, 163, 184, 0.18);
+    --ui-overlay-dim: rgba(15, 23, 42, 0.28);
+    --ui-overlay-dialog: rgba(15, 23, 42, 0.2);
+    --ui-overlay-modal: rgba(15, 23, 42, 0.22);
+    --ui-overlay-modal-strong: rgba(15, 23, 42, 0.32);
+    --ui-accent: #4f46e5;
+    --ui-accent-hover: #4338ca;
+    --ui-accent-strong: #3730a3;
+    --ui-accent-text: #ffffff;
+    --ui-accent-text-soft: #4f46e5;
+    --ui-accent-glow: rgba(79, 70, 229, 0.26);
+    --ui-accent-soft: rgba(79, 70, 229, 0.1);
+    --ui-accent-soft-strong: rgba(79, 70, 229, 0.16);
+    --ui-accent-15: rgba(79, 70, 229, 0.15);
+    --ui-accent-20: rgba(79, 70, 229, 0.2);
+    --ui-accent-30: rgba(79, 70, 229, 0.3);
+    --ui-nav-hover-bg: var(--ui-nav-active-bg);
+    --ui-nav-active-bg: rgb(235, 235, 235);
+    --ui-nav-active-border: transparent;
+    --ui-accent-gradient: linear-gradient(135deg, #4f46e5 0%, #0ea5e9 100%);
+    --ui-accent-shadow: 0 8px 20px rgba(79, 70, 229, 0.2);
+    --ui-success: #15803d;
+    --ui-success-strong: #166534;
+    --ui-success-soft: rgba(34, 197, 94, 0.12);
+    --ui-success-gradient: linear-gradient(135deg, #22c55e 0%, #15803d 100%);
+    --ui-warning: #d97706;
+    --ui-warning-soft: rgba(245, 158, 11, 0.12);
+    --ui-warning-soft-text: rgba(180, 83, 9, 0.9);
+    --ui-danger: #dc2626;
+    --ui-danger-strong: #b91c1c;
+    --ui-danger-text: #dc2626;
+    --ui-danger-text-soft: #ef4444;
+    --ui-danger-soft: rgba(239, 68, 68, 0.1);
+    --ui-danger-bg-soft: rgba(254, 226, 226, 0.8);
+    --ui-danger-bg-strong: rgba(254, 202, 202, 0.92);
+    --ui-danger-bg-hover: rgba(254, 202, 202, 1);
+    --ui-danger-border-soft: rgba(248, 113, 113, 0.38);
+    --ui-outline-line: #cbd5e1;
+    --ui-outline-line-hover: #94a3b8;
+    --ui-scrollbar-thumb: rgba(100, 116, 139, 0.3);
+    --ui-shadow-popover-compact: 0 8px 24px rgba(15, 23, 42, 0.1);
+    --ui-shadow-popover: 0 18px 50px rgba(15, 23, 42, 0.12);
+    --ui-shadow-popover-strong: 0 24px 60px rgba(15, 23, 42, 0.16);
+    --ui-shadow-modal: 0 24px 72px rgba(15, 23, 42, 0.16);
+    --ui-shadow-modal-large: 0 28px 90px rgba(15, 23, 42, 0.18);
+    --ui-shadow-dialog: 0 24px 70px rgba(15, 23, 42, 0.16), inset 0 1px 0 rgba(255, 255, 255, 0.72);
+    --ui-shadow-search-modal: 0 20px 60px rgba(15, 23, 42, 0.18);
+    --ui-shadow-sidebar-peek: 12px 0 28px rgba(15, 23, 42, 0.12);
+    --ui-shadow-glass: 0 12px 30px rgba(15, 23, 42, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.72);
+    --ui-toast-text: #0f172a;
+    --ui-markdown-highlight-bg: rgba(79, 70, 229, 0.14);
+    --ui-markdown-highlight-text: #312e81;
+    --graph-node-hub: #4f46e5;
+    --graph-node-active: #7c3aed;
+    --graph-node-light: #0ea5e9;
+    --graph-node-isolated: #94a3b8;
+    --graph-link: rgba(79, 70, 229, 0.16);
+    --graph-link-strong: rgba(79, 70, 229, 0.28);
+    --home-bg-base: #f8fafc;
+    --home-bg-section: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+    --home-bg-section-reverse: linear-gradient(180deg, #f8fafc 0%, #ffffff 100%);
+    --home-bg-focus: linear-gradient(180deg, #f8fafc 0%, #eef2ff 50%, #f8fafc 100%);
+    --home-bg-footer: #eef2ff;
+    --home-panel-gradient: linear-gradient(145deg, rgba(255, 255, 255, 0.95) 0%, rgba(248, 250, 252, 0.98) 100%);
+    --home-panel-gradient-alt: linear-gradient(145deg, #ffffff, #f8fafc);
+    --home-panel-shadow-subtle: 0 10px 30px rgba(15, 23, 42, 0.08);
+    --home-text-accent: #4338ca;
+    --home-text-purple: #7c3aed;
+    --home-text-cyan: #0891b2;
+    --home-text-dim: rgba(51, 65, 85, 0.72);
+    --home-text-soft: rgba(71, 85, 105, 0.68);
+    --home-text-faint: rgba(100, 116, 139, 0.6);
+    --home-text-strong: rgba(15, 23, 42, 0.9);
+    --home-divider: rgba(148, 163, 184, 0.18);
+    --home-header-bg: rgba(255, 255, 255, 0.78);
+    --home-header-border: rgba(79, 70, 229, 0.12);
+    --home-grid-line: rgba(79, 70, 229, 0.04);
+    --home-hero-glow: radial-gradient(ellipse, rgba(79, 70, 229, 0.1) 0%, rgba(14, 165, 233, 0.05) 50%, transparent 72%);
+    --home-focus-glow: radial-gradient(circle, rgba(79, 70, 229, 0.08) 0%, rgba(14, 165, 233, 0.04) 35%, transparent 65%);
+    --home-visual-glow: radial-gradient(ellipse, rgba(14, 165, 233, 0.08) 0%, rgba(79, 70, 229, 0.05) 40%, transparent 72%);
+    --home-brain-gradient: linear-gradient(135deg, rgba(79, 70, 229, 0.1), rgba(14, 165, 233, 0.08));
+    --home-brain-shadow: 0 0 60px rgba(79, 70, 229, 0.08), 0 0 120px rgba(14, 165, 233, 0.06), inset 0 0 30px rgba(79, 70, 229, 0.05);
+    --home-accent-line: rgba(79, 70, 229, 0.24);
+    --home-accent-line-soft: rgba(79, 70, 229, 0.1);
+    --home-accent-line-faint: rgba(79, 70, 229, 0.05);
+    --home-accent-border: rgba(79, 70, 229, 0.18);
+    --home-accent-shadow: 0 8px 24px rgba(79, 70, 229, 0.16);
+    --home-accent-shadow-soft: 0 6px 18px rgba(79, 70, 229, 0.12);
+    --home-panel-shadow: 0 20px 50px rgba(15, 23, 42, 0.08);
+    --home-card-inset-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.68);
+    --home-card-top-line: linear-gradient(90deg, transparent, rgba(79, 70, 229, 0.32), transparent);
+    --home-card-icon-glow: drop-shadow(0 0 8px rgba(79, 70, 229, 0.2));
+    --home-cyan-border: rgba(14, 165, 233, 0.18);
+    --home-cyan-border-soft: rgba(14, 165, 233, 0.12);
+    --home-cyan-line: rgba(14, 165, 233, 0.28);
+    --home-cyan-soft: rgba(14, 165, 233, 0.14);
+    --home-cyan-soft-text: rgba(8, 145, 178, 0.75);
+    --home-cyan-gradient: linear-gradient(135deg, #0ea5e9, #4f46e5);
+    --home-cyan-inset-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7);
+    --home-orange-border: rgba(245, 158, 11, 0.18);
+    --home-orange-border-soft: rgba(245, 158, 11, 0.12);
+    --home-orange-soft: rgba(245, 158, 11, 0.12);
+    --home-orange-gradient: linear-gradient(135deg, #f59e0b, #f97316);
+    --home-orange-inset-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7);
+    --home-purple-border: rgba(124, 58, 237, 0.14);
+    --home-purple-border-strong: rgba(124, 58, 237, 0.18);
+    --home-purple-line: rgba(124, 58, 237, 0.28);
+    --home-purple-shadow: drop-shadow(0 0 8px rgba(124, 58, 237, 0.18));
+    --home-purple-inset-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7);
+    --home-indigo-border: rgba(79, 70, 229, 0.16);
+    --home-indigo-line: rgba(79, 70, 229, 0.26);
+    --home-indigo-shadow: drop-shadow(0 0 8px rgba(79, 70, 229, 0.18));
+    --home-indigo-inset-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7);
+    --home-code-key: #4f46e5;
+    --home-code-symbol: #0ea5e9;
+    --home-code-magenta: #7c3aed;
+    --home-stroke: #94a3b8;
+    --home-orange: #f59e0b;
+    --home-orange-strong: #ea580c;
+    --home-graph-link-secondary: rgba(124, 58, 237, 0.16);
+    --home-graph-link-secondary-soft: rgba(124, 58, 237, 0.1);
+    --home-graph-node-active-stroke: rgba(124, 58, 237, 0.3);
+    --home-graph-node-light-stroke: rgba(14, 165, 233, 0.26);
+    --home-graph-node-isolated-stroke: rgba(148, 163, 184, 0.3);
+    --home-mermaid-canvas-bg: #f8fafc;
+    --home-mermaid-node-ai-bg: rgba(79, 70, 229, 0.12);
+    --home-mermaid-node-ai-border: #4f46e5;
+    --home-mermaid-node-notes-bg: rgba(124, 58, 237, 0.12);
+    --home-mermaid-node-notes-border: #7c3aed;
+    --home-mermaid-node-graph-bg: rgba(14, 165, 233, 0.12);
+    --home-mermaid-node-graph-border: #0ea5e9;
+    --home-mermaid-node-insights-bg: rgba(245, 158, 11, 0.12);
+    --home-mermaid-node-insights-border: #f59e0b;
+    --home-mermaid-node-action-bg: rgba(79, 70, 229, 0.1);
+    --home-mermaid-node-action-border: #4f46e5;
+    --home-cta-grid: linear-gradient(rgba(148, 163, 184, 0.12) 1px, transparent 1px), linear-gradient(90deg, rgba(148, 163, 184, 0.12) 1px, transparent 1px);
+    --home-cta-outline-border: rgba(79, 70, 229, 0.28);
+    --home-footer-link: rgba(79, 70, 229, 0.72);
+    --code-block-border: #d5deea;
+    --code-block-bg: #f8fafc;
+    --code-block-gutter-bg: #eef2f7;
+    --code-block-text: #0f172a;
+    --code-block-muted: #64748b;
+    --code-block-subtle: #94a3b8;
+    --code-block-cursor: #4f46e5;
+    --code-block-selection: rgba(79, 70, 229, 0.12);
+    --code-block-selection-focused: rgba(79, 70, 229, 0.2);
+    --code-block-hover-bg: rgba(79, 70, 229, 0.06);
+    --code-block-keyword: #7c3aed;
+    --code-block-def: #2563eb;
+    --code-block-variable: #0f172a;
+    --code-block-variable-2: #db2777;
+    --code-block-variable-3: #d97706;
+    --code-block-operator: #0891b2;
+    --code-block-number: #ea580c;
+    --code-block-string: #15803d;
+    --code-block-comment: #94a3b8;
+    --mermaid-primary-color: #4f46e5;
+    --mermaid-primary-text: #0f172a;
+    --mermaid-border: #cbd5e1;
+    --mermaid-secondary: #7c3aed;
+    --mermaid-tertiary: #eef2ff;
+    --mermaid-background: #f8fafc;
+    --mermaid-main-bg: #eef2ff;
+    --mermaid-edge-label-bg: #ffffff;
+    --mermaid-badge-accent: #4f46e5;
+    --mermaid-loading-text: rgba(71, 85, 105, 0.78);
+    --mermaid-error-text: #dc2626;
+    --mermaid-button-hover-bg: rgba(79, 70, 229, 0.08);
+}
+
+:root[data-theme="light"] .sidebar-item.active,
+:root[data-theme="light"] .note-list-item.active {
+    background: var(--ui-nav-active-bg);
+    border: 1px solid transparent;
+    box-shadow: none;
+    opacity: 1;
+}
+
+:root[data-theme="light"] .sidebar-item:hover,
+:root[data-theme="light"] .note-list-item:hover {
+    background: var(--ui-nav-active-bg);
+}
+
+:root[data-theme="light"] .sidebar-new-note-btn {
+    background: transparent;
+    border: 1px solid transparent;
+    color: var(--ui-text-strong);
+}
+
+:root[data-theme="light"] .sidebar-new-note-btn:hover {
+    background: var(--ui-nav-active-bg);
+    border-color: transparent;
+}
+
 body {
     margin: 0;
     font-family: open sans,-apple-system,BlinkMacSystemFont,segoe ui,Roboto,helvetica neue,Arial,sans-serif,apple color emoji,segoe ui emoji,segoe ui symbol;
     font-size: 1rem;
     font-weight: 400;
     line-height: 1.5;
-    color: var(--ui-accent-text);
+    color: var(--ui-text-primary);
     text-align: left;
     background-color: var(--ui-bg-app);
+}
+
+.ui-svg-icon {
+    display: inline-block;
+    width: 1em;
+    height: 1em;
+    flex-shrink: 0;
+    vertical-align: middle;
+    background-color: currentColor;
+    -webkit-mask-image: var(--icon-mask);
+    mask-image: var(--icon-mask);
+    -webkit-mask-repeat: no-repeat;
+    mask-repeat: no-repeat;
+    -webkit-mask-position: center;
+    mask-position: center;
+    -webkit-mask-size: contain;
+    mask-size: contain;
 }
 
 .night-center-boxBg {
@@ -852,7 +1124,7 @@ hulu-text-font {
 
 .context-menu-item:hover,
 .menu-popover-item:hover {
-    background: var(--ui-surface-popover-hover);
+    background: var(--ui-nav-hover-bg);
 }
 
 .context-menu-item:active {
@@ -865,6 +1137,82 @@ hulu-text-font {
 
 .menu-popover-item-danger:hover {
     background: var(--ui-surface-popover-danger-hover);
+}
+
+.custom-select {
+    position: relative;
+    min-width: 0;
+}
+
+.custom-select-trigger {
+    width: 100%;
+    min-height: 40px;
+    padding: 0 14px;
+    border: 1px solid var(--ui-border-control);
+    border-radius: 10px;
+    background: var(--ui-content-bg);
+    color: var(--ui-text-strong);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    cursor: pointer;
+    box-sizing: border-box;
+    transition: border-color 0.15s ease, background 0.15s ease, box-shadow 0.15s ease;
+}
+
+.custom-select-trigger:hover {
+    background: var(--ui-content-bg);
+    border-color: var(--ui-border-strong);
+}
+
+.custom-select.open .custom-select-trigger {
+    background: var(--ui-content-bg);
+    border-color: var(--ui-border-strong);
+    box-shadow: none;
+}
+
+.custom-select.disabled .custom-select-trigger {
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
+.custom-select-trigger-label {
+    min-width: 0;
+    flex: 1 1 auto;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    text-align: left;
+    font-size: 14px;
+    line-height: 1.2;
+}
+
+.custom-select-trigger-icon {
+    width: 16px;
+    height: 16px;
+    color: var(--ui-text-secondary);
+    flex: 0 0 16px;
+    transition: transform 0.15s ease, color 0.15s ease;
+}
+
+.custom-select.open .custom-select-trigger-icon {
+    transform: rotate(180deg);
+    color: var(--ui-text-strong);
+}
+
+.custom-select-menu {
+    z-index: 10020;
+}
+
+.custom-select-menu .menu-popover-item {
+    margin: 0;
+    min-height: 36px;
+    border-radius: 10px;
+}
+
+.custom-select-option.active {
+    background: var(--ui-nav-active-bg);
 }
 
 /* ==================== Head Dot / Row Click ==================== */
@@ -963,7 +1311,7 @@ hulu-text-font {
     top: var(--app-topbar-height);
     height: calc(100vh - var(--app-topbar-height));
     width: var(--sidebar-width);
-    background: var(--ui-surface-panel);
+    background: var(--ui-sidebar-bg);
     border-right: 1px solid var(--ui-border-subtle);
     transition: transform 0.3s ease;
     z-index: 100;
@@ -1105,7 +1453,7 @@ hulu-text-font {
     text-overflow: ellipsis;
     white-space: nowrap;
     font-size: 13px;
-    font-weight: 600;
+    font-weight: 400;
     color: var(--ui-text-strong);
 }
 
@@ -1113,7 +1461,7 @@ hulu-text-font {
     width: 14px;
     height: 14px;
     opacity: 0.7;
-    filter: brightness(0) invert(1);
+    color: var(--ui-text-soft);
     flex-shrink: 0;
     transition: transform 0.15s ease;
 }
@@ -1153,8 +1501,8 @@ hulu-text-font {
 }
 
 .sidebar-user-menu-database-item.active {
-    background: var(--ui-accent-20);
-    border: 1px solid var(--ui-accent-30);
+    background: var(--ui-nav-active-bg);
+    border: 1px solid var(--ui-nav-active-border);
     color: var(--ui-text-strong);
 }
 
@@ -1169,9 +1517,9 @@ hulu-text-font {
 }
 
 .sidebar-item {
-    margin: 2px 8px;
-    padding: 7px 12px;
-    min-height: 34px;
+    margin: 1px 8px;
+    padding: 6px 12px;
+    min-height: 32px;
     display: flex;
     align-items: center;
     cursor: pointer;
@@ -1184,13 +1532,13 @@ hulu-text-font {
 }
 
 .sidebar-item:hover {
-    background: var(--ui-surface-hover);
+    background: var(--ui-nav-hover-bg);
     opacity: 1;
 }
 
 .sidebar-item.active {
-    background: var(--ui-accent-20);
-    border: 1px solid var(--ui-accent-30);
+    background: var(--ui-nav-active-bg);
+    border: 1px solid var(--ui-nav-active-border);
     box-shadow: none;
     opacity: 1;
 }
@@ -1207,7 +1555,8 @@ hulu-text-font {
 .sidebar-symbol-icon {
     width: 16px;
     height: 16px;
-    filter: invert(1) brightness(0.85);
+    color: var(--ui-control-text-strong);
+    opacity: 0.9;
     line-height: 1;
 }
 
@@ -1252,33 +1601,37 @@ hulu-text-font {
 }
 
 .new-note-btn-icon {
-    width: 14px;
-    height: 14px;
+    width: 16px;
+    height: 16px;
     display: inline-flex;
     align-items: center;
     justify-content: center;
     flex-shrink: 0;
-    filter: brightness(0) invert(1);
+    color: inherit;
     object-fit: contain;
 }
 
 .sidebar-new-note-btn {
-    background: var(--ui-accent-20);
-    border: 1px solid var(--ui-accent-30);
+    width: calc(100% - 16px);
+    background: transparent;
+    border: 1px solid transparent;
     color: var(--ui-text-strong);
-    border-radius: 8px;
-    font-weight: 600;
+    font: inherit;
+    text-align: left;
     box-shadow: none;
-    opacity: 1;
+    opacity: 0.8;
+    appearance: none;
+    -webkit-appearance: none;
 }
 
 .sidebar-new-note-btn:hover {
-    background: var(--ui-accent-20);
-    border-color: var(--ui-accent-30);
+    background: var(--ui-nav-hover-bg);
+    border-color: transparent;
+    opacity: 1;
 }
 
 .sidebar-new-note-btn .new-note-btn-icon {
-    opacity: 0.92;
+    opacity: 0.9;
 }
 
 .note-list {
@@ -1288,8 +1641,8 @@ hulu-text-font {
 }
 
 .note-list-item {
-    margin: 2px 8px;
-    padding: 8px 8px;
+    margin: 1px 8px;
+    padding: 7px 8px;
     cursor: pointer;
     color: var(--ui-text-strong);
     opacity: 0.7;
@@ -1302,7 +1655,7 @@ hulu-text-font {
 }
 
 .note-list-item:hover {
-    background: var(--ui-surface-hover);
+    background: var(--ui-nav-hover-bg);
     opacity: 1;
 }
 
@@ -1345,6 +1698,7 @@ hulu-text-font {
     transition: margin-left 0.3s ease, padding-left 0.3s ease;
     min-height: calc(100vh - var(--app-topbar-height));
     overflow-y: auto;
+    background: var(--ui-content-bg);
     padding-top: 0;
     padding-left: 40px;
     padding-right: 40px;
@@ -1370,7 +1724,7 @@ hulu-text-font {
     grid-template-columns: auto 1fr auto;
     align-items: center;
     gap: 12px;
-    background: var(--ui-surface-topbar);
+    background: var(--ui-content-bg);
     border-bottom: 1px solid var(--ui-border-subtle);
     backdrop-filter: blur(8px);
 }
@@ -1378,7 +1732,7 @@ hulu-text-font {
 .app-topbar.with-sidebar {
     grid-template-columns: var(--sidebar-width) auto 1fr auto;
     padding-left: 0;
-    gap: 4px;
+    gap: 0;
 }
 
 .app-topbar-brand {
@@ -1388,6 +1742,9 @@ hulu-text-font {
     justify-content: stretch;
     padding: 0 16px;
     box-sizing: border-box;
+    background: var(--ui-sidebar-bg);
+    border-right: 1px solid var(--ui-border-subtle);
+    border-bottom: 1px solid var(--ui-border-subtle);
 }
 
 .app-topbar-brand-main {
@@ -1423,11 +1780,11 @@ hulu-text-font {
 }
 
 .app-topbar.with-sidebar .app-topbar-left {
-    padding-left: 0;
+    padding-left: 14px;
 }
 
 .app-topbar.with-sidebar .app-topbar-brand {
-    padding-right: 8px;
+    padding-right: 16px;
 }
 
 /* When running inside Electron on macOS, add extra padding for traffic lights */
@@ -1484,18 +1841,18 @@ hulu-text-font {
 .app-topbar-icon {
     width: 16px;
     height: 16px;
-    filter: invert(1) brightness(0.85);
+    color: var(--ui-control-text-strong);
 }
 
 .app-topbar-btn:hover {
-    background: var(--ui-surface-hover);
-    border-color: var(--ui-border-strong);
+    background: var(--ui-nav-active-bg);
+    border-color: transparent;
     color: var(--ui-text-strong);
 }
 
 .app-topbar-btn.active {
-    background: var(--ui-accent-20);
-    border-color: var(--ui-accent-30);
+    background: var(--ui-nav-active-bg);
+    border-color: var(--ui-nav-active-border);
     color: var(--ui-text-strong);
 }
 
@@ -2181,7 +2538,7 @@ hulu-text-font {
     width: 18px;
     height: 18px;
     opacity: 0.5;
-    filter: brightness(0) invert(1);
+    color: var(--ui-text-subtle);
 }
 
 .search-modal-input {

@@ -2,16 +2,16 @@
 
 (defonce settings-modal-state
   (atom {:open? false
-         :tab :profile
+         :tab :preferences
          :version 0}))
 
 (defn open-settings!
-  ([] (open-settings! :profile))
+  ([] (open-settings! :preferences))
   ([tab]
    (swap! settings-modal-state
           (fn [{:keys [version]}]
             {:open? true
-             :tab (or tab :profile)
+             :tab (or tab :preferences)
              :version (inc (or version 0))}))))
 
 (defn close-settings! []

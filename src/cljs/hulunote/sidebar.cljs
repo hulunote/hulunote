@@ -8,6 +8,7 @@
             [hulunote.menu :as menu]
             [hulunote.settings-state :as settings-state]
             [hulunote.storage :as storage]
+            [hulunote.theme :as theme]
             [hulunote.util :as u]
             [hulunote.router :as router]
             [hulunote.render :as render]
@@ -297,42 +298,42 @@
     {:name "more_horiz"
      :style {:width "16px"
              :height "16px"
-             :filter "brightness(0) invert(1)"}}))
+             :color "var(--ui-text-strong)"}}))
 
 (defn star-menu-icon []
   (icon/svg-icon
     {:name "star"
      :style {:width "14px"
              :height "14px"
-             :filter "brightness(0) invert(1)"}}))
+             :color "var(--ui-text-strong)"}}))
 
 (defn star-menu-icon-filled []
   (icon/svg-icon
     {:name "star"
      :style {:width "14px"
              :height "14px"
-             :filter "brightness(0) invert(1)"}}))
+             :color "var(--ui-warning)"}}))
 
 (defn delete-menu-icon []
   (icon/svg-icon
     {:name "delete"
      :style {:width "14px"
              :height "14px"
-             :filter "brightness(0) saturate(100%) invert(57%) sepia(69%) saturate(3786%) hue-rotate(324deg) brightness(101%) contrast(101%)"}}))
+             :color "var(--ui-danger)"}}))
 
 (defn settings-menu-icon []
   (icon/svg-icon
     {:name "settings"
      :style {:width "14px"
              :height "14px"
-             :filter "brightness(0) invert(1)"}}))
+             :color "var(--ui-text-strong)"}}))
 
 (defn logout-menu-icon []
   (icon/svg-icon
     {:name "logout"
      :style {:width "14px"
              :height "14px"
-             :filter "brightness(0) saturate(100%) invert(57%) sepia(69%) saturate(3786%) hue-rotate(324deg) brightness(101%) contrast(101%)"}}))
+             :color "var(--ui-danger)"}}))
 
 (defn available-database-names
   [conn]
@@ -467,7 +468,7 @@
                          :style {:width "16px"
                                  :height "16px"
                                  :opacity 0.78
-                                 :filter "brightness(0) invert(1)"}})
+                                 :color "var(--ui-text-secondary)"}})
                 :on-click (fn [_]
                             (if (= db-name database-name)
                               (hide-sidebar-user-menu!)
@@ -503,6 +504,7 @@
   (let [collapsed? (rum/react sidebar-collapsed?)
         right-sidebar-open? (rum/react db/right-sidebar-open?)
         current-route (db/get-route (rum/react db/dsdb))
+        current-theme-mode (rum/react theme/current-theme-mode)
         database-name (get-in current-route [:params :database])
         more-menu-open? (rum/react topbar-more-menu-open?)
         more-menu-items (or more-menu-items [])]
@@ -558,7 +560,7 @@
                {:class (str "topbar-more-menu-item"
                             (when danger? " topbar-more-menu-item-danger")
                             (when class (str " " class)))
-                :danger? danger?
+               :danger? danger?
                 :icon icon
                 :style style
                 :on-click (fn [e]
@@ -567,6 +569,19 @@
                               (on-click e))
                             (hide-topbar-more-menu!))}
                label))))])
+    [:button.app-topbar-btn
+     {:title (case current-theme-mode
+               "dark" "Theme: Dark"
+               "light" "Theme: Light"
+               "auto" "Theme: Auto"
+               "Theme")
+      :on-click #(theme/set-theme! (theme/next-theme-mode))}
+     (icon/svg-icon {:name (case current-theme-mode
+                             "dark" "theme_dark"
+                             "light" "theme_light"
+                             "auto" "theme_auto"
+                             "theme_dark")
+                     :class "app-topbar-icon"})]
     [:button.app-topbar-btn
      {:class (when right-sidebar-open? "active")
       :title (if right-sidebar-open?
@@ -641,10 +656,12 @@
                         #(router/go-to-mcp-chat! database-name)
                         (= route-name :mcp-chat))
 
-          [:button.new-note-btn.sidebar-new-note-btn
-           {:on-click #(create-new-note! database-name)}
-           (icon/svg-icon {:name "add_large" :class "new-note-btn-icon"})
-           "New Note"]
+          [:button.sidebar-item.sidebar-new-note-btn
+           {:type "button"
+            :on-click #(create-new-note! database-name)}
+           [:div.sidebar-item-icon
+            (icon/svg-icon {:name "note_add" :class "sidebar-symbol-icon new-note-btn-icon"})]
+           [:div.sidebar-item-text "New Note"]]
 
           [:div.sidebar-section-title "Shortcuts"]
 
