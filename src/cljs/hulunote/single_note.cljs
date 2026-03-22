@@ -1,5 +1,6 @@
 (ns hulunote.single-note
-  (:require [datascript.core :as d]
+  (:require [clojure.string :as str]
+            [datascript.core :as d]
             [rum.core :as rum]
             [hulunote.components :as comps]
             [hulunote.menu :as menu]
@@ -23,11 +24,21 @@
                                   :root-nav-id nil
                                   :database-name nil}))
 
+(declare note-title-editor)
+(declare linked-references)
+
 (defn get-route-params
   "Get route params from db"
   [db]
   (let [{:keys [params]} (db/get-route db)]
     params))
+
+(defn block-label
+  [content]
+  (let [text (some-> content str/trim)]
+    (if (str/blank? text)
+      "Untitled block"
+      text)))
 
 (defn get-note-by-id
   "Get note by id from datascript"
@@ -42,6 +53,72 @@
                    [(get-else $ ?e :hulunote-notes/is-shortcut false) ?is-shortcut]]
                  db note-id)]
     (first result)))
+
+(defn get-nav-breadcrumbs
+  [db root-nav-id nav-id]
+  (loop [current-id nav-id
+         acc []]
+    (if-let [nav (u/get-nav-by-id db current-id)]
+      (let [entry {:id current-id
+                   :content (:content nav)}
+            parent-id (:origin-parid nav)]
+        (if (or (nil? parent-id)
+                (= parent-id root-nav-id)
+                (= parent-id db/root-id))
+          (vec (reverse (conj acc entry)))
+          (recur parent-id (conj acc entry))))
+      (vec (reverse acc)))))
+
+(rum/defc focused-block-breadcrumbs
+  [database-name note-id note-title breadcrumbs]
+  (into
+    [:div
+     {:style {:display "flex"
+              :align-items "center"
+              :flex-wrap "wrap"
+              :gap "8px"
+              :margin-bottom "18px"
+              :font-size "15px"
+              :line-height "1.5"}}
+     [:span
+      {:style {:color "rgba(255,255,255,0.56)"
+               :cursor "pointer"
+               :font-weight "500"}
+       :on-click #(router/go-to-note! database-name note-id)}
+      note-title]]
+    (mapcat
+      (fn [[_ {:keys [id content]}]]
+        [[:span {:key (str "sep-" id)
+                 :style {:color "rgba(255,255,255,0.24)"}} "›"]
+         [:span
+          {:key (str "crumb-" id)
+           :style {:color "rgba(255,255,255,0.50)"
+                   :cursor "pointer"}
+           :on-click #(router/go-to-block-focus! database-name note-id id)}
+          (block-label content)]])
+      (map-indexed vector breadcrumbs))))
+
+(rum/defc focused-block-view
+  [db database-name note-id note-title nav-id]
+  (let [[_ root-nav-id] (get-note-by-id db note-id)
+        breadcrumbs (get-nav-breadcrumbs db root-nav-id nav-id)
+        parent-breadcrumbs (vec (butlast breadcrumbs))
+        focused-nav (u/get-nav-by-id db nav-id)]
+    (when focused-nav
+      [:div
+       (focused-block-breadcrumbs database-name note-id note-title parent-breadcrumbs)
+       [:div {:style {:padding-left "12px"}}
+        (render/nav-input db nav-id note-id database-name)]])))
+
+(defn note-page-content
+  [db database note-id note-title root-nav-id]
+  [:<>
+   [:div.note-title-wrapper
+    {:style {:margin-bottom "24px"}}
+    (note-title-editor note-id note-title root-nav-id database)]
+   [:div {:style {:padding-left "12px"}}
+    (render/render-navs db root-nav-id note-id database)]
+   (linked-references db note-title note-id database)])
 
 (defn start-editing-title!
   "Start editing a note title"
@@ -433,7 +510,9 @@
 
 (rum/defc single-note-page < rum/reactive
   [db]
-  (let [{:keys [database note-id]} (get-route-params db)
+  (let [{:keys [database note-id nav-id]} (get-route-params db)
+        route-name (:route-name (db/get-route db))
+        focused-view? (= route-name :block-focus)
         note-info (when note-id (get-note-by-id db note-id))
         sidebar-collapsed? (rum/react sidebar/sidebar-collapsed?)
         right-sidebar-open? (rum/react db/right-sidebar-open?)]
@@ -472,17 +551,20 @@
         (if note-info
           (let [[note-title root-nav-id] note-info]
             [:div
-             ;; Editable note title with context menu
-             [:div.note-title-wrapper
-              {:style {:margin-bottom "24px"}}
-              (note-title-editor note-id note-title root-nav-id database)]
-
-             ;; Nav outline
-             [:div {:style {:padding-left "12px"}}
-              (render/render-navs db root-nav-id note-id database)]
-
-             ;; Linked References (Backlinks)
-             (linked-references db note-title note-id database)])
+             (if focused-view?
+               (if-let [focused-view (focused-block-view db database note-id note-title nav-id)]
+                 focused-view
+                 [:<>
+                  [:div
+                   {:style {:margin-bottom "20px"
+                            :padding "10px 14px"
+                            :border-radius "10px"
+                            :background "rgba(255,255,255,0.04)"
+                            :color "rgba(255,255,255,0.56)"
+                            :font-size "14px"}}
+                   "Focused block no longer exists. Showing the full note."]
+                  (note-page-content db database note-id note-title root-nav-id)])
+               (note-page-content db database note-id note-title root-nav-id))])
 
           ;; Note not found
           [:div.flex.flex-column.items-center.justify-center

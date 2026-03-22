@@ -5,6 +5,7 @@
             [hulunote.util :as u]
             [hulunote.db :as db]
             [hulunote.http :as http]
+            [hulunote.router :as router]
             [hulunote.components :as comps]
             [hulunote.plugin :as plugin]
             [hulunote.codemirror :as cm]
@@ -761,13 +762,17 @@
       [{:id nav-id :content (:content nav)}])))
 
 (defn get-visible-nav-list
-  "Get a flat list of all visible navs starting from root-nav-id.
-   This represents the visual order of navs as seen by the user."
-  [root-nav-id]
-  (let [root-nav (u/get-nav-sub-navs-sorted @db/dsdb root-nav-id)
-        children (:parid root-nav)]
-    ;; Start from root's children (don't include root itself)
-    (vec (mapcat #(collect-visible-navs (:id %)) children))))
+  "Get a flat list of visible navs for a subtree.
+   When include-root? is true, the root itself is included as the first item."
+  ([root-nav-id]
+   (get-visible-nav-list root-nav-id false))
+  ([root-nav-id include-root?]
+   (if include-root?
+     (vec (collect-visible-navs root-nav-id))
+     (let [root-nav (u/get-nav-sub-navs-sorted @db/dsdb root-nav-id)
+           children (:parid root-nav)]
+       ;; Start from root's children (don't include synthetic note root itself)
+       (vec (mapcat #(collect-visible-navs (:id %)) children))))))
 
 (defn find-visible-nav-index
   "Find the index of a nav in the visible nav list"
@@ -778,19 +783,23 @@
 
 (defn get-prev-visible-nav
   "Get the previous visible nav (the one above in visual hierarchy)"
-  [root-nav-id current-nav-id]
-  (let [visible-list (get-visible-nav-list root-nav-id)
-        current-idx (find-visible-nav-index visible-list current-nav-id)]
-    (when (and current-idx (> current-idx 0))
-      (nth visible-list (dec current-idx)))))
+  ([root-nav-id current-nav-id]
+   (get-prev-visible-nav root-nav-id current-nav-id false))
+  ([root-nav-id current-nav-id include-root?]
+   (let [visible-list (get-visible-nav-list root-nav-id include-root?)
+         current-idx (find-visible-nav-index visible-list current-nav-id)]
+     (when (and current-idx (> current-idx 0))
+       (nth visible-list (dec current-idx))))))
 
 (defn get-next-visible-nav
   "Get the next visible nav (the one below in visual hierarchy)"
-  [root-nav-id current-nav-id]
-  (let [visible-list (get-visible-nav-list root-nav-id)
-        current-idx (find-visible-nav-index visible-list current-nav-id)]
-    (when (and current-idx (< current-idx (dec (count visible-list))))
-      (nth visible-list (inc current-idx)))))
+  ([root-nav-id current-nav-id]
+   (get-next-visible-nav root-nav-id current-nav-id false))
+  ([root-nav-id current-nav-id include-root?]
+   (let [visible-list (get-visible-nav-list root-nav-id include-root?)
+         current-idx (find-visible-nav-index visible-list current-nav-id)]
+     (when (and current-idx (< current-idx (dec (count visible-list))))
+       (nth visible-list (inc current-idx))))))
 
 ;; ==================== Nav Operations ====================
 
@@ -874,6 +883,37 @@
         :parid parid
         :content ""
         :order new-order}])))
+
+(defn create-child-nav!
+  "Create a new child nav as the last child of the current nav."
+  [current-nav-id note-id database-name]
+  (let [last-child-order (get-last-child-order current-nav-id)
+        new-order (calculate-order-between last-child-order nil)
+        new-nav-id (str (d/squuid))]
+    (d/transact! db/dsdb
+      [{:id new-nav-id
+        :content ""
+        :hulunote-note note-id
+        :same-deep-order new-order
+        :is-display true
+        :origin-parid current-nav-id}
+       [:db/add [:id current-nav-id] :parid [:id new-nav-id]]
+       [:db/add [:id current-nav-id] :is-display true]])
+    (start-editing! new-nav-id "")
+    (re-frame/dispatch-sync
+      [:create-nav
+       {:database-name database-name
+        :note-id note-id
+        :id new-nav-id
+        :parid current-nav-id
+        :content ""
+        :order new-order}])
+    (re-frame/dispatch-sync
+      [:update-nav
+       {:database-name database-name
+        :note-id note-id
+        :id current-nav-id
+        :is-display true}])))
 
 (defn indent-nav!
   "Indent a nav (make it a child of its previous sibling).
@@ -1007,7 +1047,14 @@
         current-content (or (.-value input) @editing-content)
         cursor-pos (.-selectionStart input)
         content-length (count current-content)
-        root-nav-id (get-root-nav-id note-id)]
+        root-nav-id (get-root-nav-id note-id)
+        {:keys [route-name params]} (db/get-route @db/dsdb)
+        focused-nav-id (:nav-id params)
+        focused-view? (= route-name :block-focus)
+        visible-root-id (if focused-view? focused-nav-id root-nav-id)
+        include-root? focused-view?
+        focused-root? (and (= route-name :block-focus)
+                           (= nav-id focused-nav-id))]
     ;; Prevent global key handlers from stealing focus while editing.
     (.stopPropagation e)
     (cond
@@ -1115,7 +1162,7 @@
 
       ;; Arrow Up (38) - move to previous visible node
       (= key-code 38)
-      (when-let [prev-nav (get-prev-visible-nav root-nav-id nav-id)]
+      (when-let [prev-nav (get-prev-visible-nav visible-root-id nav-id include-root?)]
         (.preventDefault e)
         ;; Save current content first
         (d/transact! db/dsdb
@@ -1131,7 +1178,7 @@
 
       ;; Arrow Down (40) - move to next visible node
       (= key-code 40)
-      (when-let [next-nav (get-next-visible-nav root-nav-id nav-id)]
+      (when-let [next-nav (get-next-visible-nav visible-root-id nav-id include-root?)]
         (.preventDefault e)
         ;; Save current content first
         (d/transact! db/dsdb
@@ -1147,7 +1194,7 @@
 
       ;; Arrow Left (37) at position 0 - move to end of previous visible node
       (and (= key-code 37) (= cursor-pos 0) (not shift?))
-      (when-let [prev-nav (get-prev-visible-nav root-nav-id nav-id)]
+      (when-let [prev-nav (get-prev-visible-nav visible-root-id nav-id include-root?)]
         (.preventDefault e)
         ;; Save current content first
         (d/transact! db/dsdb
@@ -1159,7 +1206,7 @@
 
       ;; Arrow Right (39) at end - move to start of next visible node
       (and (= key-code 39) (= cursor-pos content-length) (not shift?))
-      (when-let [next-nav (get-next-visible-nav root-nav-id nav-id)]
+      (when-let [next-nav (get-next-visible-nav visible-root-id nav-id include-root?)]
         (.preventDefault e)
         ;; Save current content first
         (d/transact! db/dsdb
@@ -1184,7 +1231,7 @@
               parent-nav (when-let [parid (:origin-parid nav)]
                           (u/get-nav-by-id @db/dsdb parid))
               ;; Try to use visible navigation for better UX
-              prev-visible (get-prev-visible-nav root-nav-id nav-id)
+              prev-visible (get-prev-visible-nav visible-root-id nav-id include-root?)
           next-focus-id (or (:id prev-visible)
                                (:id prev-sibling)
                                (when (and parent-nav
@@ -1229,9 +1276,15 @@
         (save-nav-content! nav-id note-id database-name {:clear-editing? false})
         ;; Defer create+focus to next tick to avoid blur/keydown timing race.
         (js/setTimeout
-          #(if (and (= cursor-pos 0)
-                    (not (empty? current-content)))
+          #(cond
+             focused-root?
+             (create-child-nav! nav-id note-id database-name)
+
+             (and (= cursor-pos 0)
+                  (not (empty? current-content)))
              (create-sibling-above! nav-id note-id database-name)
+
+             :else
              (create-sibling-nav! nav-id note-id database-name))
           0))
 
@@ -1287,7 +1340,11 @@
         handle-toggle (or on-toggle
                           (fn [e]
                             (u/stop-click-bubble e)
-                            (toggle-nav-display! db nav-id is-display note-id database-name)))]
+                            (toggle-nav-display! db nav-id is-display note-id database-name)))
+        handle-focus (fn [e]
+                       (u/stop-click-bubble e)
+                       (when (and note-id database-name)
+                         (router/go-to-block-focus! database-name note-id nav-id)))]
     [:span
      {:class (str "controls hulu-text-font " (when has-child "has-children"))
       :style {:align-items "center"
@@ -1351,7 +1408,8 @@
                              :else "none")
                :cursor "pointer"
                :display "block"
-               :vertical-align "middle"}}]]))
+               :vertical-align "middle"}
+       :on-click handle-focus}]]))
 
 (rum/defc nav-content-editor < rum/reactive
   "Editable content component"

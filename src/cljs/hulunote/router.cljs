@@ -18,6 +18,7 @@
      ["/app/:database/graph" :graph]
      ["/app/:database/diaries" :diaries]
      ["/app/:database/notes" :all-notes]
+     ["/app/:database/note/:note-id/block/:nav-id" :block-focus]
      ["/app/:database/note/:note-id" :single-note]
      ["/app/:database/mcp-settings" :mcp-settings]
      ["/app/:database/mcp-chat" :mcp-chat]
@@ -40,6 +41,11 @@
   "Navigate to a specific note page"
   [database-name note-id]
   (switch-router! (str "/app/" database-name "/note/" note-id)))
+
+(defn go-to-block-focus!
+  "Navigate to a focused block view inside a note."
+  [database-name note-id nav-id]
+  (switch-router! (str "/app/" database-name "/note/" note-id "/block/" nav-id)))
 
 (defn go-to-all-notes!
   "Navigate to all notes page"
