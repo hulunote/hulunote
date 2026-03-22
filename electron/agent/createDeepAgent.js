@@ -4,6 +4,7 @@ const McpToolsMiddleware = require('./middleware/McpToolsMiddleware');
 const SummarizationMiddleware = require('./middleware/SummarizationMiddleware');
 const SubAgentMiddleware = require('./middleware/SubAgentMiddleware');
 const PatchToolCallsMiddleware = require('./middleware/PatchToolCallsMiddleware');
+const HulunoteSkillMiddleware = require('./middleware/HulunoteSkillMiddleware');
 
 /**
  * Factory function that creates a runnable agent.
@@ -36,6 +37,9 @@ function createDeepAgent({
     stack = middleware;
   } else {
     stack = [];
+
+    // 0. Hulunote outline-writing skill knowledge
+    stack.push(new HulunoteSkillMiddleware());
 
     // 1. MCP tools collection
     if (mcpManager) {
