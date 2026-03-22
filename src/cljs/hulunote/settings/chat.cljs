@@ -4,7 +4,7 @@
             [hulunote.settings.shared :as shared]))
 
 (rum/defc page < rum/reactive []
-  (let [{:keys [api-key model available-models models-loading? saved?]}
+  (let [{:keys [api-key model available-models models-loading? saving? saved?]}
         (rum/react shared/chat-settings-state)]
     [:div {:style {:padding "24px 0"}}
      (when-not (chat/chat-available?)
@@ -76,5 +76,9 @@
                     :justify-content "flex-end"}}
       (shared/action-button
         {:on-click shared/save-chat-settings!
+         :disabled? saving?
          :tone (when saved? :success)}
-        (if saved? "Saved!" "Save Chat Settings"))]]))
+        (cond
+          saving? "Saving..."
+          saved? "Saved!"
+          :else "Save Chat Settings"))]]))

@@ -40,6 +40,14 @@
 (defn clear-messages! []
   (swap! chat-state assoc :messages []))
 
+(def valid-llm-roles
+  #{"system" "assistant" "user" "function" "tool" "developer"})
+
+(defn llm-message?
+  [{:keys [role content]}]
+  (and (contains? valid-llm-roles role)
+       (string? content)))
+
 ;; ==================== AI Note Events (right sidebar) ====================
 
 (defonce note-event-listener-registered? (atom false))
@@ -48,14 +56,14 @@
   "Handle note/nav creation events from AI agent.
    Opens created notes in the right sidebar and updates DataScript in real-time."
   [event-data]
-  (let [event-type (.-type event-data)]
+  (let [event-type (unchecked-get event-data "type")]
     (prn "[chat-ui] note event:" event-type)
     (cond
       (= event-type "note_created")
-      (let [note-id (.-noteId event-data)
-            root-nav-id (.-rootNavId event-data)
-            database-name (.-databaseName event-data)
-            title (.-title event-data)]
+      (let [note-id (unchecked-get event-data "noteId")
+            root-nav-id (unchecked-get event-data "rootNavId")
+            database-name (unchecked-get event-data "databaseName")
+            title (unchecked-get event-data "title")]
         (prn "[chat-ui] note_created - opening in right sidebar:" title)
         ;; Add note to local DataScript
         (d/transact! db/dsdb
@@ -79,11 +87,11 @@
         (db/open-note-in-right-sidebar! note-id title root-nav-id database-name))
 
       (= event-type "nav_created")
-      (let [note-id (.-noteId event-data)
-            nav-id (.-navId event-data)
-            content (.-content event-data)
-            parid (.-parid event-data)
-            order (.-order event-data)]
+      (let [note-id (unchecked-get event-data "noteId")
+            nav-id (unchecked-get event-data "navId")
+            content (unchecked-get event-data "content")
+            parid (unchecked-get event-data "parid")
+            order (unchecked-get event-data "order")]
         (prn "[chat-ui] nav_created - updating DataScript:" nav-id)
         ;; Add/update nav node in DataScript for real-time sidebar rendering
         (d/transact! db/dsdb
@@ -136,6 +144,7 @@
   (let [{:keys [input messages use-tools? api-key-set? database-name]} @chat-state]
     (when (and (not (str/blank? input)) api-key-set?)
       (let [user-message {:role "user" :content input}
+            request-messages (conj (vec (filter llm-message? messages)) user-message)
             all-messages (conj messages user-message)]
         ;; 更新状态
         (swap! chat-state assoc
@@ -145,7 +154,7 @@
                :error nil)
         ;; 发送请求
 	        (go
-	          (when-let [ch (chat/send-message! {:messages all-messages
+	          (when-let [ch (chat/send-message! {:messages request-messages
 	                                             :use-tools use-tools?
 	                                             :database-name database-name})]
 	            (let [raw (<! ch)
