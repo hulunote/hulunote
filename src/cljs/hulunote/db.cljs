@@ -493,6 +493,19 @@
 
 (defonce right-sidebar-open? (atom false))
 (defonce right-sidebar-notes (atom []))
+(defonce right-sidebar-width (atom 420))
+
+(defn clamp-right-sidebar-width
+  [width]
+  (let [viewport-width (or (some-> js/window .-innerWidth) 1520)
+        max-width (max 320 (js/Math.floor (/ viewport-width 2)))]
+    (-> width
+        (max 320)
+        (min max-width))))
+
+(defn set-right-sidebar-width!
+  [width]
+  (reset! right-sidebar-width (clamp-right-sidebar-width width)))
 
 (defn open-note-in-right-sidebar!
   "Open a note in the right sidebar"

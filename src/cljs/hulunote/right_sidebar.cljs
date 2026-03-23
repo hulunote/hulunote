@@ -1,11 +1,50 @@
 (ns hulunote.right-sidebar
   (:require [datascript.core :as d]
             [rum.core :as rum]
+            [goog.events :as events]
             [hulunote.db :as db]
+            [hulunote.icon :as icon]
             [hulunote.util :as u]
             [hulunote.router :as router]
             [hulunote.render :as render]
             [hulunote.components :as comps]))
+
+(defonce resize-session (atom nil))
+
+(defn sync-right-sidebar-width-css!
+  [width]
+  (.setProperty (.-style (.-documentElement js/document))
+                "--right-sidebar-width"
+                (str width "px")))
+
+(defn stop-resizing!
+  []
+  (.remove (.-classList (.-documentElement js/document)) "right-sidebar-resizing")
+  (when-let [{:keys [move-key up-key]} @resize-session]
+    (events/unlistenByKey move-key)
+    (events/unlistenByKey up-key)
+    (reset! resize-session nil)))
+
+(defn begin-resize!
+  [evt]
+  (.preventDefault evt)
+  (.stopPropagation evt)
+  (stop-resizing!)
+  (.add (.-classList (.-documentElement js/document)) "right-sidebar-resizing")
+  (let [move-key
+        (events/listen js/window "mousemove"
+          (fn [move-evt]
+            (let [next-width (- (.-innerWidth js/window)
+                                (.-clientX move-evt))
+                  clamped-width (db/clamp-right-sidebar-width next-width)]
+              (sync-right-sidebar-width-css! clamped-width)
+              (db/set-right-sidebar-width! clamped-width))))
+        up-key
+        (events/listen js/window "mouseup"
+          (fn [_]
+            (stop-resizing!)))]
+    (reset! resize-session {:move-key move-key
+                            :up-key up-key})))
 
 (rum/defc sidebar-note-panel < rum/reactive
   "A single note panel in the right sidebar with editable nav tree"
@@ -42,19 +81,27 @@
   "Right sidebar component showing multiple notes side by side"
   [db]
   (let [open? (rum/react db/right-sidebar-open?)
-        notes (rum/react db/right-sidebar-notes)]
+        notes (rum/react db/right-sidebar-notes)
+        width (rum/react db/right-sidebar-width)]
     (prn "[right-sidebar render] open?:" open? "notes:" (count notes))
+    (sync-right-sidebar-width-css! width)
     (when open?
       [:div.right-sidebar
-       ;; Header
+       [:div.right-sidebar-resize-handle
+        {:on-mouse-down begin-resize!
+         :title "Resize sidebar"}]
        [:div.right-sidebar-header
-        [:span.right-sidebar-title
-         (str "Sidebar (" (count notes) ")")]
-        [:div.right-sidebar-close
-         {:on-click db/close-right-sidebar!
-          :title "Close sidebar"}
-         "\u00D7"]]
-       ;; Note panels
+        [:div.right-sidebar-header-main]
+        [:div.right-sidebar-header-actions
+         (when (seq notes)
+           [:button.right-sidebar-topbar-btn
+            {:title "Close All Sidebar Notes"
+             :on-click db/close-right-sidebar!}
+            (icon/svg-icon {:name "right_sidebar_clear" :class "app-topbar-icon"})])
+         [:button.right-sidebar-topbar-btn
+          {:title "Hide Right Sidebar"
+           :on-click #(db/toggle-right-sidebar-visibility!)}
+          (icon/svg-icon {:name "dock_to_left" :class "app-topbar-icon"})]]]
        [:div.right-sidebar-body
         (if (seq notes)
           (for [note notes]

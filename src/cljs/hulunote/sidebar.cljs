@@ -511,7 +511,9 @@
     ;; Set topbar height on :root so layout (sidebar, page-wrapper) adapts
     (.setProperty (.-style (.-documentElement js/document)) "--app-topbar-height" "44px")
     [:div.app-topbar
-     {:class (when-not collapsed? "with-sidebar")}
+     {:class (str
+               (when-not collapsed? "with-sidebar")
+               (when right-sidebar-open? " right-sidebar-open"))}
      (when-not collapsed?
        [:div.app-topbar-brand
         (sidebar-user-trigger {:database-name database-name
@@ -582,13 +584,11 @@
                              "auto" "theme_auto"
                              "theme_dark")
                      :class "app-topbar-icon"})]
-    [:button.app-topbar-btn
-     {:class (when right-sidebar-open? "active")
-      :title (if right-sidebar-open?
-               "Hide Right Sidebar"
-               "Show Right Sidebar")
-      :on-click #(db/toggle-right-sidebar-visibility!)}
-     (icon/svg-icon {:name "dock_to_left" :class "app-topbar-icon"})]]]))
+    (when-not right-sidebar-open?
+      [:button.app-topbar-btn
+       {:title "Show Right Sidebar"
+        :on-click #(db/toggle-right-sidebar-visibility!)}
+       (icon/svg-icon {:name "dock_to_left" :class "app-topbar-icon"})])]]))
 
 (rum/defc left-sidebar < rum/reactive
   [db database-name]
