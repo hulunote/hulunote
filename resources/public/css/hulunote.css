@@ -30,6 +30,7 @@
     --diary-entry-gap: 18px;
     --diary-entry-divider: rgba(151, 151, 151, 0.25);
     --app-topbar-height: 0px;
+    --right-sidebar-width: 420px;
 
     /* Semantic application tokens */
     --ui-bg-app: #2a354b;
@@ -1710,6 +1711,10 @@ hulu-text-font {
     padding-right: 0;
 }
 
+.right-sidebar-resizing .main-content-area {
+    transition: none !important;
+}
+
 /* ==================== App Top Bar ==================== */
 
 .app-topbar {
@@ -1727,12 +1732,21 @@ hulu-text-font {
     background: var(--ui-content-bg);
     border-bottom: 1px solid var(--ui-border-subtle);
     backdrop-filter: blur(8px);
+    transition: right 0.25s ease;
 }
 
 .app-topbar.with-sidebar {
     grid-template-columns: var(--sidebar-width) auto 1fr auto;
     padding-left: 0;
     gap: 0;
+}
+
+.app-topbar.right-sidebar-open {
+    right: var(--right-sidebar-width);
+}
+
+.right-sidebar-resizing .app-topbar {
+    transition: none !important;
 }
 
 .app-topbar-brand {
@@ -2294,16 +2308,41 @@ hulu-text-font {
 .right-sidebar {
     position: fixed;
     right: 0;
-    top: var(--app-topbar-height);
-    width: 420px;
-    height: calc(100vh - var(--app-topbar-height));
-    background: var(--ui-surface-panel);
+    top: 0;
+    width: var(--right-sidebar-width);
+    height: 100vh;
+    background: var(--ui-content-bg);
     border-left: 1px solid var(--ui-border-subtle);
     z-index: 100;
     display: flex;
     flex-direction: column;
     overflow: hidden;
     animation: rightSidebarSlideIn 0.25s ease-out;
+}
+
+.right-sidebar-resize-handle {
+    position: absolute;
+    top: 0;
+    left: -4px;
+    width: 8px;
+    height: 100%;
+    cursor: col-resize;
+    z-index: 2;
+}
+
+.right-sidebar-resize-handle::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 3px;
+    width: 2px;
+    height: 100%;
+    background: transparent;
+    transition: background 0.15s ease;
+}
+
+.right-sidebar-resize-handle:hover::after {
+    background: var(--ui-border-strong);
 }
 
 @keyframes rightSidebarSlideIn {
@@ -2319,34 +2358,52 @@ hulu-text-font {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 12px 16px;
+    height: 44px;
+    padding: 0 14px 0 16px;
     border-bottom: 1px solid var(--ui-border-subtle);
     flex-shrink: 0;
+    background: var(--ui-content-bg);
+    box-sizing: border-box;
 }
 
-.right-sidebar-title {
-    font-size: 14px;
-    font-weight: 600;
-    color: var(--ui-text-secondary);
+.right-sidebar-header-main {
+    flex: 1;
+    min-width: 0;
 }
 
-.right-sidebar-close {
+.right-sidebar-header-actions {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.right-sidebar-topbar-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 26px;
+    height: 26px;
+    border: 1px solid transparent;
+    background: transparent;
     cursor: pointer;
-    padding: 2px 8px;
-    color: var(--ui-text-soft);
+    padding: 0;
+    color: var(--ui-control-text-strong);
     font-size: 18px;
-    border-radius: 4px;
-    transition: all 0.15s ease;
+    border-radius: 6px;
+    line-height: 1;
+    transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
 }
 
-.right-sidebar-close:hover {
+.right-sidebar-topbar-btn:hover {
     color: var(--ui-text-strong);
-    background: var(--ui-surface-hover);
+    background: var(--ui-nav-active-bg);
+    border-color: transparent;
 }
 
 .right-sidebar-body {
     flex: 1;
     overflow-y: auto;
+    background: var(--ui-content-bg);
 }
 
 .right-sidebar-empty {
@@ -2414,12 +2471,12 @@ hulu-text-font {
 
 /* Adjust main content area when right sidebar is open */
 .right-sidebar-active .main-content-area {
-    margin-right: 420px;
+    margin-right: var(--right-sidebar-width);
     transition: margin-right 0.25s ease;
 }
 
 .right-sidebar-active .main-content-area.right-sidebar-open {
-    margin-right: 420px;
+    margin-right: var(--right-sidebar-width);
 }
 
 /* Mobile: right sidebar takes full width */
